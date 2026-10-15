@@ -37,8 +37,8 @@ button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 .app {
-  display: grid; grid-template-columns: auto minmax(280px, 1fr) 390px; grid-template-areas: "stage chat panel"; gap: 18px; align-items: start;
-  max-width: 1560px; margin: 0 auto;
+  display: grid; grid-template-columns: minmax(0, 1fr) 420px; grid-template-areas: "stage panel"; gap: 18px; align-items: start;
+  max-width: 1300px; margin: 0 auto;
   padding-block: 16px 32px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -46,8 +46,8 @@ button { cursor: pointer; }
 .stage-col { grid-area: stage; align-items: center; }
 .chat-col { grid-area: chat; }
 .panel-col { grid-area: panel; }
-@media (max-width: 1250px) { .app { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "stage panel" "chat chat"; } }
-@media (max-width: 860px) { .app { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "panel" "chat"; } }
+
+@media (max-width: 860px) { .app { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "panel"; } }
 .chat-col .chatbox { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; height: calc(100vh - 34px); max-height: 980px; min-height: 420px; position: sticky; top: 16px; }
 .chat-col .chathead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .chat-col .chathead h2 { margin: 0; font-family: var(--display); font-size: 20px; font-weight: 400; }
@@ -403,7 +403,7 @@ html.unlocked .gate { display: none; }
 
   </div>
 
-  <div class="col chat-col">
+  <div class="col chat-col" hidden>  <!-- Chat auf Davids Wunsch ausgeblendet (2026-10-15) -->
     <div class="chatbox">
       <div class="chathead"><h2>Live-Chat crashketchum</h2><div class="status"><span class="dot" id="connDot"></span><span id="connText">Nicht verbunden</span></div></div>
       <div class="chat" id="chat"></div>
