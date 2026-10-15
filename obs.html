@@ -37,13 +37,24 @@ button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 .app {
-  display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 18px; align-items: start;
+  display: grid; grid-template-columns: auto minmax(280px, 1fr) 390px; grid-template-areas: "stage chat panel"; gap: 18px; align-items: start;
   max-width: 1560px; margin: 0 auto;
   padding-block: 16px 32px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-@media (max-width: 1000px) { .app { grid-template-columns: minmax(0, 1fr); } }
+.stage-col { grid-area: stage; align-items: center; }
+.chat-col { grid-area: chat; }
+.panel-col { grid-area: panel; }
+@media (max-width: 1250px) { .app { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "stage panel" "chat chat"; } }
+@media (max-width: 860px) { .app { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "panel" "chat"; } }
+.chat-col .chatbox { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; height: calc(100vh - 34px); max-height: 980px; min-height: 420px; position: sticky; top: 16px; }
+.chat-col .chathead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.chat-col .chathead h2 { margin: 0; font-family: var(--display); font-size: 20px; font-weight: 400; }
+.chat-col .chat { flex: 1; height: auto; min-height: 0; }
+.chat-col .chatsetup summary { cursor: pointer; font-weight: 800; font-size: 13px; color: var(--muted); }
+.chat-col .chatsetup .later-body { margin-top: 8px; }
+@media (max-width: 1250px) { .chat-col .chatbox { height: 520px; position: static; } }
 .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
 .topbar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -123,7 +134,8 @@ body.green .stage::before { display: none; }
 .stage.portrait .banner { top: 9%; }
 .stage.portrait .banner .line { font-size: calc(var(--u) * 4.4); }
 .stage.portrait .mon { width: calc(var(--u) * 30); height: calc(var(--u) * 30); }
-body:not(.overlay) .stage.portrait { height: min(60vh, 620px); }
+body:not(.overlay) .stage.portrait { height: min(calc(100vh - 90px), 980px); }
+@media (max-width: 860px) { body:not(.overlay) .stage.portrait { height: min(75vh, 700px); } }
 .s-empty { display: none; position: absolute; inset: 0; place-items: center; text-align: center; padding: 10%; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
 body:not(.overlay) .stage.clear:not(.playing) .s-empty { display: grid; }
 .stage.portrait .s-grid { bottom: calc(var(--u) * 15); }
@@ -284,7 +296,7 @@ textarea { resize: vertical; min-height: 150px; font-family: var(--mono); font-s
 /* OBS-Browserquelle: transparenter Hintergrund, Bühne blendet sich automatisch ein */
 body.overlay { background: transparent !important; overflow: hidden; }
 body.overlay .app { display: block; padding: 0; max-width: none; }
-body.overlay .topbar, body.overlay .panel-col, body.overlay .board-wrap { display: none; }
+body.overlay .topbar, body.overlay .panel-col, body.overlay .chat-col, body.overlay .board-wrap { display: none; }
 body.overlay .stage { width: 100vw; height: 100vh; aspect-ratio: auto; border: 0; border-radius: 0; opacity: 0; transition: opacity .6s ease; }
 body.overlay .stage.shown { opacity: 1; }
 .btn.big { padding: 14px 16px; font-size: 16px; }
@@ -322,7 +334,7 @@ body.overlay .stage.shown { opacity: 1; }
 code { font-family: var(--mono); font-size: 12.5px; background: var(--night); padding: 1px 5px; border-radius: 5px; }
 
 /* Nur-Bühne-Ansicht (für OBS-Fensteraufnahme) */
-body.stage-only .panel-col, body.stage-only .topbar { display: none; }
+body.stage-only .panel-col, body.stage-only .chat-col, body.stage-only .topbar { display: none; }
 body.stage-only .app { grid-template-columns: minmax(0, 1fr); max-width: none; padding: 0; }
 body.stage-only .stage { border-radius: 0; border: 0; }
 body.stage-only .board-wrap { border-radius: 0; border-width: 1px 0 0; }
@@ -355,10 +367,9 @@ html.unlocked .gate { display: none; }
   </form>
 </div>
 <div class="app">
-  <div class="col">
+  <div class="col stage-col">
     <div class="topbar">
       <div class="brand">Fangrunde <span>·</span> crashketchum</div>
-      <div class="sub" id="topHint">Rechts die Pokémon des Käufers eingeben, dann „Fangen!“.</div>
     </div>
 
     <div class="stage" id="stage" aria-live="polite">
@@ -390,6 +401,33 @@ html.unlocked .gate { display: none; }
       <div class="summary" id="summary"><div class="sum-card" id="sumCard"></div></div>
     </div>
 
+  </div>
+
+  <div class="col chat-col">
+    <div class="chatbox">
+      <div class="chathead"><h2>Live-Chat crashketchum</h2><div class="status"><span class="dot" id="connDot"></span><span id="connText">Nicht verbunden</span></div></div>
+      <div class="chat" id="chat"></div>
+      <div class="row">
+        <input class="grow" type="text" id="fakeName" placeholder="Name" autocomplete="off" style="flex:0 1 110px">
+        <input class="grow" type="text" id="fakeMsg" placeholder="Test-Nachricht" autocomplete="off">
+        <button class="btn" id="sendFake">Senden</button>
+      </div>
+      <details class="chatsetup" id="chatSetup">
+        <summary>Chat verbinden</summary>
+        <div class="later-body">
+          <p class="hint">Whatnot lässt sich nicht direkt einbetten. Der Chat kommt über die kostenlose Chrome-Erweiterung <b>Social Stream Ninja</b>. Ist ein Käufer eingetragen, werden seine Pokémon aus dem Chat automatisch übernommen. Ein Klick auf einen Namen trägt ihn als Käufer ein.</p>
+          <ol class="steps">
+            <li>Erweiterung installieren (socialstream.ninja) und auf der Whatnot-Live-Seite von crashketchum aktivieren.</li>
+            <li>Unter <b>Global settings → Mechanics</b> „Enable remote API control“ und „Send chat messages to API server“ einschalten.</li>
+            <li>Die <b>Session-ID</b> aus der Erweiterung hier eintragen und verbinden.</li>
+          </ol>
+          <div class="row">
+            <input class="grow" type="text" id="sessionInput" placeholder="Session-ID" autocomplete="off">
+            <button class="btn" id="connectBtn">Verbinden</button>
+          </div>
+        </div>
+      </details>
+    </div>
   </div>
 
   <div class="col panel-col">
@@ -489,28 +527,6 @@ html.unlocked .gate { display: none; }
         <label class="check"><input type="checkbox" id="greenBg"> Grüner Hintergrund (für Chroma-Key in OBS)</label>
         <label class="check"><input type="checkbox" id="showBoard" checked> Fangbrett unter der Bühne zeigen</label>
         <label class="check"><input type="checkbox" id="soundOn" checked> Soundeffekte</label>
-        <details class="later">
-          <summary>Später: Whatnot-Chat automatisch lesen (optional)</summary>
-          <div class="later-body">
-            <p class="hint">Noch nicht nötig. Wenn das später gewünscht ist: Mit der Chrome-Erweiterung <b>Social Stream Ninja</b> kann die Seite den Whatnot-Chat mitlesen. Ist ein Käufer eingetragen, werden seine ersten 3 Pokémon aus dem Chat automatisch übernommen.</p>
-            <ol class="steps">
-              <li>Erweiterung installieren (socialstream.ninja) und auf der eigenen Whatnot-Live-Seite aktivieren.</li>
-              <li>Unter <b>Global settings → Mechanics</b> „Enable remote API control“ und „Send chat messages to API server“ einschalten.</li>
-              <li>Die <b>Session-ID</b> hier eintragen und verbinden.</li>
-            </ol>
-            <div class="row">
-              <input class="grow" type="text" id="sessionInput" placeholder="Session-ID" autocomplete="off">
-              <button class="btn" id="connectBtn">Verbinden</button>
-            </div>
-            <div class="status"><span class="dot" id="connDot"></span><span id="connText">Nicht verbunden</span></div>
-            <div class="chat" id="chat"></div>
-            <div class="row">
-              <input class="grow" type="text" id="fakeName" placeholder="Name" autocomplete="off" style="flex:0 1 110px">
-              <input class="grow" type="text" id="fakeMsg" placeholder="Test-Nachricht" autocomplete="off">
-              <button class="btn" id="sendFake">Senden</button>
-            </div>
-          </div>
-        </details>
       </div>
     </div>
   </div>
@@ -1251,7 +1267,7 @@ function renderChat() {
       note = `<span class="note">${ok}${ok && no ? ' · ' : ''}${no || (!ok ? 'kein gültiges Pokémon gefunden' : '')}</span>`;
     }
     return `<div class="msg ${m.buyer ? 'buyer' : ''}">${m.source ? `<span class="src">${esc(m.source)}</span>` : ''}<button class="nm" data-buyer="${esc(m.name)}" title="Als Käufer setzen">${esc(m.name)}</button>${esc(m.message)}${note}</div>`;
-  }).join('') : '<div class="empty">Noch keine Nachrichten.</div>';
+  }).join('') : (S.session ? '<div class="empty">Noch keine Nachrichten.</div>' : '<div class="empty">Noch kein Chat verbunden. Unten bei „Chat verbinden“ einrichten.</div>');
   if (atBottom) el.scrollTop = el.scrollHeight;
 }
 function renderRoundTab() {
@@ -1473,7 +1489,7 @@ if (overlay) document.body.classList.add('overlay');
 $('#obsPass').value = S.obsPass || ''; $('#obsPort').value = S.obsPort || 4455; $('#obsMode').value = S.obsMode || 'auto'; $('#layoutSel').value = S.layout || 'portrait'; $('#clearBg').checked = S.clear !== false;
 $('#listInput').value = S.list.join('\n');
 $('#autoStart').checked = !!S.auto; $('#buyerInput').value = S.buyer || ''; $('#greenBg').checked = !!S.green; $('#showBoard').checked = S.showBoard !== false; $('#soundOn').checked = S.sound !== false;
-$('#sessionInput').value = S.session || '';
+$('#sessionInput').value = S.session || ''; if (!S.session) $('#chatSetup').open = true;
 renderRoundTab(); renderAll(); renderChat();
 if (S.session && !stageOnly) { wsWanted = true; openSocket(); }
 if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsOpen(); }
