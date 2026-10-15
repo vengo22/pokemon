@@ -18,4 +18,6 @@ assert 'FANG_OVERLAY = true' in ov
 out = os.path.dirname(here)
 open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(full(art))
 open(os.path.join(out, 'obs.html'), 'w', encoding='utf-8').write(full(ov))
-print('index.html und obs.html gebaut')
+os.makedirs(os.path.join(out, 'obs'), exist_ok=True)
+open(os.path.join(out, 'obs', 'index.html'), 'w', encoding='utf-8').write(full(ov))
+print('index.html, obs.html und obs/index.html gebaut')

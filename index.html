@@ -184,6 +184,9 @@ body:not(.overlay) .stage.clear { background: repeating-conic-gradient(#1b2450 0
 .stage.portrait .sb-main { font-size: calc(var(--u) * 2.4); }
 .stage.portrait .sb-sub { font-size: calc(var(--u) * 1.2); }
 .stage.portrait .sb-cell .no { font-size: calc(var(--u) * 1.2); }
+.obstest { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: calc(var(--u) * 2) calc(var(--u) * 3); border-radius: calc(var(--u) * 2); background: rgba(20,24,40,.88); border: calc(var(--u) * .5) solid #3ddc84; color: #fff; text-align: center; font-family: var(--display); font-size: calc(var(--u) * 4); line-height: 1.15; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 50; white-space: nowrap; }
+.obstest small { display: block; font-family: system-ui, sans-serif; font-size: calc(var(--u) * 1.8); opacity: .8; margin-top: calc(var(--u) * .8); }
+.obstest.on { opacity: 1; }
 .banner { position: absolute; left: 50%; top: 19%; transform: translate(-50%, 0); text-align: center; width: 90%; opacity: 0; }
 .banner .line { font-family: var(--display); font-size: calc(var(--u) * 3.6); line-height: 1.05; text-shadow: 0 calc(var(--u) * .35) 0 rgba(0,0,0,.5); }
 .pill { display: inline-block; margin-top: calc(var(--u) * 1); padding: calc(var(--u) * .5) calc(var(--u) * 2); border-radius: 999px; font-family: var(--display); font-size: calc(var(--u) * 3); letter-spacing: .04em; color: #10162f; }
@@ -410,6 +413,7 @@ html.unlocked .gate { display: none; }
       </div>
       <div class="s-board" id="sBoard" aria-hidden="true"><div class="sb-stats" id="sbStats"></div><div class="sb-grid" id="sbGrid"></div></div>
       <div class="banner" id="banner"></div>
+      <div class="obstest" id="obsTest">Verbindung zu OBS steht ✓<small>Dieser Test verschwindet gleich wieder</small></div>
       <div class="fx" id="fx"></div>
       <div class="s-buyer">
         <div class="s-prompt" id="sPrompt"></div>
@@ -512,13 +516,13 @@ html.unlocked .gate { display: none; }
       <div class="tabpanel" data-panel="conn" hidden>
         <div class="obslink">
           <span class="lbl">Link für OBS (Browserquelle)</span>
-          <div class="obslink-row"><code id="obsUrl">https://vengo22.github.io/pokemon/obs.html</code><button class="btn" id="copyObs">Kopieren</button></div>
+          <div class="obslink-row"><code id="obsUrl">https://crashketchum.de/obs/</code><button class="btn" id="copyObs">Kopieren</button></div>
           <p class="hint">In OBS als Browserquelle einfügen, Breite 1080, Höhe 1920.</p>
         </div>
         <div class="field">
           <span class="lbl">Einmal in OBS einrichten</span>
           <ol class="steps">
-            <li>In OBS eine neue Quelle <b>Browser</b> hinzufügen und als URL den Link von oben eintragen. Hochkant: Breite <b>1080</b>, Höhe <b>1920</b> (quer: 1920 × 1080).</li>
+            <li>In OBS eine neue Quelle <b>Browser</b> hinzufügen. „Lokale Datei“ <b>nicht</b> anhaken, als URL den Link von oben eintragen. Hochkant: Breite <b>1080</b>, Höhe <b>1920</b> (quer: 1920 × 1080). Zum Prüfen kann man hinten <b>?test</b> anhängen: dann steht dauerhaft „OBS-Link funktioniert ✓“ im Bild.</li>
             <li>In OBS unter <b>Werkzeuge → WebSocket-Servereinstellungen</b> „WebSocket-Server aktivieren“ anhaken. Bei „Verbindungsinformationen anzeigen“ steht das Passwort.</li>
             <li>Diese Seite in Chrome öffnen, das Passwort hier eintragen und verbinden. Das merkt sich die Seite.</li>
           </ol>
@@ -529,6 +533,8 @@ html.unlocked .gate { display: none; }
         </div>
         <button class="btn primary" id="obsBtn">Mit OBS verbinden</button>
         <div class="status"><span class="dot" id="obsDot"></span><span id="obsText">Nicht mit OBS verbunden</span></div>
+        <button class="btn" id="obsTestBtn">Test im Stream anzeigen</button>
+        <p class="hint" id="obsTestHint">Zeigt 5 Sekunden lang „Verbindung zu OBS steht ✓“ in der Browserquelle. Ohne laufende Runde ist die Quelle absichtlich leer.</p>
         <div class="field">
           <label for="obsMode">Im Stream einblenden</label>
           <select id="obsMode">
@@ -654,8 +660,9 @@ if (!S || !Array.isArray(S.round)) {
 let chatLog = [];
 const overlay = !!window.FANG_OVERLAY || location.hash === '#obs';
 const stageOnly = overlay || location.hash === '#buehne';
+const testLink = overlay && /test/i.test(location.search + location.hash);
 const pendingLocal = new Set(); // in diesem Fenster noch nicht animiert
-let playing = false, summaryOn = false;
+let playing = false, summaryOn = false, testOn = testLink, testTimer = 0;
 
 function makeRound(list, wins, mains) {
   const prizes = [];
@@ -680,12 +687,16 @@ if (bc) bc.onmessage = (ev) => {
   if (m.t === 'state') syncFromStore();
 };
 const playTs = (lp) => (lp ? parseInt(lp.id, 10) || 0 : 0);
-let lastPlayed = S.lastPlay ? S.lastPlay.id : null, maxPlayed = playTs(S.lastPlay), seenUndo = S.undoSeq || 0;
+let lastPlayed = S.lastPlay ? S.lastPlay.id : null, maxPlayed = playTs(S.lastPlay), seenUndo = S.undoSeq || 0, seenPing = S.ping || 0;
 const queue = [];
 function syncFromStore() { applyState(load(KEY) || S); }
 function applyState(next) {
   S = next;
   if (overlay) store(KEY, S);
+  if (overlay && S.ping && S.ping > seenPing) {
+    seenPing = S.ping;
+    if (Date.now() - S.ping < 20000) { testOn = true; clearTimeout(testTimer); testTimer = setTimeout(() => { testOn = testLink; renderAll(); }, 5000); }
+  }
   if (stageOnly && (S.undoSeq || 0) > seenUndo) { seenUndo = S.undoSeq; queue.length = 0; if (playing) abortCatch(); }
   if (stageOnly && S.lastPlay && playTs(S.lastPlay) > maxPlayed) {
     maxPlayed = playTs(S.lastPlay); lastPlayed = S.lastPlay.id; S.lastPlay.picks.forEach((p) => pendingLocal.add(p.idx));
@@ -889,8 +900,8 @@ function obsOpen() {
     obsOk = false; $('#obsBtn').textContent = 'Mit OBS verbinden';
     if (ev.code === 4009) { obsWanted = false; setObs('err', 'Falsches Passwort. Bitte in OBS unter „Verbindungsinformationen anzeigen“ nachsehen.'); return; }
     if (!obsWanted) { setObs('', 'Nicht mit OBS verbunden'); return; }
-    if (obsRetry < 30) { obsRetry++; setObs('wait', 'OBS nicht erreichbar, neuer Versuch … Läuft OBS mit aktiviertem WebSocket-Server?'); setTimeout(() => { if (obsWanted) obsOpen(); }, Math.min(10000, 1000 * obsRetry)); }
-    else setObs('err', 'OBS nicht erreichbar. Läuft OBS und ist der WebSocket-Server an?');
+    if (obsRetry < 30) { obsRetry++; setObs('wait', 'OBS nicht erreichbar, neuer Versuch … Läuft OBS mit aktiviertem WebSocket-Server? Falls Chrome nach „Geräte im lokalen Netzwerk“ fragt: Zulassen.'); setTimeout(() => { if (obsWanted) obsOpen(); }, Math.min(10000, 1000 * obsRetry)); }
+    else setObs('err', 'OBS nicht erreichbar. Läuft OBS und ist der WebSocket-Server an? Erlaubt Chrome den Zugriff aufs lokale Netzwerk (Schloss-Symbol links neben der Adresse)?');
   };
 }
 /* Schickt den ganzen Spielstand an alle Browserquellen in OBS. */
@@ -1355,7 +1366,9 @@ function renderAll() {
   if (!stageOnly) { renderBuyerBox(); renderRoundTab(); renderWinners(); }
   document.body.classList.toggle('green', !!S.green);
   document.body.classList.toggle('no-board', !S.showBoard);
-  if (overlay) stage.classList.toggle('shown', S.obsMode === 'always' || playing || summaryOn || S.picks.length > 0 || !!S.showAll);
+  if (overlay && testLink && !$('#obsTest').dataset.l) { $('#obsTest').dataset.l = 1; $('#obsTest').innerHTML = 'OBS-Link funktioniert ✓<small>Test-Link. Für den Stream die URL ohne ?test eintragen.</small>'; }
+  if (overlay) $('#obsTest').classList.toggle('on', testOn);
+  if (overlay) stage.classList.toggle('shown', testOn || S.obsMode === 'always' || playing || summaryOn || S.picks.length > 0 || !!S.showAll);
   if (!stageOnly) { const b = $('#toggleAll'); b.textContent = S.showAll ? 'Übersicht ausblenden' : 'Übersicht im Stream zeigen'; b.classList.toggle('warn', !!S.showAll); }
 }
 
@@ -1385,7 +1398,7 @@ document.querySelectorAll('#perBuyer button').forEach((b) => (b.onclick = () => 
 }));
 $('#copyObs').onclick = async (e) => { const b = e.currentTarget; try { await navigator.clipboard.writeText($('#obsUrl').textContent); b.textContent = 'Kopiert'; } catch (err) { b.textContent = 'Bitte markieren'; } setTimeout(() => (b.textContent = 'Kopieren'), 2000); };
 /* OBS-Link passend zur Adresse, unter der diese Seite läuft (Vercel, GitHub Pages ...) */
-if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('obs.html', location.href); u.hash = ''; u.search = ''; $('#obsUrl').textContent = u.href; }
+if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('obs/', location.href); u.hash = ''; u.search = ''; $('#obsUrl').textContent = u.href; }
 $('#wTabWin').onclick = () => { wView = 'win'; renderWinners(); };
 $('#wTabNone').onclick = () => { wView = 'none'; renderWinners(); };
 $('#copyWin').onclick = async (e) => {
@@ -1491,6 +1504,10 @@ $('#assignSave').onclick = () => {
 
 $('#connectBtn').onclick = () => { if (ws && ws.readyState <= 1 && wsWanted) { wsWanted = false; ws.close(); } else connect(); };
 $('#obsBtn').onclick = () => { if (obsWanted || obsOk) { obsWanted = false; S.obsAuto = false; save(); try { obs && obs.close(); } catch (e) {} setObs('', 'Nicht mit OBS verbunden'); } else obsConnect(); };
+$('#obsTestBtn').onclick = () => {
+  if (!obsOk) { setObs('err', 'Erst mit OBS verbinden (Passwort eintragen, dann „Mit OBS verbinden“). Danach geht der Test.'); return; }
+  S.ping = Date.now(); save(); pushObs(); setObs('on', 'Test an OBS geschickt. In der Browserquelle sollte jetzt 5 Sekunden lang „Verbindung zu OBS steht ✓“ stehen.');
+};
 $('#obsMode').onchange = (e) => { S.obsMode = e.target.value; save(); };
 $('#layoutSel').onchange = (e) => { S.layout = e.target.value; save(); renderAll(); };
 $('#clearBg').onchange = (e) => { S.clear = e.target.checked; save(); renderAll(); };

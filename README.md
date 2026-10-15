@@ -7,7 +7,7 @@ Overlay und Steuerseite für die Pokémon-Fangrunden im Whatnot-Stream.
 
 Live über Vercel (jeder Push auf `main` geht automatisch online):
 - Steuerseite: https://crashketchum.de/
-- OBS-Browserquelle: https://crashketchum.de/obs.html
+- OBS-Browserquelle: https://crashketchum.de/obs/
 
 Zusätzlich über GitHub Pages: https://vengo22.github.io/pokemon/
 
