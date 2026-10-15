@@ -262,6 +262,10 @@ textarea { resize: vertical; min-height: 150px; font-family: var(--mono); font-s
 .tag-p.main { background: var(--gold); } .tag-p.win { background: var(--teal); } .tag-p.trost { background: #c9cff0; }
 .empty-t { padding: 18px; text-align: center; color: var(--muted); font-size: 13px; }
 .need { border-color: var(--gold) !important; }
+.obslink { padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,201,61,.55); background: rgba(255,201,61,.08); display: grid; gap: 8px; }
+.obslink-row { display: flex; gap: 8px; align-items: center; }
+.obslink-row code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 13px; padding: 8px 10px; border-radius: 8px; background: rgba(0,0,0,.3); color: var(--fg); user-select: all; }
+.obslink-row .btn { flex: none; }
 .lockbox { font-size: 13px; color: var(--teal); margin: 0; }
 .steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: var(--muted); }
 .steps b { color: var(--fg); }
@@ -433,12 +437,17 @@ html.unlocked .gate { display: none; }
       </div>
 
       <div class="tabpanel" data-panel="conn" hidden>
+        <div class="obslink">
+          <span class="lbl">Link für OBS (Browserquelle)</span>
+          <div class="obslink-row"><code id="obsUrl">https://vengo22.github.io/pokemon/obs.html</code><button class="btn" id="copyObs">Kopieren</button></div>
+          <p class="hint">In OBS als Browserquelle einfügen, Breite 1080, Höhe 1920.</p>
+        </div>
         <div class="field">
           <span class="lbl">Einmal in OBS einrichten</span>
           <ol class="steps">
-            <li>In OBS eine neue Quelle <b>Browser</b> hinzufügen und als URL <code id="obsUrl">https://vengo22.github.io/pokemon/obs.html</code> eintragen (oder <b>Lokale Datei</b> anhaken und <code>fangrunde-obs.html</code> auswählen). Hochkant: Breite <b>1080</b>, Höhe <b>1920</b> (quer: 1920 × 1080).</li>
+            <li>In OBS eine neue Quelle <b>Browser</b> hinzufügen und als URL den Link von oben eintragen. Hochkant: Breite <b>1080</b>, Höhe <b>1920</b> (quer: 1920 × 1080).</li>
             <li>In OBS unter <b>Werkzeuge → WebSocket-Servereinstellungen</b> „WebSocket-Server aktivieren“ anhaken. Bei „Verbindungsinformationen anzeigen“ steht das Passwort.</li>
-            <li>Diese Seite (<code>fangrunde.html</code>) in Chrome öffnen, das Passwort hier eintragen und verbinden. Das merkt sich die Seite.</li>
+            <li>Diese Seite in Chrome öffnen, das Passwort hier eintragen und verbinden. Das merkt sich die Seite.</li>
           </ol>
         </div>
         <div class="row">
@@ -1307,6 +1316,7 @@ $('#board').addEventListener('keydown', (e) => { const t = e.target.closest('.ti
 $('#chat').addEventListener('click', (e) => { const b = e.target.closest('[data-buyer]'); if (b) setBuyer(b.dataset.buyer); });
 $('#buyerBox').addEventListener('click', (e) => { const b = e.target.closest('[data-rm]'); if (b && !playing) { remember(S.round[+b.dataset.rm].name + ' entfernt'); S.picks = S.picks.filter((i) => i !== +b.dataset.rm); save(); renderAll(); } });
 $('#startCatch').onclick = startCatch;
+$('#copyObs').onclick = async (e) => { const b = e.currentTarget; try { await navigator.clipboard.writeText($('#obsUrl').textContent); b.textContent = 'Kopiert'; } catch (err) { b.textContent = 'Bitte markieren'; } setTimeout(() => (b.textContent = 'Kopieren'), 2000); };
 /* OBS-Link passend zur Adresse, unter der diese Seite läuft (Vercel, GitHub Pages ...) */
 if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('obs.html', location.href); u.hash = ''; u.search = ''; $('#obsUrl').textContent = u.href; }
 $('#wTabWin').onclick = () => { wView = 'win'; renderWinners(); };
