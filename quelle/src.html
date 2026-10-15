@@ -436,7 +436,7 @@ html.unlocked .gate { display: none; }
         <div class="field">
           <span class="lbl">Einmal in OBS einrichten</span>
           <ol class="steps">
-            <li>In OBS eine neue Quelle <b>Browser</b> hinzufügen und als URL <code>https://vengo22.github.io/pokemon/obs.html</code> eintragen (oder <b>Lokale Datei</b> anhaken und <code>fangrunde-obs.html</code> auswählen). Hochkant: Breite <b>1080</b>, Höhe <b>1920</b> (quer: 1920 × 1080).</li>
+            <li>In OBS eine neue Quelle <b>Browser</b> hinzufügen und als URL <code id="obsUrl">https://vengo22.github.io/pokemon/obs.html</code> eintragen (oder <b>Lokale Datei</b> anhaken und <code>fangrunde-obs.html</code> auswählen). Hochkant: Breite <b>1080</b>, Höhe <b>1920</b> (quer: 1920 × 1080).</li>
             <li>In OBS unter <b>Werkzeuge → WebSocket-Servereinstellungen</b> „WebSocket-Server aktivieren“ anhaken. Bei „Verbindungsinformationen anzeigen“ steht das Passwort.</li>
             <li>Diese Seite (<code>fangrunde.html</code>) in Chrome öffnen, das Passwort hier eintragen und verbinden. Das merkt sich die Seite.</li>
           </ol>
@@ -1307,6 +1307,8 @@ $('#board').addEventListener('keydown', (e) => { const t = e.target.closest('.ti
 $('#chat').addEventListener('click', (e) => { const b = e.target.closest('[data-buyer]'); if (b) setBuyer(b.dataset.buyer); });
 $('#buyerBox').addEventListener('click', (e) => { const b = e.target.closest('[data-rm]'); if (b && !playing) { remember(S.round[+b.dataset.rm].name + ' entfernt'); S.picks = S.picks.filter((i) => i !== +b.dataset.rm); save(); renderAll(); } });
 $('#startCatch').onclick = startCatch;
+/* OBS-Link passend zur Adresse, unter der diese Seite läuft (Vercel, GitHub Pages ...) */
+if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('obs.html', location.href); u.hash = ''; u.search = ''; $('#obsUrl').textContent = u.href; }
 $('#wTabWin').onclick = () => { wView = 'win'; renderWinners(); };
 $('#wTabNone').onclick = () => { wView = 'none'; renderWinners(); };
 $('#copyWin').onclick = async (e) => {
