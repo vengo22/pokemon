@@ -274,6 +274,10 @@ textarea { resize: vertical; min-height: 150px; font-family: var(--mono); font-s
 .obslink-row { display: flex; gap: 8px; align-items: center; }
 .obslink-row code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 13px; padding: 8px 10px; border-radius: 8px; background: rgba(0,0,0,.3); color: var(--fg); user-select: all; }
 .obslink-row .btn { flex: none; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.seg button { padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: none; color: var(--muted); font-weight: 800; font-size: 16px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: #fff; }
+.wtable .mons { display: flex; flex-wrap: wrap; gap: 4px 10px; }
 .lockbox { font-size: 13px; color: var(--teal); margin: 0; }
 .steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: var(--muted); }
 .steps b { color: var(--fg); }
@@ -404,6 +408,10 @@ html.unlocked .gate { display: none; }
           <label for="buyerInput">Käufer (Pflicht)</label>
           <input type="text" id="buyerInput" placeholder="Name des Käufers, z. B. pika_paul" autocomplete="off">
         </div>
+        <div class="field">
+          <span class="lbl">Pokémon pro Käufer</span>
+          <div class="seg" id="perBuyer"><button data-n="1">1</button><button data-n="2">2</button><button data-n="3">3</button></div>
+        </div>
         <button class="btn primary big" id="openPicker">Pokémon auswählen</button>
         <div class="buyerbox" id="buyerBox"></div>
         <p class="hint" id="pickNote"></p>
@@ -412,7 +420,7 @@ html.unlocked .gate { display: none; }
           <button class="btn grow" id="undoBtn" disabled>↶ Zurück</button>
           <button class="btn grow" id="toggleAll">Übersicht im Stream zeigen</button>
         </div>
-        <label class="check"><input type="checkbox" id="autoStart"> Automatisch starten, sobald 3 Pokémon gewählt sind</label>
+        <label class="check"><input type="checkbox" id="autoStart"> Automatisch starten, sobald alle Pokémon gewählt sind</label>
       </div>
 
       <!-- RUNDE -->
@@ -714,7 +722,8 @@ function findPokemon(text) {
 }
 const remaining = () => S.round.filter((p) => !p.res && !p.off).length;
 const activeIdx = () => S.round.map((p, i) => i).filter((i) => !S.round[i].off);
-const needed = () => Math.min(3, remaining());
+const perBuyer = () => Math.max(1, Math.min(3, +S.perBuyer || 3));
+const needed = () => Math.min(perBuyer(), remaining());
 const sameUser = (a, b) => norm(a || '').replace(/ /g, '') === norm(b || '').replace(/ /g, '') && norm(a || '') !== '';
 
 /* Fügt Pokémon aus einem Text zur Auswahl hinzu. Nur die ersten gültigen bis zur Grenze zählen. */
@@ -724,7 +733,7 @@ function addPicksFromText(text) {
   for (const idx of findPokemon(text)) {
     const p = S.round[idx];
     if (S.picks.includes(idx)) { if (!ok.includes(p.name)) no.push(p.name + ' (schon gewählt)'); continue; }
-    if (S.picks.length >= needed()) { no.push(p.name + ' (mehr als 3)'); continue; }
+    if (S.picks.length >= needed()) { no.push(p.name + ' (mehr als ' + perBuyer() + ')'); continue; }
     if (p.res) { no.push(p.name + ' (schon aufgedeckt)'); continue; }
     S.picks.push(idx); ok.push(p.name);
   }
@@ -737,7 +746,7 @@ function togglePick(idx) {
   const p = S.round[idx]; if (!p || p.res || p.off) return;
   if (S.picks.includes(idx)) { remember(p.name + ' abgewählt'); S.picks = S.picks.filter((i) => i !== idx); }
   else if (S.picks.length < needed()) { remember(p.name + ' gewählt'); S.picks.push(idx); sfx('pick'); }
-  else { $('#pickNote').innerHTML = '<span class="pickno">Es sind schon 3 Pokémon gewählt.</span>'; return; }
+  else { $('#pickNote').innerHTML = `<span class="pickno">Es sind schon ${needed()} Pokémon gewählt.</span>`; return; }
   save(); renderAll(); maybeAuto();
   if (S.picks.length >= needed()) setTimeout(() => closeModal('#pickerModal'), 350);
 }
@@ -1219,7 +1228,9 @@ function renderBoard() {
     return `<div class="tile ${res ? 'r-' + res : ''} ${picked && !res ? 'picked' : ''} ${can ? 'can' : ''}" data-idx="${i}" ${can ? 'role="button" tabindex="0"' : ''} title="${res ? esc(p.name + ': ' + PRIZE[res] + (p.by ? ' für ' + p.by : '')) : esc(p.name)}"><span class="n">${i + 1}</span>${smallImg(p.name)}<span>${esc(p.name)}</span>${tag ? `<span class="tag">${tag}</span>` : ''}</div>`;
   }).join('') || '<div class="empty">Noch keine Pokémon eingetragen.</div>';
 }
+function renderPerBuyer() { document.querySelectorAll('#perBuyer button').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.n === perBuyer())); }
 function renderBuyerBox() {
+  renderPerBuyer();
   const box = $('#buyerBox');
   const chips = S.picks.map((idx) => `<span class="chip">${esc(S.round[idx].name)}<button aria-label="${esc(S.round[idx].name)} entfernen" data-rm="${idx}">×</button></span>`).join('');
   box.innerHTML = `<div class="lbl">Auswahl${S.buyer ? ' von ' + esc(S.buyer) : ''}</div><div class="hint">${S.picks.length} von ${needed()} Pokémon gewählt</div><div class="picklist">${chips || '<span class="hint">Noch nichts gewählt.</span>'}</div>`;
@@ -1276,7 +1287,8 @@ function logRows(kind) {
   const out = []; const log = Array.isArray(S.log) ? S.log : [];
   log.forEach((e) => {
     const dud = e.picks.every((p) => p.prize === 'none');
-    e.picks.forEach((p) => { if ((kind === 'win') === (p.prize !== 'none')) out.push({ e, p, trost: kind !== 'win' && dud }); });
+    if (kind === 'win') e.picks.forEach((p) => { if (p.prize !== 'none') out.push({ e, p }); });
+    else { const ps = e.picks.filter((p) => p.prize === 'none'); if (ps.length) out.push({ e, ps, trost: dud }); }
   });
   return out.reverse();
 }
@@ -1284,11 +1296,17 @@ function fmtTime(t) { const d = new Date(t); return d.toLocaleDateString('de-DE'
 function renderWinners() {
   const box = $('#wTable'); if (!box) return;
   const wins = logRows('win'), duds = logRows('none'), rows = wView === 'win' ? wins : duds;
-  $('#wTabWin').textContent = `Gewinne (${wins.length})`; $('#wTabNone').textContent = `Nieten (${duds.length})`;
+  $('#wTabWin').textContent = `Gewinne (${wins.length})`; $('#wTabNone').textContent = `Nieten (${duds.reduce((a, d) => a + d.ps.length, 0)})`;
   $('#wTabWin').setAttribute('aria-pressed', wView === 'win'); $('#wTabNone').setAttribute('aria-pressed', wView !== 'win');
   if (!rows.length) { box.innerHTML = `<div class="empty-t">${wView === 'win' ? 'Noch keine Gewinne.' : 'Noch keine Nieten.'}</div>`; return; }
   let html = `<table class="wtable"><thead><tr><th>Käufer</th><th>Pokémon</th><th>${wView === 'win' ? 'Preis' : ''}</th><th>Zeit</th></tr></thead><tbody>`, lastR = null;
-  rows.forEach(({ e, p, trost }) => {
+  rows.forEach(({ e, p, ps, trost }) => {
+    if (ps) {
+      if (e.r !== lastR) { html += `<tr class="roundrow"><td colspan="4">Runde ${e.r} · ${new Date(e.t).toLocaleDateString('de-DE')}</td></tr>`; lastR = e.r; }
+      const mons = ps.map((q) => `<span class="mon-c">${smallImg(q.name)}#${q.no} ${esc(q.name)}</span>`).join('');
+      html += `<tr><td class="who">${esc(e.buyer)}</td><td><div class="mons">${mons}</div></td><td>${trost ? '<span class="tag-p trost">Trostpreis</span>' : ''}</td><td class="t" title="${fmtTime(e.t)}">${new Date(e.t).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</td></tr>`;
+      return;
+    }
     if (e.r !== lastR) { html += `<tr class="roundrow"><td colspan="4">Runde ${e.r} · ${new Date(e.t).toLocaleDateString('de-DE')}</td></tr>`; lastR = e.r; }
     const tag = p.prize === 'main' ? '<span class="tag-p main">Hauptgewinn</span>' : p.prize === 'win' ? '<span class="tag-p win">Gewinn</span>' : trost ? '<span class="tag-p trost">Trostpreis</span>' : '';
     html += `<tr><td class="who">${esc(e.buyer)}</td><td><span class="mon-c">${smallImg(p.name)}#${p.no} ${esc(p.name)}</span></td><td>${tag}</td><td class="t" title="${fmtTime(e.t)}">${new Date(e.t).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</td></tr>`;
@@ -1327,6 +1345,12 @@ $('#board').addEventListener('keydown', (e) => { const t = e.target.closest('.ti
 $('#chat').addEventListener('click', (e) => { const b = e.target.closest('[data-buyer]'); if (b) setBuyer(b.dataset.buyer); });
 $('#buyerBox').addEventListener('click', (e) => { const b = e.target.closest('[data-rm]'); if (b && !playing) { remember(S.round[+b.dataset.rm].name + ' entfernt'); S.picks = S.picks.filter((i) => i !== +b.dataset.rm); save(); renderAll(); } });
 $('#startCatch').onclick = startCatch;
+document.querySelectorAll('#perBuyer button').forEach((b) => (b.onclick = () => {
+  if (playing) return;
+  S.perBuyer = +b.dataset.n;
+  if (S.picks.length > needed()) { remember('Pokémon pro Käufer auf ' + S.perBuyer); S.picks = S.picks.slice(0, needed()); }
+  save(); renderAll(); maybeAuto();
+}));
 $('#copyObs').onclick = async (e) => { const b = e.currentTarget; try { await navigator.clipboard.writeText($('#obsUrl').textContent); b.textContent = 'Kopiert'; } catch (err) { b.textContent = 'Bitte markieren'; } setTimeout(() => (b.textContent = 'Kopieren'), 2000); };
 /* OBS-Link passend zur Adresse, unter der diese Seite läuft (Vercel, GitHub Pages ...) */
 if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('obs.html', location.href); u.hash = ''; u.search = ''; $('#obsUrl').textContent = u.href; }
