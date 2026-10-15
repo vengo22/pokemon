@@ -253,6 +253,23 @@ textarea { resize: vertical; min-height: 150px; font-family: var(--mono); font-s
 .stat span { font-size: 12px; color: var(--muted); font-weight: 600; }
 .warnbox { font-size: 13px; color: var(--gold); margin: 0; }
 [hidden] { display: none !important; }
+
+/* Fröhlicher Hintergrund nur für die Steuerseite (OBS bleibt transparent) */
+body:not(.overlay):not(.stage-only) {
+  background:
+    radial-gradient(circle at 10% 6%, rgba(238,59,76,.24), transparent 38%),
+    radial-gradient(circle at 92% 94%, rgba(255,201,61,.18), transparent 42%),
+    radial-gradient(circle at 88% 8%, rgba(47,214,181,.13), transparent 34%),
+    radial-gradient(circle at 15% 95%, rgba(143,168,255,.14), transparent 40%),
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22260%22%20height%3D%22260%22%3E%3Cg%20transform%3D%22translate%2860%2062%29%20rotate%28-18%29%22%20opacity%3D%220.07%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2230%22/%3E%3Cpath%20d%3D%22M-30%200H-9.6M9.6%200H30%22/%3E%3Ccircle%20r%3D%229.6%22/%3E%3Ccircle%20r%3D%224.2%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%28195%20185%29%20rotate%2824%29%22%20opacity%3D%220.05%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2222%22/%3E%3Cpath%20d%3D%22M-22%200H-7.04M7.04%200H22%22/%3E%3Ccircle%20r%3D%227.04%22/%3E%3Ccircle%20r%3D%223.08%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%28200%2048%29%20rotate%280%29%22%20opacity%3D%220.06%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2210%22/%3E%3Cpath%20d%3D%22M-10%200H-3.2M3.2%200H10%22/%3E%3Ccircle%20r%3D%223.2%22/%3E%3Ccircle%20r%3D%221.4000000000000001%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2852%20205%29%20rotate%2840%29%22%20opacity%3D%220.05%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2213%22/%3E%3Cpath%20d%3D%22M-13%200H-4.16M4.16%200H13%22/%3E%3Ccircle%20r%3D%224.16%22/%3E%3Ccircle%20r%3D%221.8200000000000003%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3C/svg%3E") 0 0 / 260px 260px,
+    linear-gradient(160deg, #18215a 0%, #10173d 55%, #1d1647 100%);
+  background-attachment: fixed;
+}
+html .gate { background:
+    radial-gradient(circle at 20% 15%, rgba(238,59,76,.25), transparent 40%),
+    radial-gradient(circle at 80% 85%, rgba(255,201,61,.18), transparent 42%),
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22260%22%20height%3D%22260%22%3E%3Cg%20transform%3D%22translate%2860%2062%29%20rotate%28-18%29%22%20opacity%3D%220.07%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2230%22/%3E%3Cpath%20d%3D%22M-30%200H-9.6M9.6%200H30%22/%3E%3Ccircle%20r%3D%229.6%22/%3E%3Ccircle%20r%3D%224.2%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%28195%20185%29%20rotate%2824%29%22%20opacity%3D%220.05%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2222%22/%3E%3Cpath%20d%3D%22M-22%200H-7.04M7.04%200H22%22/%3E%3Ccircle%20r%3D%227.04%22/%3E%3Ccircle%20r%3D%223.08%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%28200%2048%29%20rotate%280%29%22%20opacity%3D%220.06%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2210%22/%3E%3Cpath%20d%3D%22M-10%200H-3.2M3.2%200H10%22/%3E%3Ccircle%20r%3D%223.2%22/%3E%3Ccircle%20r%3D%221.4000000000000001%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2852%20205%29%20rotate%2840%29%22%20opacity%3D%220.05%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2213%22/%3E%3Cpath%20d%3D%22M-13%200H-4.16M4.16%200H13%22/%3E%3Ccircle%20r%3D%224.16%22/%3E%3Ccircle%20r%3D%221.8200000000000003%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3C/svg%3E") 0 0 / 260px 260px,
+    linear-gradient(160deg, #18215a, #10173d 55%, #1d1647); }
 .roundtimer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255,255,255,.04); font-size: 14px; color: var(--muted); }
 .roundtimer b { font-family: var(--mono); font-size: 22px; color: var(--fg); letter-spacing: .04em; }
 .roundtimer.on { border-color: rgba(47,214,181,.5); background: rgba(47,214,181,.08); }
