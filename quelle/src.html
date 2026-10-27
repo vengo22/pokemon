@@ -382,39 +382,119 @@ body:not(.overlay):not(.stage-only) .stage-col .topbar { display: none; }
 body.tab-wheel:not(.overlay):not(.stage-only) .app { display: none; }
 html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
 
-/* ---------- Wheel (Glücksrad) ---------- */
-.wheel-app { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 18px; align-items: start; max-width: 1300px; margin: 0 auto; padding-block: 16px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-@media (max-width: 860px) { .wheel-app { grid-template-columns: minmax(0, 1fr); } }
-.w-stage { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px 16px; display: grid; justify-items: center; gap: 18px; }
-.w-wrap { position: relative; width: min(100%, 600px, calc(100vh - 270px)); min-width: 260px; aspect-ratio: 1; }
-.w-wrap canvas { width: 100%; height: 100%; display: block; filter: drop-shadow(0 10px 26px rgba(0,0,0,.45)); }
-.w-pointer { position: absolute; left: 50%; top: -6px; width: 44px; height: 54px; transform: translateX(-50%); z-index: 2; filter: drop-shadow(0 3px 4px rgba(0,0,0,.5)); }
-.w-pointer.tick { animation: wtick .12s ease-out; }
-@keyframes wtick { 50% { transform: translateX(-50%) rotate(-14deg); } }
-.w-hub { position: absolute; left: 50%; top: 50%; width: 17%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 0; padding: 0; background: none; border-radius: 50%; z-index: 2; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
-.w-hub svg { width: 100%; height: 100%; display: block; }
-.w-hub:disabled { cursor: default; }
-.w-result { min-height: 64px; text-align: center; display: grid; place-items: center; }
-.w-result .big { font-family: var(--display); font-size: clamp(26px, 4vw, 40px); line-height: 1.1; color: var(--gold); text-shadow: 0 3px 0 rgba(0,0,0,.35); animation: wpop .5s cubic-bezier(.3,1.6,.5,1); }
-.w-result small { display: block; color: var(--muted); font-size: 14px; font-family: var(--body); text-shadow: none; }
-@keyframes wpop { from { transform: scale(.4); opacity: 0; } }
-.w-spin { font-family: var(--display); font-size: 24px; padding: 12px 40px; border-radius: 999px; border: 0; background: var(--red); color: #fff; box-shadow: 0 6px 18px rgba(238,59,76,.4); letter-spacing: .5px; }
-.w-spin:disabled { opacity: .5; cursor: default; }
-.w-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-.w-panel h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 21px; }
-.w-panel label.lbl { font-size: 13px; font-weight: 800; color: var(--muted); display: block; margin-bottom: 6px; }
-.w-panel input[type=text], .w-panel textarea { width: 100%; background: var(--night); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; }
-.w-panel textarea { min-height: 190px; resize: vertical; font-family: var(--mono); font-size: 13.5px; line-height: 1.6; }
-.w-hint { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+/* ---------- Wheel: Steuerung ---------- */
+.wheel-app { display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 18px; align-items: start; max-width: 1300px; margin: 0 auto; padding-block: 16px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (max-width: 900px) { .wheel-app { grid-template-columns: minmax(0, 1fr); } }
+.w-prev-col { display: flex; flex-direction: column; gap: 10px; align-items: center; position: sticky; top: 80px; }
+@media (max-width: 900px) { .w-prev-col { position: static; } }
+.w-prev-head { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; font-weight: 800; }
+.w-prev { position: relative; height: min(calc(100vh - 140px), 900px); aspect-ratio: 9 / 16; max-width: 100%; border-radius: 14px; border: 1px dashed var(--line); overflow: hidden; background: repeating-conic-gradient(#1b2450 0 25%, #151d40 0 50%) 0 0 / 28px 28px; }
+@media (max-width: 900px) { .w-prev { height: auto; width: 100%; } }
+.w-prev.off .wb-bar { opacity: .35; }
+.w-prev-note { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; color: var(--muted); font-size: 12.5px; pointer-events: none; }
+.w-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.w-sec { display: flex; flex-direction: column; gap: 8px; }
+.w-sec + .w-sec { border-top: 1px solid var(--line); padding-top: 14px; }
+.w-sec h3 { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+.w-panel input[type=text], .w-panel input[type=number] { width: 100%; background: var(--night); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; }
+.w-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.w-nums label { font-size: 12px; color: var(--muted); font-weight: 700; display: grid; gap: 4px; }
+.w-big { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; }
+.w-big button { border: 0; border-radius: 12px; padding: 14px 10px; font-family: var(--display); font-size: 19px; letter-spacing: .3px; line-height: 1.1; }
+.w-big button small { display: block; font-family: var(--body); font-size: 12px; font-weight: 700; opacity: .8; margin-top: 3px; }
+.w-hit { background: var(--gold); color: #1a1530; box-shadow: 0 5px 16px rgba(255,201,61,.3); }
+.w-miss { background: var(--panel-2); color: var(--fg); border: 1px solid var(--line) !important; }
+.w-big button:disabled { opacity: .4; cursor: default; box-shadow: none; }
+.w-status { display: flex; gap: 14px; font-size: 13.5px; color: var(--muted); flex-wrap: wrap; }
+.w-status b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.w-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .w-check { display: flex; gap: 8px; align-items: center; font-size: 13.5px; }
-.w-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.w-log { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
-.w-log li { display: flex; gap: 10px; align-items: center; padding: 7px 10px; border-top: 1px solid var(--line); font-size: 13.5px; }
+.w-hits { display: flex; flex-direction: column; gap: 6px; }
+.w-hitrow { display: grid; grid-template-columns: 52px 1fr auto; gap: 8px; align-items: center; }
+.w-hitrow .ph { width: 52px; height: 52px; border-radius: 8px; border: 1px dashed var(--line); background: var(--night) center / contain no-repeat; display: grid; place-items: center; color: var(--muted); font-size: 22px; cursor: pointer; padding: 0; }
+.w-hitrow .ph.has { border-style: solid; font-size: 0; }
+.w-hitrow .x { background: none; border: 1px solid var(--line); border-radius: 8px; width: 34px; height: 34px; color: var(--muted); }
+.w-hitrow .x:hover { color: var(--red); border-color: var(--red); }
+.w-log { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
+.w-log li { display: flex; gap: 10px; align-items: center; padding: 6px 10px; border-top: 1px solid var(--line); font-size: 13px; }
 .w-log li:first-child { border-top: 0; }
-.w-log .t { font-family: var(--mono); color: var(--muted); font-size: 12px; }
+.w-log img { width: 26px; height: 26px; object-fit: contain; }
+.w-log .n { font-family: var(--mono); color: var(--muted); font-size: 12px; min-width: 2.2em; }
 .w-log .who { font-weight: 800; }
-.w-log .what { margin-left: auto; font-weight: 800; padding: 2px 9px; border-radius: 999px; color: #10162f; white-space: nowrap; }
-.w-log .none { color: var(--muted); padding: 14px; text-align: center; display: block; border: 0; }
+.w-log .res { margin-left: auto; font-weight: 800; font-size: 12px; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.w-log .res.hit { background: var(--gold); color: #1a1530; } .w-log .res.miss { color: var(--muted); border: 1px solid var(--line); }
+.w-log .none { color: var(--muted); padding: 14px; justify-content: center; }
+.w-hint { font-size: 12.5px; color: var(--muted); margin: 0; }
+
+/* ---------- Wheel: Stream-Leiste (OBS und Vorschau). Größen in --k = 1/100 der Leistenbreite ---------- */
+.wov { position: fixed; inset: 0; pointer-events: none; display: none; }
+body.wheel-ov .wov { display: block; }
+body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
+.w-prev .wov { display: block; position: absolute; }
+.wb { --k: min(1vw, 1vh); position: absolute; inset: 0; font-family: var(--display); color: #fff; }
+.wb-bar { position: absolute; top: calc(var(--k) * 3); left: 50%; width: calc(var(--k) * 94); transform: translateX(-50%); transition: opacity .5s, transform .5s; }
+.wb.hide .wb-bar { opacity: 0; transform: translate(-50%, calc(var(--k) * -6)); }
+.wb-card0 { position: relative; border-radius: calc(var(--k) * 3); padding: calc(var(--k) * 1.6); background: linear-gradient(180deg, #1c2763 0%, #10173d 100%); box-shadow: 0 calc(var(--k) * .8) calc(var(--k) * 3) rgba(0,0,0,.5), inset 0 0 0 calc(var(--k) * .35) #2c3a72; overflow: hidden; }
+.wb-card0::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: calc(var(--k) * .9); background: linear-gradient(90deg, #ee3b4c, #ffc93d, #2fd6b5); }
+.wb-top { display: grid; grid-template-columns: 1fr 1.15fr; gap: calc(var(--k) * 1.6); }
+.wb-round { font-size: calc(var(--k) * 3.2); letter-spacing: .06em; color: #9aa6d6; margin: calc(var(--k) * .6) 0 calc(var(--k) * .8) calc(var(--k) * .6); }
+.wb-round b { color: #fff; font-weight: 400; }
+.wb-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--k) * 1.2); }
+.wb-tile { border-radius: calc(var(--k) * 2); padding: calc(var(--k) * 1.2) calc(var(--k) * 1) calc(var(--k) * .6); text-align: center; background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 calc(var(--k) * .3) rgba(255,255,255,.12); }
+.wb-tile small { display: flex; align-items: center; justify-content: center; gap: calc(var(--k) * .8); font-size: calc(var(--k) * 2.7); letter-spacing: .05em; }
+.wb-tile small svg { width: calc(var(--k) * 3.2); height: calc(var(--k) * 3.2); }
+.wb-tile b { display: block; font-weight: 400; font-size: calc(var(--k) * 12); line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 calc(var(--k) * .6) 0 rgba(0,0,0,.3); }
+.wb-tile.gold { background: linear-gradient(180deg, #ffd85e, #f4a91f); color: #2a1a00; box-shadow: inset 0 calc(var(--k) * -.6) 0 rgba(0,0,0,.18); }
+.wb-tile.gold b { text-shadow: 0 calc(var(--k) * .5) 0 rgba(255,255,255,.35); }
+.wb-tile b.bump { animation: wbump .5s cubic-bezier(.3,1.8,.5,1); }
+@keyframes wbump { 40% { transform: scale(1.25); } }
+.wb-hits { display: flex; flex-direction: column; min-width: 0; }
+.wb-hhead { display: flex; justify-content: space-between; align-items: center; font-size: calc(var(--k) * 3.2); color: #ffc93d; margin: calc(var(--k) * .6) calc(var(--k) * .4) calc(var(--k) * .8); }
+.wb-dots { display: flex; gap: calc(var(--k) * .8); }
+.wb-dots i { width: calc(var(--k) * 1.2); height: calc(var(--k) * 1.2); border-radius: 50%; background: rgba(255,255,255,.25); }
+.wb-dots i.on { background: #ffc93d; }
+.wb-hcard { flex: 1; display: grid; grid-template-columns: 42% 1fr; gap: calc(var(--k) * 1.4); align-items: center; border-radius: calc(var(--k) * 2); padding: calc(var(--k) * 1); background: rgba(0,0,0,.28); min-height: calc(var(--k) * 19); }
+.wb-hcard .img { align-self: stretch; border-radius: calc(var(--k) * 1.4); background: rgba(255,255,255,.06) center / contain no-repeat; min-height: calc(var(--k) * 17); }
+.wb-hcard .nm { font-size: calc(var(--k) * 4.4); line-height: 1.05; overflow-wrap: anywhere; }
+.wb-hcard.swap { animation: wswap .5s ease-out; }
+@keyframes wswap { from { opacity: 0; transform: translateX(calc(var(--k) * 4)); } }
+.wb-hcard.noimg, .wb-hcard.empty { grid-template-columns: 1fr; } .wb-hcard.noimg .img, .wb-hcard.empty .img { display: none; }
+.wb-hcard.noimg .nm { font-size: calc(var(--k) * 5.4); text-align: center; color: #ffc93d; }
+.wb-hcard.empty .nm { color: #9aa6d6; font-size: calc(var(--k) * 3.2); }
+.wb-chance { display: grid; grid-template-columns: auto 1fr auto; gap: calc(var(--k) * 1.6); align-items: center; margin-top: calc(var(--k) * 1.4); padding: calc(var(--k) * 1) calc(var(--k) * 1.4); border-radius: calc(var(--k) * 2); background: rgba(0,0,0,.28); }
+.wb-chance .lbl small { display: block; font-family: var(--body); font-weight: 800; font-size: calc(var(--k) * 1.9); letter-spacing: .1em; color: #9aa6d6; }
+.wb-chance .lbl b { font-weight: 400; font-size: calc(var(--k) * 4.6); line-height: 1; color: var(--hc, #ffc93d); }
+.wb-meter { position: relative; height: calc(var(--k) * 4.4); border-radius: 999px; background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 calc(var(--k) * .3) rgba(255,255,255,.12); overflow: hidden; }
+.wb-meter .fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 999px; background: linear-gradient(90deg, #3dc1ff, var(--hc, #ffc93d)); box-shadow: 0 0 calc(var(--k) * 2) var(--hc, #ffc93d); transition: width .8s cubic-bezier(.3,1.3,.5,1); }
+.wb-meter .fill::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(255,255,255,.28) 0 calc(var(--k) * 1.2), transparent calc(var(--k) * 1.2) calc(var(--k) * 2.6)); animation: wstripe 1.2s linear infinite; }
+@keyframes wstripe { to { background-position: calc(var(--k) * 5.6) 0; } }
+.wb-meter .seg { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - var(--k) * .3), rgba(16,23,61,.7) calc(10% - var(--k) * .3) 10%); }
+.wb-chance .pct { font-weight: 400; font-size: calc(var(--k) * 6.4); line-height: 1; color: var(--hc, #ffc93d); font-variant-numeric: tabular-nums; min-width: calc(var(--k) * 13); text-align: right; }
+.wb-chance .pct small { font-size: .55em; }
+.wb-win { display: flex; align-items: center; gap: calc(var(--k) * 1.4); margin-top: calc(var(--k) * 1.2); height: calc(var(--k) * 6); border-radius: calc(var(--k) * 2); background: rgba(0,0,0,.28); padding-left: calc(var(--k) * 1.4); overflow: hidden; }
+.wb-win .wl { flex: none; font-size: calc(var(--k) * 2.8); color: #2fd6b5; }
+.wb-win .vp { flex: 1; overflow: hidden; height: 100%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 4%, #000 92%, transparent); }
+.wb-win .tr { display: inline-flex; align-items: center; height: 100%; gap: calc(var(--k) * 3); white-space: nowrap; padding-right: calc(var(--k) * 3); }
+.wb-win .tr.run { animation: wmarq var(--dur, 20s) linear infinite; }
+@keyframes wmarq { to { transform: translateX(-50%); } }
+.wb-win .it { display: inline-flex; align-items: center; gap: calc(var(--k) * .8); font-size: calc(var(--k) * 3); }
+.wb-win .it img { width: calc(var(--k) * 5); height: calc(var(--k) * 5); object-fit: contain; }
+.wb-win .it em { font-style: normal; color: #ffc93d; }
+/* Fang-Animation bei Treffer */
+.wb-catch { position: absolute; left: 0; right: 0; top: 52%; height: 0; display: none; }
+.wb-catch.on { display: block; }
+.wb-glow { position: absolute; left: 50%; top: 0; width: calc(var(--k) * 70); height: calc(var(--k) * 70); margin: calc(var(--k) * -35) 0 0 calc(var(--k) * -35); border-radius: 50%; background: radial-gradient(circle, rgba(255,201,61,.55), rgba(255,201,61,0) 65%); opacity: 0; }
+.wb-mon { position: absolute; left: 50%; top: 0; width: calc(var(--k) * 46); height: calc(var(--k) * 46); margin: calc(var(--k) * -26) 0 0 calc(var(--k) * -23); object-fit: contain; filter: drop-shadow(0 calc(var(--k) * 1) calc(var(--k) * 2) rgba(0,0,0,.5)); opacity: 0; }
+.wb-ball { position: absolute; left: 50%; top: 0; width: calc(var(--k) * 16); height: calc(var(--k) * 16); margin: calc(var(--k) * -8) 0 0 calc(var(--k) * -8); opacity: 0; filter: drop-shadow(0 calc(var(--k) * 1) calc(var(--k) * 1.5) rgba(0,0,0,.5)); }
+.wb-ball svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.wb-ball .btn { transition: fill .15s; }
+.wb-ball.click .btn { fill: #ff5a5a; }
+.wb-stars { position: absolute; left: 50%; top: 0; }
+.wb-stars i { position: absolute; width: calc(var(--k) * 3.4); height: calc(var(--k) * 3.4); margin: calc(var(--k) * -1.7); background: #ffc93d; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); opacity: 0; }
+.wb-text { position: absolute; left: 4%; right: 4%; top: calc(var(--k) * 14); text-align: center; opacity: 0; }
+.wb-text b { display: block; font-weight: 400; font-size: calc(var(--k) * 11); line-height: 1; color: #ffc93d; -webkit-text-stroke: calc(var(--k) * .5) #1b2a7a; paint-order: stroke fill; text-shadow: 0 calc(var(--k) * .8) 0 #1b2a7a; }
+.wb-text span { display: inline-block; margin-top: calc(var(--k) * 1.4); font-size: calc(var(--k) * 4.4); padding: calc(var(--k) * .8) calc(var(--k) * 3); border-radius: 999px; background: rgba(16,23,61,.85); }
+.wb-text span em { font-style: normal; color: #2fd6b5; }
 </style>
 
 <div class="gate" id="gate">
@@ -616,46 +696,60 @@ html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
 </div>
 
 <div class="wheel-app" id="wheelApp" hidden>
-  <div class="w-stage">
-    <div class="w-wrap">
-      <svg class="w-pointer" id="wPointer" viewBox="0 0 44 54" aria-hidden="true"><path d="M4 6h36L22 50z" fill="#ffc93d" stroke="#15151d" stroke-width="4" stroke-linejoin="round"/></svg>
-      <canvas id="wCanvas" width="1240" height="1240" aria-label="Glücksrad"></canvas>
-      <button class="w-hub" id="wHub" aria-label="Rad drehen"><svg viewBox="0 0 100 100" aria-hidden="true">
-        <circle cx="50" cy="50" r="45" fill="#f3f4fa"/>
-        <path d="M5 50a45 45 0 0 1 90 0z" fill="#ee3b4c"/>
-        <path d="M20 31a32 32 0 0 1 20-14" stroke="#fff" stroke-opacity=".6" stroke-width="6" fill="none" stroke-linecap="round"/>
-        <path d="M5 50h90" stroke="#15151d" stroke-width="8"/>
-        <circle cx="50" cy="50" r="45" fill="none" stroke="#15151d" stroke-width="6"/>
-        <circle cx="50" cy="50" r="14" fill="#f3f4fa" stroke="#15151d" stroke-width="6"/>
-        <circle cx="50" cy="50" r="6" fill="#fff" stroke="#15151d" stroke-opacity=".25" stroke-width="2"/>
-      </svg></button>
-    </div>
-    <div class="w-result" id="wResult" aria-live="polite"></div>
-    <button class="w-spin" id="wSpin">Drehen!</button>
+  <div class="w-prev-col">
+    <div class="w-prev-head"><span>Stream-Vorschau (transparent, 9:16)</span><button class="btn" id="wTestCatch" style="padding:6px 10px;font-size:12.5px">Fang-Animation testen</button></div>
+    <div class="w-prev" id="wPrev"><div class="wov" id="wovPrev"></div><div class="w-prev-note" id="wPrevNote"></div></div>
   </div>
   <div class="w-panel">
-    <h2>Wheel</h2>
-    <div>
-      <label class="lbl" for="wBuyer">Käufer (optional)</label>
-      <input type="text" id="wBuyer" placeholder="Name aus dem Chat" autocomplete="off">
-    </div>
-    <div>
-      <label class="lbl" for="wFields">Felder auf dem Rad (eins pro Zeile)</label>
-      <textarea id="wFields" spellcheck="false"></textarea>
-      <p class="w-hint">Ein Feld öfter eintragen = größere Chance. Mit „5x Booster“ steht es fünfmal drauf.</p>
-    </div>
-    <label class="w-check"><input type="checkbox" id="wRemove"> Gewonnenes Feld danach vom Rad nehmen</label>
-    <label class="w-check"><input type="checkbox" id="wSound" checked> Ton beim Drehen</label>
-    <div>
-      <div class="w-row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
-        <label class="lbl" style="margin:0">Verlauf</label>
-        <button class="btn" id="wClear" style="padding:5px 10px;font-size:12.5px">Verlauf leeren</button>
+    <div class="w-sec">
+      <h3>Spot verkauft</h3>
+      <input type="text" id="wBuyer" placeholder="Käufer (optional), z. B. pika_paul" autocomplete="off">
+      <div class="w-big">
+        <button class="w-hit" id="wHitBtn">Pokémon gefangen!<small>Treffer, mit Fang-Animation</small></button>
+        <button class="w-miss" id="wMissBtn">Kein Treffer<small>Spot ohne Pokémon</small></button>
       </div>
+      <div class="w-status" id="wStatus"></div>
+      <div class="w-row"><button class="btn" id="wUndo">↶ Zurück</button><button class="btn" id="wNewRound">Neue Runde</button></div>
+    </div>
+    <div class="w-sec">
+      <h3>Runde</h3>
+      <div class="w-nums">
+        <label>Runde<input type="number" id="wRound" min="1"></label>
+        <label>Spots gesamt<input type="number" id="wSpots" min="1"></label>
+        <label>Pokémon gesamt<input type="number" id="wTickets" min="0"></label>
+      </div>
+      <p class="w-hint">„Pokémon“ sind die Tickets: so viele Treffer stecken in den Spots. Die Leiste zählt beides runter und rechnet die Fang-Chance aus.</p>
+    </div>
+    <div class="w-sec">
+      <h3>Im Stream anzeigen</h3>
+      <label class="w-check"><input type="checkbox" id="wLive"> <b>Leiste im Stream zeigen</b></label>
+      <label class="w-check"><input type="checkbox" id="wShowChance"> Fang-Chance</label>
+      <label class="w-check"><input type="checkbox" id="wShowHits"> Top-Hits im Durchlauf</label>
+      <label class="w-check"><input type="checkbox" id="wShowWin"> Aktuelle Gewinner</label>
+      <label class="w-check"><input type="checkbox" id="wAnim"> Fang-Animation bei Treffer</label>
+      <label class="w-check"><input type="checkbox" id="wSound"> Ton</label>
+    </div>
+    <div class="w-sec">
+      <h3>Top-Hits in dieser Runde</h3>
+      <div class="w-hits" id="wHits"></div>
+      <div class="w-row"><button class="btn" id="wAddHit">+ Hit hinzufügen</button><span class="w-hint">Bild antippen zum Hochladen</span></div>
+      <input type="file" id="wFile" accept="image/*" hidden>
+    </div>
+    <div class="w-sec">
+      <h3>OBS-Link fürs Wheel</h3>
+      <div class="obslink">
+        <div class="obslink-row"><code id="wObsUrl">crashketchum.de/wheel/</code><button class="btn" id="wObsCopy">Kopieren</button></div>
+        <p class="w-hint">In OBS als <b>Browser</b>-Quelle eintragen, Breite 1080, Höhe 1920. Daten kommen über dieselbe OBS-Verbindung wie bei Fangen.</p>
+        <div class="w-row"><span class="w-hint" id="wObsState"></span><button class="btn" id="wObsConnect" style="padding:6px 10px;font-size:12.5px">Mit OBS verbinden</button></div>
+      </div>
+    </div>
+    <div class="w-sec">
+      <h3>Verlauf dieser Runde</h3>
       <ul class="w-log" id="wLog"></ul>
     </div>
   </div>
 </div>
-
+<div class="wov" id="wovStream"></div>
 <div class="modal" id="pickerModal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
     <div class="modal-head">
@@ -799,7 +893,7 @@ function applyState(next) {
     if (Date.now() - S.ping < 20000) { testOn = true; clearTimeout(testTimer); testTimer = setTimeout(() => { testOn = testLink; renderAll(); }, 5000); }
   }
   if (stageOnly && (S.undoSeq || 0) > seenUndo) { seenUndo = S.undoSeq; queue.length = 0; if (playing) abortCatch(); }
-  if (stageOnly && S.lastPlay && playTs(S.lastPlay) > maxPlayed) {
+  if (stageOnly && !window.WHEEL_OVERLAY && S.lastPlay && playTs(S.lastPlay) > maxPlayed) {
     maxPlayed = playTs(S.lastPlay); lastPlayed = S.lastPlay.id; S.lastPlay.picks.forEach((p) => pendingLocal.add(p.idx));
     queue.push(S.lastPlay); if (!playing) nextInQueue();
   }
@@ -1470,6 +1564,7 @@ function renderAll() {
   if (overlay && testLink && !$('#obsTest').dataset.l) { $('#obsTest').dataset.l = 1; $('#obsTest').innerHTML = 'OBS-Link funktioniert ✓<small>Test-Link. Für den Stream die URL ohne ?test eintragen.</small>'; }
   if (overlay) $('#obsTest').classList.toggle('on', testOn);
   if (overlay) stage.classList.toggle('shown', testOn || S.obsMode === 'always' || playing || summaryOn || S.picks.length > 0 || !!S.showAll);
+  if (window.wheelRender) wheelRender();
   if (!stageOnly) { const b = $('#toggleAll'); b.textContent = S.showAll ? 'Übersicht ausblenden' : 'Übersicht im Stream zeigen'; b.classList.toggle('warn', !!S.showAll); }
 }
 
@@ -1619,7 +1714,7 @@ window.addEventListener('storage', (e) => { if (e.key === KEY) syncFromStore(); 
 
 /* ---------- Start ---------- */
 if (stageOnly) document.body.classList.add('stage-only');
-if (overlay) document.body.classList.add('overlay');
+if (overlay) { document.body.classList.add('overlay'); document.documentElement.style.colorScheme = 'normal'; document.documentElement.style.background = 'transparent'; } // sonst malt Chrome bei color-scheme dark einen dunklen Grund statt transparent
 $('#obsPass').value = S.obsPass || ''; $('#obsPort').value = S.obsPort || 4455; $('#obsMode').value = S.obsMode || 'auto'; $('#layoutSel').value = S.layout || 'portrait'; $('#clearBg').checked = S.clear !== false;
 $('#listInput').value = S.list.join('\n');
 $('#autoStart').checked = !!S.auto; $('#buyerInput').value = S.buyer || ''; $('#greenBg').checked = !!S.green; $('#showBoard').checked = S.showBoard !== false; $('#soundOn').checked = S.sound !== false;
@@ -1629,194 +1724,270 @@ if (S.session && !stageOnly) { wsWanted = true; openSocket(); }
 if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsOpen(); }
 </script>
 <script>
-/* ---------- Header-Tabs + Wheel (Glücksrad) ---------- */
+/* ---------- Header-Tabs + Wheel ---------- */
+/* Das Wheel läuft auf Whatnot. Chris trägt hier jeden verkauften Spot ein (Treffer = Pokémon gefangen oder kein Treffer).
+   Der Zustand liegt in S.wheel und geht über save() denselben Weg wie die Fangrunde (localStorage, BroadcastChannel, obs-websocket). */
 (() => {
-  const ov = !!window.FANG_OVERLAY || location.hash === '#obs' || location.hash === '#buehne';
+  const wheelOv = !!window.WHEEL_OVERLAY;
+  const ctl = !overlay && !stageOnly;
   const $$ = (s) => document.querySelector(s);
-  const ld = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
-  const st = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   /* Tabs */
-  const app = $$('.app'), wapp = $$('#wheelApp');
   function setTab(t) {
-    if (ov) return;
+    if (!ctl) return;
     const w = t === 'wheel';
     document.body.classList.toggle('tab-wheel', w);
-    wapp.hidden = !w;
+    $$('#wheelApp').hidden = !w;
     $$('#tabFang').setAttribute('aria-selected', String(!w));
     $$('#tabWheel').setAttribute('aria-selected', String(w));
     try { localStorage.setItem('crash.tab', t); } catch (e) {}
-    if (w) draw();
+    if (w) render();
   }
   document.querySelectorAll('.hdr-tabs button').forEach((b) => b.onclick = () => setTab(b.dataset.tab));
   window.crashTab = () => document.body.classList.contains('tab-wheel') ? 'wheel' : 'fang';
 
   /* Zustand */
-  const KEY = 'wheel.v1';
-  const DEF = ['Booster', 'Booster', 'Booster', 'Holo-Karte', 'Promo', 'Nochmal drehen', 'Mystery-Pack', 'Hauptgewinn'];
-  const W = Object.assign({ fields: DEF.slice(), remove: false, sound: true, log: [], buyer: '' }, ld(KEY) || {});
-  const save = () => st(KEY, W);
-  const COLORS = ['#ee3b4c', '#ffc93d', '#2fd6b5', '#5b7cff', '#a35bff', '#ff8a3d', '#3dc1ff', '#ff5fa8'];
-  const colorFor = (i, n) => { let c = COLORS[i % COLORS.length]; if (n > 1 && i === n - 1 && c === COLORS[0]) c = COLORS[3]; return c; };
-  const textOn = (hex) => { const v = parseInt(hex.slice(1), 16); const r = v >> 16, g = (v >> 8) & 255, b = v & 255; return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? '#15151d' : '#ffffff'; };
-
-  function parse(text) {
-    const out = [];
-    text.split('\n').map((l) => l.trim()).filter(Boolean).forEach((l) => {
-      const m = l.match(/^(\d{1,2})\s*[x×]\s+(.+)$/i);
-      if (m) for (let i = 0; i < Math.min(+m[1], 50); i++) out.push(m[2].trim()); else out.push(l);
-    });
-    return out.slice(0, 120);
-  }
-  // Felder für die Anzeige im Textfeld wieder zusammenfassen ("3x Booster")
-  function unparse(list) {
-    const lines = []; let i = 0;
-    while (i < list.length) { let j = i; while (j < list.length && list[j] === list[i]) j++; lines.push(j - i > 1 ? (j - i) + 'x ' + list[i] : list[i]); i = j; }
-    return lines.join('\n');
-  }
-
-  /* Zeichnen */
-  const cv = $$('#wCanvas'), ctx = cv.getContext('2d');
-  let rot = 0, spinning = false;
-  function draw() {
-    const n = W.fields.length, S = cv.width, R = S / 2 - 14, c = S / 2;
-    ctx.clearRect(0, 0, S, S);
-    ctx.save(); ctx.translate(c, c);
-    // Rand
-    ctx.beginPath(); ctx.arc(0, 0, R + 10, 0, Math.PI * 2); ctx.fillStyle = '#15151d'; ctx.fill();
-    if (!n) {
-      ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fillStyle = '#1e2955'; ctx.fill();
-      ctx.fillStyle = '#9aa6d6'; ctx.font = '600 44px Figtree, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Keine Felder', 0, -R / 2); ctx.restore(); return;
-    }
-    const a = (Math.PI * 2) / n;
-    ctx.rotate(rot);
-    for (let i = 0; i < n; i++) {
-      const s0 = -Math.PI / 2 + i * a; // Feld 0 beginnt oben
-      const col = colorFor(i, n);
-      ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, s0, s0 + a); ctx.closePath();
-      ctx.fillStyle = col; ctx.fill();
-      ctx.strokeStyle = '#15151d'; ctx.lineWidth = 6; ctx.stroke();
-      // Text entlang des Radius
-      ctx.save(); ctx.rotate(s0 + a / 2);
-      ctx.fillStyle = textOn(col); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-      let fs = Math.max(22, Math.min(58, (R * a) * 0.55, 900 / Math.max(6, n)));
-      const label = W.fields[i];
-      ctx.font = fs + 'px "Lilita One", "Arial Black", sans-serif';
-      const maxW = R * 0.66;
-      while (ctx.measureText(label).width > maxW && fs > 18) { fs -= 2; ctx.font = fs + 'px "Lilita One", "Arial Black", sans-serif'; }
-      let txt = label;
-      if (ctx.measureText(txt).width > maxW) { while (txt.length > 1 && ctx.measureText(txt + '…').width > maxW) txt = txt.slice(0, -1); txt += '…'; }
-      ctx.fillText(txt, R - 34, 2);
-      ctx.restore();
-    }
-    // Lämpchen am Rand
-    for (let i = 0; i < Math.max(n, 16); i++) {
-      const t = (i / Math.max(n, 16)) * Math.PI * 2;
-      ctx.beginPath(); ctx.arc(Math.cos(t) * (R + 1), Math.sin(t) * (R + 1), 7, 0, Math.PI * 2); ctx.fillStyle = '#fff6d0'; ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  /* Ton */
-  let ac = null;
-  function tick() {
-    $$('#wPointer').classList.remove('tick'); void $$('#wPointer').offsetWidth; $$('#wPointer').classList.add('tick');
-    if (!W.sound) return;
-    try {
-      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-      const o = ac.createOscillator(), g = ac.createGain();
-      o.type = 'square'; o.frequency.value = 1300; g.gain.setValueAtTime(0.05, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.04);
-      o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.05);
-    } catch (e) {}
-  }
-  function fanfare() {
-    if (!W.sound) return;
-    try {
-      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-      [523, 659, 784, 1047].forEach((f, i) => {
-        const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + i * 0.11;
-        o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
-        o.connect(g).connect(ac.destination); o.start(t); o.stop(t + 0.4);
-      });
-    } catch (e) {}
-  }
-
-  /* Drehen */
-  const reducedW = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function spin() {
-    const n = W.fields.length;
-    if (spinning || !n) return;
-    spinning = true; $$('#wSpin').disabled = true; $$('#wHub').disabled = true; $$('#wResult').innerHTML = '';
-    const a = (Math.PI * 2) / n;
-    const pick = Math.floor(Math.random() * n);
-    // Zeiger steht oben: Mitte von Feld pick muss nach oben, mit etwas Zufall innerhalb des Feldes
-    const off = (Math.random() - 0.5) * a * 0.7;
-    const norm0 = ((rot % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-    let target = -(pick * a + a / 2 + off);
-    target = ((target % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-    let delta = target - norm0; if (delta < 0) delta += Math.PI * 2;
-    const turns = reducedW ? 1 : 5 + Math.floor(Math.random() * 3);
-    const from = rot, to = rot + delta + turns * Math.PI * 2;
-    const dur = reducedW ? 1200 : 5200 + Math.random() * 1200;
-    const t0 = performance.now();
-    let lastSeg = Math.floor(((-from) % (Math.PI * 2) + Math.PI * 4) % (Math.PI * 2) / a);
-    const ease = (t) => 1 - Math.pow(1 - t, 4);
-    function step(now) {
-      const t = Math.min(1, (now - t0) / dur);
-      rot = from + (to - from) * ease(t);
-      const seg = Math.floor((((-rot) % (Math.PI * 2)) + Math.PI * 4) % (Math.PI * 2) / a);
-      if (seg !== lastSeg) { lastSeg = seg; tick(); }
-      draw();
-      if (t < 1) requestAnimationFrame(step); else done(pick);
-    }
-    requestAnimationFrame(step);
-  }
-  function done(i) {
-    const prize = W.fields[i], who = W.buyer.trim();
-    const col = colorFor(i, W.fields.length);
-    $$('#wResult').innerHTML = '<div class="big"></div>';
-    $$('#wResult .big').textContent = prize;
-    if (who) { const sm = document.createElement('small'); sm.textContent = 'für ' + who; $$('#wResult .big').appendChild(sm); }
-    fanfare();
-    const d = new Date();
-    W.log.unshift({ t: d.toTimeString().slice(0, 5), who, prize, col });
-    W.log = W.log.slice(0, 200);
-    if (W.remove) { W.fields.splice(i, 1); $$('#wFields').value = unparse(W.fields); }
-    save(); renderLog();
-    setTimeout(() => { spinning = false; $$('#wSpin').disabled = false; $$('#wHub').disabled = false; draw(); }, W.remove ? 1400 : 300);
-  }
-
-  function renderLog() {
-    const ul = $$('#wLog'); ul.innerHTML = '';
-    if (!W.log.length) { ul.innerHTML = '<li class="none">Noch nicht gedreht</li>'; return; }
-    W.log.forEach((e) => {
-      const li = document.createElement('li');
-      const t = document.createElement('span'); t.className = 't'; t.textContent = e.t;
-      const w = document.createElement('span'); w.className = 'who'; w.textContent = e.who || '–';
-      const p = document.createElement('span'); p.className = 'what'; p.textContent = e.prize; p.style.background = e.col; p.style.color = textOn(e.col);
-      li.append(t, w, p); ul.appendChild(li);
-    });
-  }
-
-  if (ov) return;
-  $$('#wFields').value = unparse(W.fields);
-  $$('#wBuyer').value = W.buyer || '';
-  $$('#wRemove').checked = !!W.remove;
-  $$('#wSound').checked = W.sound !== false;
-  $$('#wFields').addEventListener('input', (e) => { if (spinning) return; W.fields = parse(e.target.value); save(); draw(); });
-  $$('#wBuyer').addEventListener('input', (e) => { W.buyer = e.target.value; save(); });
-  $$('#wRemove').onchange = (e) => { W.remove = e.target.checked; save(); };
-  $$('#wSound').onchange = (e) => { W.sound = e.target.checked; save(); };
-  $$('#wSpin').onclick = spin; $$('#wHub').onclick = spin;
-  $$('#wClear').onclick = (e) => {
-    const b = e.currentTarget;
-    if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Wirklich? Nochmal klicken'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'Verlauf leeren'; }, 3500); return; }
-    delete b.dataset.sure; b.textContent = 'Verlauf leeren'; W.log = []; save(); renderLog();
+  const DEF = { round: 1, spots: 50, tickets: 15, sold: [], hits: [], live: true, showChance: true, showHits: true, showWin: true, anim: true, sound: true, lastHit: null };
+  const W = () => { if (!S.wheel) S.wheel = JSON.parse(JSON.stringify(DEF)); return Object.assign(S.wheel, Object.assign({}, DEF, S.wheel)); };
+  const stats = () => {
+    const w = W(), hitsDone = w.sold.filter((x) => x.hit).length;
+    const spotsLeft = Math.max(0, w.spots - w.sold.length), tLeft = Math.max(0, w.tickets - hitsDone);
+    return { spotsLeft, tLeft, pct: spotsLeft ? Math.min(100, Math.round((tLeft / spotsLeft) * 100)) : 0 };
   };
-  document.addEventListener('keydown', (e) => { if (window.crashTab() === 'wheel' && (e.key === ' ' || e.key === 'Enter') && !e.target.closest('input, textarea, select, button')) { e.preventDefault(); spin(); } });
-  renderLog();
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
-  draw();
+  const HEAT = [[40, 'Glühend', '#ff5a3d'], [28, 'Heiß', '#ff8a3d'], [18, 'Warm', '#ffc93d'], [8, 'Lauwarm', '#9be36b'], [0, 'Kalt', '#3dc1ff']];
+  const heat = (p) => HEAT.find((h) => p >= h[0]);
+  const monOf = (id) => ({ id, name: (DEX[id - 1] || '').split('|')[0], img: SPRITES[id - 1] });
+
+  const BALL = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M5 53a45 45 0 0 0 90 0z" fill="#f3f4fa" stroke="#15151d" stroke-width="6"/><g class="top"><path d="M5 47a45 45 0 0 1 90 0z" fill="#ee3b4c" stroke="#15151d" stroke-width="6"/><path d="M22 28a30 30 0 0 1 22-13" stroke="#fff" stroke-opacity=".55" stroke-width="6" fill="none" stroke-linecap="round"/></g><rect x="4" y="46" width="92" height="8" fill="#15151d"/><circle cx="50" cy="50" r="13" fill="#f3f4fa" stroke="#15151d" stroke-width="6"/><circle class="btn" cx="50" cy="50" r="5.5" fill="#ffffff"/></svg>';
+
+  /* Stream-Leiste: eine Instanz pro Wurzel (OBS-Seite und Vorschau) */
+  function makeBar(root) {
+    root.innerHTML = `<div class="wb hide"><div class="wb-bar"><div class="wb-card0">
+      <div class="wb-top">
+        <div><div class="wb-round">RUNDE <b data-r></b></div>
+          <div class="wb-tiles"><div class="wb-tile gold"><small>${BALL}POKÉMON</small><b data-t></b></div><div class="wb-tile"><small>SPOTS</small><b data-s></b></div></div></div>
+        <div class="wb-hits" data-hits><div class="wb-hhead"><span>In dieser Runde</span><span class="wb-dots" data-dots></span></div><div class="wb-hcard" data-card><div class="img"></div><div class="nm"></div></div></div>
+      </div>
+      <div class="wb-chance" data-chance><div class="lbl"><small>FANG-CHANCE</small><b data-hl></b></div><div class="wb-meter"><div class="fill" data-fill></div><div class="seg"></div></div><b class="pct" data-pct></b></div>
+      <div class="wb-win" data-win><span class="wl">Gefangen</span><div class="vp"><div class="tr" data-tr></div></div></div>
+    </div></div>
+    <div class="wb-catch" data-catch><div class="wb-glow"></div><img class="wb-mon" alt=""><div class="wb-stars"></div><div class="wb-ball">${BALL}</div><div class="wb-text"><b>Gefangen!</b><span></span></div></div></div>`;
+    const q = (a) => root.querySelector('[data-' + a + ']');
+    const bar = { root, wb: root.firstChild, hi: 0, last: {}, winKey: '' };
+    bar.update = () => {
+      const w = W(), st = stats(), h = heat(st.pct);
+      bar.wb.classList.toggle('hide', !w.live && !bar.preview);
+      q('r').textContent = w.round;
+      [['t', st.tLeft], ['s', st.spotsLeft]].forEach(([k, v]) => {
+        const el = q(k); if (bar.last[k] !== undefined && bar.last[k] !== v) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+        bar.last[k] = v; el.textContent = v;
+      });
+      q('chance').hidden = !w.showChance;
+      bar.wb.style.setProperty('--hc', h[2]); q('hl').textContent = h[1];
+      q('fill').style.width = Math.max(st.pct ? 6 : 0, st.pct) + '%'; q('pct').innerHTML = st.pct + '<small>%</small>';
+      const hits = w.hits.filter((x) => x.name || x.img);
+      q('hits').hidden = !w.showHits; root.querySelector('.wb-top').style.gridTemplateColumns = w.showHits ? '' : '1fr';
+      bar.showHit(hits, false);
+      const winners = w.sold.filter((x) => x.hit);
+      q('win').hidden = !w.showWin || !winners.length;
+      const key = winners.map((x) => x.who + x.mon).join('|');
+      if (key !== bar.winKey) {
+        bar.winKey = key;
+        const items = winners.slice().reverse().map((x) => { const m = monOf(x.mon); return `<span class="it"><img src="${m.img}" alt="">${esc(x.who || 'Spot ' + x.n)} <em>${esc(m.name)}</em></span>`; }).join('');
+        const tr = q('tr'); tr.classList.remove('run'); tr.innerHTML = items;
+        requestAnimationFrame(() => { const vp = tr.parentNode; if (items && tr.scrollWidth > vp.clientWidth) { tr.innerHTML = items + items; tr.style.setProperty('--dur', Math.max(8, winners.length * 4) + 's'); tr.classList.add('run'); } });
+      }
+    };
+    bar.showHit = (hits, swap) => {
+      const card = q('card');
+      if (!hits.length) { card.className = 'wb-hcard empty'; card.querySelector('.img').style.backgroundImage = ''; card.querySelector('.nm').textContent = 'Top-Hits folgen'; q('dots').innerHTML = ''; return; }
+      bar.hi = bar.hi % hits.length; const x = hits[bar.hi];
+      const sig = x.name + (x.img || '').length + hits.length;
+      if (!swap && bar.sig === sig) return; bar.sig = sig;
+      card.className = 'wb-hcard' + (x.img ? '' : ' noimg'); if (swap) { void card.offsetWidth; card.classList.add('swap'); }
+      card.querySelector('.img').style.backgroundImage = x.img ? `url("${x.img}")` : '';
+      card.querySelector('.nm').textContent = x.name || '';
+      q('dots').innerHTML = hits.length > 1 ? hits.map((_, i) => `<i class="${i === bar.hi ? 'on' : ''}"></i>`).join('') : '';
+    };
+    setInterval(() => { const hits = W().hits.filter((x) => x.name || x.img); if (hits.length > 1) { bar.hi = (bar.hi + 1) % hits.length; bar.showHit(hits, true); } }, 4500);
+    bar.catch = (hit) => playCatch(bar, hit);
+    return bar;
+  }
+
+  /* Fang-Animation: Pokémon erscheint, Ball fliegt rein, wackelt dreimal, klick, Sterne */
+  function playCatch(bar, hit) {
+    const c = bar.root.querySelector('[data-catch]'), m = monOf(hit.mon);
+    const mon = c.querySelector('.wb-mon'), ball = c.querySelector('.wb-ball'), glow = c.querySelector('.wb-glow'), txt = c.querySelector('.wb-text'), stars = c.querySelector('.wb-stars');
+    (bar.anims || []).forEach((a) => a.cancel()); bar.anims = [];
+    clearTimeout(bar.ct);
+    mon.src = m.img; ball.classList.remove('click');
+    txt.querySelector('span').innerHTML = (hit.who ? esc(hit.who) + ' fängt ' : '') + '<em>' + esc(m.name) + '</em> · Hit!';
+    stars.innerHTML = Array.from({ length: 10 }, () => '<i></i>').join('');
+    c.classList.add('on');
+    const k = bar.wb.getBoundingClientRect().width / 100 || 10;
+    const A = (el, kf, o) => { const a = el.animate(kf, Object.assign({ fill: 'forwards', easing: 'ease-out' }, o)); bar.anims.push(a); return a; };
+    A(glow, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 500 });
+    A(mon, [{ opacity: 0, transform: 'scale(.3) translateY(40%)' }, { opacity: 1, transform: 'scale(1.08)', offset: .7 }, { opacity: 1, transform: 'scale(1)' }], { duration: 600, easing: 'cubic-bezier(.3,1.5,.5,1)' });
+    // Ball fliegt von unten links im Bogen auf das Pokémon
+    A(ball, [
+      { opacity: 1, transform: `translate(${-40 * k}px, ${70 * k}px) rotate(-540deg) scale(.7)` },
+      { opacity: 1, transform: `translate(${-14 * k}px, ${-20 * k}px) rotate(-200deg) scale(.9)`, offset: .55 },
+      { opacity: 1, transform: `translate(0, ${-12 * k}px) rotate(0deg) scale(1)` }
+    ], { delay: 900, duration: 700, easing: 'cubic-bezier(.25,.6,.4,1)' });
+    // Pokémon wird hell und in den Ball gesaugt
+    A(mon, [{ opacity: 1, filter: 'brightness(1)', transform: 'scale(1)' }, { opacity: 1, filter: 'brightness(6)', transform: 'scale(.9)', offset: .35 }, { opacity: 0, filter: 'brightness(6)', transform: `translateY(${-6 * k}px) scale(.05)` }], { delay: 1600, duration: 500, easing: 'ease-in' });
+    A(glow, [{ opacity: 1 }, { opacity: .25 }], { delay: 1600, duration: 500 });
+    // Ball fällt runter und wackelt
+    A(ball, [{ transform: `translate(0, ${-12 * k}px)` }, { transform: 'translate(0, 0)', offset: .6 }, { transform: `translate(0, ${-2.5 * k}px)`, offset: .8 }, { transform: 'translate(0, 0)' }], { delay: 2150, duration: 450, easing: 'ease-in' });
+    const wob = [{ transform: 'rotate(0)' }, { transform: 'rotate(-22deg)', offset: .25 }, { transform: 'rotate(18deg)', offset: .6 }, { transform: 'rotate(0)' }];
+    [2800, 3600, 4400].forEach((d) => { const a = ball.querySelector('svg').animate(wob, { delay: d, duration: 520, easing: 'ease-in-out' }); bar.anims.push(a); });
+    bar.ct = setTimeout(() => {
+      ball.classList.add('click');
+      if (bar.sound) sfx('click');
+      stars.querySelectorAll('i').forEach((s, i) => { const ang = (i / 10) * Math.PI * 2; A(s, [{ opacity: 1, transform: 'translate(0,0) scale(.3)' }, { opacity: 0, transform: `translate(${Math.cos(ang) * 22 * k}px, ${Math.sin(ang) * 22 * k}px) scale(1.2) rotate(180deg)` }], { duration: 900 }); });
+      A(txt, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1.1)', offset: .6 }, { opacity: 1, transform: 'scale(1)' }], { duration: 500, easing: 'cubic-bezier(.3,1.6,.5,1)' });
+      A(glow, [{ opacity: .25, transform: 'scale(1)' }, { opacity: 1, transform: 'scale(1.3)' }], { duration: 400 });
+      bar.ct = setTimeout(() => {
+        [ball, txt, glow].forEach((el) => A(el, [{ opacity: 1 }, { opacity: 0 }], { duration: 600 }));
+        bar.ct = setTimeout(() => { c.classList.remove('on'); (bar.anims || []).forEach((a) => a.cancel()); bar.anims = []; }, 650);
+      }, 3000);
+    }, 5100);
+    if (bar.sound) { sfx('throw'); [2800, 3600, 4400].forEach((d) => setTimeout(() => sfx('wob'), d)); }
+  }
+
+  let ac = null;
+  function sfx(kind) {
+    if (!W().sound) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const now = ac.currentTime;
+      const tone = (f, t, dur, type = 'square', vol = 0.06, f2) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, now + t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, now + t + dur); g.gain.setValueAtTime(0.0001, now + t); g.gain.exponentialRampToValueAtTime(vol, now + t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, now + t + dur); o.connect(g).connect(ac.destination); o.start(now + t); o.stop(now + t + dur + 0.02); };
+      if (kind === 'throw') tone(300, 0.9, 0.5, 'triangle', 0.08, 900);
+      if (kind === 'wob') tone(180, 0, 0.12, 'square', 0.05, 140);
+      if (kind === 'click') { tone(1200, 0, 0.05, 'square', 0.06); [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.12 + i * 0.11, 0.3, 'triangle', 0.12)); }
+    } catch (e) {}
+  }
+
+  const bars = [];
+  let seenHit = (S.wheel && S.wheel.lastHit) ? S.wheel.lastHit.id : 0;
+  function render() {
+    if (!S.wheel && !ctl) return;
+    W();
+    bars.forEach((b) => b.update());
+    const lh = S.wheel.lastHit;
+    if (lh && lh.id > seenHit) {
+      seenHit = lh.id;
+      if (S.wheel.anim && Date.now() - lh.id < 30000) bars.forEach((b) => b.catch(lh));
+    }
+    if (ctl) renderPanel();
+  }
+  window.wheelRender = render;
+
+  if (wheelOv) {
+    document.body.classList.add('wheel-ov');
+    const b = makeBar($$('#wovStream')); b.sound = true; bars.push(b);
+    render();
+    return;
+  }
+  if (!ctl) return;
+
+  /* ---------- Steuerseite ---------- */
+  const prev = makeBar($$('#wovPrev')); prev.preview = true; bars.push(prev);
+  const fitPrev = () => prev.wb.style.setProperty('--k', ($$('#wPrev').clientWidth / 100) + 'px');
+  new ResizeObserver(fitPrev).observe($$('#wPrev')); fitPrev();
+
+  const undoStack = [];
+  const snap = () => { undoStack.push(JSON.stringify(W())); if (undoStack.length > 50) undoStack.shift(); };
+  const commit = () => { save(); render(); };
+  function sell(hit) {
+    const w = W(), st = stats();
+    if (!st.spotsLeft || (hit && !st.tLeft) || (!hit && st.spotsLeft <= st.tLeft)) return;
+    snap();
+    const who = $$('#wBuyer').value.trim();
+    const e = { n: w.sold.length + 1, who, hit, t: new Date().toTimeString().slice(0, 5) };
+    if (hit) {
+      const used = new Set(w.sold.filter((x) => x.hit).map((x) => x.mon));
+      let id; do { id = 1 + Math.floor(Math.random() * 151); } while (used.has(id) && used.size < 151);
+      e.mon = id; w.lastHit = { id: Date.now(), who, mon: id };
+    }
+    w.sold.push(e); $$('#wBuyer').value = '';
+    // Ton kommt aus der OBS-Quelle, sonst hier
+    prev.sound = !(typeof obsOk !== 'undefined' && obsOk);
+    commit();
+  }
+  $$('#wHitBtn').onclick = () => sell(true);
+  $$('#wMissBtn').onclick = () => sell(false);
+  $$('#wUndo').onclick = () => { if (!undoStack.length) return; S.wheel = JSON.parse(undoStack.pop()); seenHit = Math.max(seenHit, (S.wheel.lastHit || {}).id || 0); commit(); };
+  $$('#wNewRound').onclick = (ev) => {
+    const b = ev.currentTarget;
+    if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Wirklich? Nochmal klicken'; b.classList.add('warn'); setTimeout(() => { delete b.dataset.sure; b.textContent = 'Neue Runde'; b.classList.remove('warn'); }, 3500); return; }
+    delete b.dataset.sure; b.textContent = 'Neue Runde'; b.classList.remove('warn');
+    snap(); const w = W(); w.round = (+w.round || 0) + 1; w.sold = []; commit();
+  };
+  [['#wRound', 'round', 1], ['#wSpots', 'spots', 1], ['#wTickets', 'tickets', 0]].forEach(([id, k, min]) => {
+    $$(id).addEventListener('change', (e) => { const v = Math.max(min, parseInt(e.target.value, 10) || min); snap(); W()[k] = v; commit(); });
+  });
+  [['#wLive', 'live'], ['#wShowChance', 'showChance'], ['#wShowHits', 'showHits'], ['#wShowWin', 'showWin'], ['#wAnim', 'anim'], ['#wSound', 'sound']].forEach(([id, k]) => {
+    $$(id).onchange = (e) => { W()[k] = e.target.checked; commit(); };
+  });
+
+  /* Top-Hits mit Bild */
+  let fileFor = -1;
+  $$('#wAddHit').onclick = () => { const w = W(); if (w.hits.length >= 10) return; w.hits.push({ name: '', img: '' }); commit(); const ins = document.querySelectorAll('#wHits input'); ins[ins.length - 1] && ins[ins.length - 1].focus(); };
+  $$('#wHits').addEventListener('click', (e) => {
+    const row = e.target.closest('.w-hitrow'); if (!row) return; const i = +row.dataset.i;
+    if (e.target.closest('.x')) { W().hits.splice(i, 1); commit(); }
+    if (e.target.closest('.ph')) { fileFor = i; $$('#wFile').value = ''; $$('#wFile').click(); }
+  });
+  $$('#wHits').addEventListener('input', (e) => { const row = e.target.closest('.w-hitrow'); if (!row) return; W().hits[+row.dataset.i].name = e.target.value; save(); bars.forEach((b) => b.update()); });
+  $$('#wFile').onchange = (e) => {
+    const f = e.target.files[0]; if (!f || fileFor < 0) return;
+    const img = new Image(), url = URL.createObjectURL(f);
+    img.onload = () => {
+      // klein rechnen, damit der Spielstand schlank bleibt (geht bei jeder Änderung an OBS)
+      const sc = Math.min(1, 360 / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+      const h = W().hits[fileFor]; if (!h) return;
+      h.img = cv.toDataURL('image/webp', 0.82);
+      if (!h.name) h.name = f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
+      commit();
+    };
+    img.src = url;
+  };
+
+  $$('#wTestCatch').onclick = () => { prev.sound = true; playCatch(prev, { who: 'Test', mon: 1 + Math.floor(Math.random() * 151) }); };
+  $$('#wObsConnect').onclick = () => { const b = $$('#obsBtn'); if (b) b.click(); setTimeout(renderPanel, 300); };
+  if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('wheel/', location.href); u.hash = ''; u.search = ''; $$('#wObsUrl').textContent = u.href; }
+  $$('#wObsCopy').onclick = () => { try { navigator.clipboard.writeText($$('#wObsUrl').textContent); $$('#wObsCopy').textContent = 'Kopiert ✓'; setTimeout(() => $$('#wObsCopy').textContent = 'Kopieren', 1500); } catch (e) {} };
+  setInterval(() => { if (window.crashTab() === 'wheel') renderObsState(); }, 1500);
+  function renderObsState() { const t = $$('#obsText'); $$('#wObsState').textContent = t ? t.textContent : ''; $$('#wObsConnect').hidden = typeof obsOk !== 'undefined' && obsOk; }
+
+  function renderPanel() {
+    const w = W(), st = stats();
+    const set = (id, v) => { const el = $$(id); if (document.activeElement !== el) el.value = v; };
+    set('#wRound', w.round); set('#wSpots', w.spots); set('#wTickets', w.tickets);
+    $$('#wLive').checked = w.live; $$('#wShowChance').checked = w.showChance; $$('#wShowHits').checked = w.showHits; $$('#wShowWin').checked = w.showWin; $$('#wAnim').checked = w.anim; $$('#wSound').checked = w.sound;
+    $$('#wHitBtn').disabled = !st.spotsLeft || !st.tLeft;
+    $$('#wMissBtn').disabled = !st.spotsLeft || st.spotsLeft <= st.tLeft;
+    $$('#wStatus').innerHTML = `<span>Noch <b>${st.tLeft}</b> Pokémon</span><span>in <b>${st.spotsLeft}</b> Spots</span><span>Chance <b>${st.pct}%</b></span>` + (!st.spotsLeft ? '<span style="color:var(--gold)">Runde ausverkauft</span>' : '');
+    $$('#wUndo').disabled = !undoStack.length;
+    $$('#wPrev').classList.toggle('off', !w.live);
+    $$('#wPrevNote').textContent = w.live ? '' : 'Leiste ist im Stream gerade ausgeblendet';
+    // Top-Hits-Liste nur neu bauen, wenn sich die Anzahl oder Bilder ändern (sonst springt der Cursor)
+    const sig = w.hits.map((h) => (h.img || '').length).join(',');
+    if ($$('#wHits').dataset.sig !== sig) {
+      $$('#wHits').dataset.sig = sig;
+      $$('#wHits').innerHTML = w.hits.length ? w.hits.map((h, i) => `<div class="w-hitrow" data-i="${i}"><button class="ph${h.img ? ' has' : ''}" style="${h.img ? `background-image:url('${h.img}')` : ''}" aria-label="Bild wählen">+</button><input type="text" value="${esc(h.name)}" placeholder="z. B. Glurak ex SAR"><button class="x" aria-label="Entfernen">✕</button></div>`).join('') : '<p class="w-hint">Noch keine Hits. Die besten Karten oder Produkte der Runde hier eintragen, sie laufen oben im Stream durch.</p>';
+    }
+    const log = $$('#wLog');
+    log.innerHTML = w.sold.length ? w.sold.slice().reverse().map((x) => { const m = x.hit ? monOf(x.mon) : null; return `<li><span class="n">#${x.n}</span>${m ? `<img src="${m.img}" alt="">` : ''}<span class="who">${esc(x.who || '–')}</span><span class="res ${x.hit ? 'hit' : 'miss'}">${x.hit ? esc(m.name) + ' gefangen' : 'kein Treffer'}</span></li>`; }).join('') : '<li class="none">Noch kein Spot verkauft</li>';
+    renderObsState();
+  }
+
+  $$('#wBuyer').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); } });
+  render();
   let t0 = 'fang'; try { t0 = localStorage.getItem('crash.tab') || 'fang'; } catch (e) {}
   if (location.hash === '#wheel') t0 = 'wheel';
   setTab(t0);

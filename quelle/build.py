@@ -1,4 +1,4 @@
-"""Baut index.html (Steuerseite) und obs.html (OBS-Browserquelle) aus quelle/src.html.
+"""Baut index.html (Steuerseite), obs.html (OBS-Browserquelle Fangen) und wheel/index.html (OBS-Quelle Wheel) aus quelle/src.html.
 Aufruf im Ordner quelle:  python3 build.py
 """
 import os
@@ -20,4 +20,9 @@ open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(full(art))
 open(os.path.join(out, 'obs.html'), 'w', encoding='utf-8').write(full(ov))
 os.makedirs(os.path.join(out, 'obs'), exist_ok=True)
 open(os.path.join(out, 'obs', 'index.html'), 'w', encoding='utf-8').write(full(ov))
-print('index.html, obs.html und obs/index.html gebaut')
+# Wheel-Leiste als eigene OBS-Quelle (crashketchum.de/wheel/)
+wh = ov.replace('<title>Fangrunde OBS</title>', '<title>Wheel OBS</title>', 1).replace('window.FANG_OVERLAY = true;', 'window.FANG_OVERLAY = true; window.WHEEL_OVERLAY = true;', 1)
+assert 'WHEEL_OVERLAY = true' in wh
+os.makedirs(os.path.join(out, 'wheel'), exist_ok=True)
+open(os.path.join(out, 'wheel', 'index.html'), 'w', encoding='utf-8').write(full(wh))
+print('index.html, obs.html, obs/index.html und wheel/index.html gebaut')
