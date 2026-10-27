@@ -4,10 +4,12 @@ Overlay und Steuerseite für die Pokémon-Fangrunden im Whatnot-Stream.
 
 - **index.html**: Steuerseite für Chris (mit Code geschützt). Hier werden Preise verteilt, Käufer und Pokémon eingetragen und die Fänge gestartet. Der Tab „Gewinner“ zeigt, wer was gewonnen hat.
 - **obs.html**: Browserquelle für OBS (1080 × 1920, transparent). Zeigt Fang-Animation und Übersicht im Stream.
+- **wheel/index.html**: Browserquelle fürs Wheel (1080 × 1920, transparent). Leiste oben mit Runde, Pokémon (Tickets), Spots, Fang-Chance, Top-Hits und Gewinnern, dazu eine Fang-Animation bei jedem Treffer. Gesteuert im Tab „Wheel“ der Steuerseite.
 
 Live über Vercel (jeder Push auf `main` geht automatisch online):
 - Steuerseite: https://crashketchum.de/
-- OBS-Browserquelle: https://crashketchum.de/obs/
+- OBS-Browserquelle Fangen: https://crashketchum.de/obs/
+- OBS-Browserquelle Wheel: https://crashketchum.de/wheel/
 
 Zusätzlich über GitHub Pages: https://vengo22.github.io/pokemon/
 
