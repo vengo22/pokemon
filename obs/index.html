@@ -373,6 +373,56 @@ html.unlocked .gate { display: none; }
 .gate .err { color: #ff8a95; min-height: 1.2em; margin: 0; font-size: 14px; }
 .gate.shake form { animation: gshake .35s; }
 @keyframes gshake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+/* ---------- Header mit Tabs (Fangen / Wheel), nur Steuerseite ---------- */
+.hdr { position: sticky; top: 0; z-index: 50; background: rgba(13,20,48,.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.hdr-in { max-width: 1300px; margin: 0 auto; display: flex; align-items: center; gap: 18px; padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); }
+.hdr-logo { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 24px; letter-spacing: .5px; white-space: nowrap; }
+.hdr-logo svg { width: 42px; height: 42px; flex: none; transition: transform .5s cubic-bezier(.3,1.6,.5,1); }
+.hdr-logo:hover svg { transform: rotate(-25deg); }
+.hdr-logo span { color: var(--red); }
+.hdr-tabs { display: flex; gap: 6px; margin-left: auto; }
+.hdr-tabs button { border: 1px solid var(--line); background: none; color: var(--muted); font-family: var(--display); font-size: 19px; letter-spacing: .4px; padding: 7px 20px; border-radius: 999px; }
+.hdr-tabs button:hover { color: var(--fg); border-color: var(--muted); }
+.hdr-tabs button[aria-selected="true"] { background: var(--red); border-color: var(--red); color: #fff; box-shadow: 0 4px 14px rgba(238,59,76,.35); }
+@media (max-width: 560px) { .hdr-logo b { display: none; } .hdr-tabs button { padding: 7px 14px; font-size: 17px; } }
+body.overlay .hdr, body.stage-only .hdr, body.overlay .wheel-app, body.stage-only .wheel-app { display: none !important; }
+body:not(.overlay):not(.stage-only) .stage-col .topbar { display: none; }
+body.tab-wheel:not(.overlay):not(.stage-only) .app { display: none; }
+html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
+
+/* ---------- Wheel (Glücksrad) ---------- */
+.wheel-app { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 18px; align-items: start; max-width: 1300px; margin: 0 auto; padding-block: 16px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (max-width: 860px) { .wheel-app { grid-template-columns: minmax(0, 1fr); } }
+.w-stage { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px 16px; display: grid; justify-items: center; gap: 18px; }
+.w-wrap { position: relative; width: min(100%, 600px, calc(100vh - 270px)); min-width: 260px; aspect-ratio: 1; }
+.w-wrap canvas { width: 100%; height: 100%; display: block; filter: drop-shadow(0 10px 26px rgba(0,0,0,.45)); }
+.w-pointer { position: absolute; left: 50%; top: -6px; width: 44px; height: 54px; transform: translateX(-50%); z-index: 2; filter: drop-shadow(0 3px 4px rgba(0,0,0,.5)); }
+.w-pointer.tick { animation: wtick .12s ease-out; }
+@keyframes wtick { 50% { transform: translateX(-50%) rotate(-14deg); } }
+.w-hub { position: absolute; left: 50%; top: 50%; width: 17%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 0; padding: 0; background: none; border-radius: 50%; z-index: 2; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
+.w-hub svg { width: 100%; height: 100%; display: block; }
+.w-hub:disabled { cursor: default; }
+.w-result { min-height: 64px; text-align: center; display: grid; place-items: center; }
+.w-result .big { font-family: var(--display); font-size: clamp(26px, 4vw, 40px); line-height: 1.1; color: var(--gold); text-shadow: 0 3px 0 rgba(0,0,0,.35); animation: wpop .5s cubic-bezier(.3,1.6,.5,1); }
+.w-result small { display: block; color: var(--muted); font-size: 14px; font-family: var(--body); text-shadow: none; }
+@keyframes wpop { from { transform: scale(.4); opacity: 0; } }
+.w-spin { font-family: var(--display); font-size: 24px; padding: 12px 40px; border-radius: 999px; border: 0; background: var(--red); color: #fff; box-shadow: 0 6px 18px rgba(238,59,76,.4); letter-spacing: .5px; }
+.w-spin:disabled { opacity: .5; cursor: default; }
+.w-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.w-panel h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 21px; }
+.w-panel label.lbl { font-size: 13px; font-weight: 800; color: var(--muted); display: block; margin-bottom: 6px; }
+.w-panel input[type=text], .w-panel textarea { width: 100%; background: var(--night); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; }
+.w-panel textarea { min-height: 190px; resize: vertical; font-family: var(--mono); font-size: 13.5px; line-height: 1.6; }
+.w-hint { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+.w-check { display: flex; gap: 8px; align-items: center; font-size: 13.5px; }
+.w-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.w-log { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
+.w-log li { display: flex; gap: 10px; align-items: center; padding: 7px 10px; border-top: 1px solid var(--line); font-size: 13.5px; }
+.w-log li:first-child { border-top: 0; }
+.w-log .t { font-family: var(--mono); color: var(--muted); font-size: 12px; }
+.w-log .who { font-weight: 800; }
+.w-log .what { margin-left: auto; font-weight: 800; padding: 2px 9px; border-radius: 999px; color: #10162f; white-space: nowrap; }
+.w-log .none { color: var(--muted); padding: 14px; text-align: center; display: block; border: 0; }
 </style>
 
 </head>
@@ -386,6 +436,26 @@ html.unlocked .gate { display: none; }
     <p class="err" id="gateErr"></p>
   </form>
 </div>
+<header class="hdr">
+  <div class="hdr-in">
+    <div class="hdr-logo">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="45" fill="#f3f4fa"/>
+      <path d="M5 50a45 45 0 0 1 90 0z" fill="#ee3b4c"/>
+      <path d="M20 31a32 32 0 0 1 20-14" stroke="#fff" stroke-opacity=".6" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <path d="M5 50h90" stroke="#15151d" stroke-width="8"/>
+      <circle cx="50" cy="50" r="45" fill="none" stroke="#15151d" stroke-width="6"/>
+      <circle cx="50" cy="50" r="14" fill="#f3f4fa" stroke="#15151d" stroke-width="6"/>
+      <circle cx="50" cy="50" r="6" fill="#fff" stroke="#15151d" stroke-opacity=".25" stroke-width="2"/>
+    </svg>
+      <b>crash<span>ketchum</span></b>
+    </div>
+    <nav class="hdr-tabs" role="tablist" aria-label="Bereich">
+      <button role="tab" id="tabFang" data-tab="fang" aria-selected="true">Fangen</button>
+      <button role="tab" id="tabWheel" data-tab="wheel" aria-selected="false">Wheel</button>
+    </nav>
+  </div>
+</header>
 <div class="app">
   <div class="col stage-col">
     <div class="topbar">
@@ -551,6 +621,47 @@ html.unlocked .gate { display: none; }
         <label class="check"><input type="checkbox" id="showBoard" checked> Fangbrett unter der Bühne zeigen</label>
         <label class="check"><input type="checkbox" id="soundOn" checked> Soundeffekte</label>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="wheel-app" id="wheelApp" hidden>
+  <div class="w-stage">
+    <div class="w-wrap">
+      <svg class="w-pointer" id="wPointer" viewBox="0 0 44 54" aria-hidden="true"><path d="M4 6h36L22 50z" fill="#ffc93d" stroke="#15151d" stroke-width="4" stroke-linejoin="round"/></svg>
+      <canvas id="wCanvas" width="1240" height="1240" aria-label="Glücksrad"></canvas>
+      <button class="w-hub" id="wHub" aria-label="Rad drehen"><svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="45" fill="#f3f4fa"/>
+        <path d="M5 50a45 45 0 0 1 90 0z" fill="#ee3b4c"/>
+        <path d="M20 31a32 32 0 0 1 20-14" stroke="#fff" stroke-opacity=".6" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path d="M5 50h90" stroke="#15151d" stroke-width="8"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#15151d" stroke-width="6"/>
+        <circle cx="50" cy="50" r="14" fill="#f3f4fa" stroke="#15151d" stroke-width="6"/>
+        <circle cx="50" cy="50" r="6" fill="#fff" stroke="#15151d" stroke-opacity=".25" stroke-width="2"/>
+      </svg></button>
+    </div>
+    <div class="w-result" id="wResult" aria-live="polite"></div>
+    <button class="w-spin" id="wSpin">Drehen!</button>
+  </div>
+  <div class="w-panel">
+    <h2>Wheel</h2>
+    <div>
+      <label class="lbl" for="wBuyer">Käufer (optional)</label>
+      <input type="text" id="wBuyer" placeholder="Name aus dem Chat" autocomplete="off">
+    </div>
+    <div>
+      <label class="lbl" for="wFields">Felder auf dem Rad (eins pro Zeile)</label>
+      <textarea id="wFields" spellcheck="false"></textarea>
+      <p class="w-hint">Ein Feld öfter eintragen = größere Chance. Mit „5x Booster“ steht es fünfmal drauf.</p>
+    </div>
+    <label class="w-check"><input type="checkbox" id="wRemove"> Gewonnenes Feld danach vom Rad nehmen</label>
+    <label class="w-check"><input type="checkbox" id="wSound" checked> Ton beim Drehen</label>
+    <div>
+      <div class="w-row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+        <label class="lbl" style="margin:0">Verlauf</label>
+        <button class="btn" id="wClear" style="padding:5px 10px;font-size:12.5px">Verlauf leeren</button>
+      </div>
+      <ul class="w-log" id="wLog"></ul>
     </div>
   </div>
 </div>
@@ -1417,7 +1528,7 @@ $('#clearLog').onclick = (e) => {
   remember('Tabelle leeren'); S.log = []; save(); renderAll();
 };
 $('#undoBtn').onclick = undo;
-document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.target.closest('input, textarea, select') && !stageOnly) { e.preventDefault(); undo(); } });
+document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.target.closest('input, textarea, select') && !stageOnly && (!window.crashTab || window.crashTab() === 'fang')) { e.preventDefault(); undo(); } });
 $('#toggleAll').onclick = () => { S.showAll = !S.showAll; save(); renderAll(); };
 $('#clearPicks').onclick = () => { if (!playing && S.picks.length) { remember('Auswahl geleert'); S.picks = []; save(); renderAll(); } };
 $('#autoStart').onchange = (e) => { S.auto = e.target.checked; save(); };
@@ -1527,6 +1638,200 @@ $('#sessionInput').value = S.session || ''; if (!S.session) $('#chatSetup').open
 renderRoundTab(); renderAll(); renderChat();
 if (S.session && !stageOnly) { wsWanted = true; openSocket(); }
 if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsOpen(); }
+</script>
+<script>
+/* ---------- Header-Tabs + Wheel (Glücksrad) ---------- */
+(() => {
+  const ov = !!window.FANG_OVERLAY || location.hash === '#obs' || location.hash === '#buehne';
+  const $$ = (s) => document.querySelector(s);
+  const ld = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const st = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+  /* Tabs */
+  const app = $$('.app'), wapp = $$('#wheelApp');
+  function setTab(t) {
+    if (ov) return;
+    const w = t === 'wheel';
+    document.body.classList.toggle('tab-wheel', w);
+    wapp.hidden = !w;
+    $$('#tabFang').setAttribute('aria-selected', String(!w));
+    $$('#tabWheel').setAttribute('aria-selected', String(w));
+    try { localStorage.setItem('crash.tab', t); } catch (e) {}
+    if (w) draw();
+  }
+  document.querySelectorAll('.hdr-tabs button').forEach((b) => b.onclick = () => setTab(b.dataset.tab));
+  window.crashTab = () => document.body.classList.contains('tab-wheel') ? 'wheel' : 'fang';
+
+  /* Zustand */
+  const KEY = 'wheel.v1';
+  const DEF = ['Booster', 'Booster', 'Booster', 'Holo-Karte', 'Promo', 'Nochmal drehen', 'Mystery-Pack', 'Hauptgewinn'];
+  const W = Object.assign({ fields: DEF.slice(), remove: false, sound: true, log: [], buyer: '' }, ld(KEY) || {});
+  const save = () => st(KEY, W);
+  const COLORS = ['#ee3b4c', '#ffc93d', '#2fd6b5', '#5b7cff', '#a35bff', '#ff8a3d', '#3dc1ff', '#ff5fa8'];
+  const colorFor = (i, n) => { let c = COLORS[i % COLORS.length]; if (n > 1 && i === n - 1 && c === COLORS[0]) c = COLORS[3]; return c; };
+  const textOn = (hex) => { const v = parseInt(hex.slice(1), 16); const r = v >> 16, g = (v >> 8) & 255, b = v & 255; return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? '#15151d' : '#ffffff'; };
+
+  function parse(text) {
+    const out = [];
+    text.split('\n').map((l) => l.trim()).filter(Boolean).forEach((l) => {
+      const m = l.match(/^(\d{1,2})\s*[x×]\s+(.+)$/i);
+      if (m) for (let i = 0; i < Math.min(+m[1], 50); i++) out.push(m[2].trim()); else out.push(l);
+    });
+    return out.slice(0, 120);
+  }
+  // Felder für die Anzeige im Textfeld wieder zusammenfassen ("3x Booster")
+  function unparse(list) {
+    const lines = []; let i = 0;
+    while (i < list.length) { let j = i; while (j < list.length && list[j] === list[i]) j++; lines.push(j - i > 1 ? (j - i) + 'x ' + list[i] : list[i]); i = j; }
+    return lines.join('\n');
+  }
+
+  /* Zeichnen */
+  const cv = $$('#wCanvas'), ctx = cv.getContext('2d');
+  let rot = 0, spinning = false;
+  function draw() {
+    const n = W.fields.length, S = cv.width, R = S / 2 - 14, c = S / 2;
+    ctx.clearRect(0, 0, S, S);
+    ctx.save(); ctx.translate(c, c);
+    // Rand
+    ctx.beginPath(); ctx.arc(0, 0, R + 10, 0, Math.PI * 2); ctx.fillStyle = '#15151d'; ctx.fill();
+    if (!n) {
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fillStyle = '#1e2955'; ctx.fill();
+      ctx.fillStyle = '#9aa6d6'; ctx.font = '600 44px Figtree, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Keine Felder', 0, -R / 2); ctx.restore(); return;
+    }
+    const a = (Math.PI * 2) / n;
+    ctx.rotate(rot);
+    for (let i = 0; i < n; i++) {
+      const s0 = -Math.PI / 2 + i * a; // Feld 0 beginnt oben
+      const col = colorFor(i, n);
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, s0, s0 + a); ctx.closePath();
+      ctx.fillStyle = col; ctx.fill();
+      ctx.strokeStyle = '#15151d'; ctx.lineWidth = 6; ctx.stroke();
+      // Text entlang des Radius
+      ctx.save(); ctx.rotate(s0 + a / 2);
+      ctx.fillStyle = textOn(col); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      let fs = Math.max(22, Math.min(58, (R * a) * 0.55, 900 / Math.max(6, n)));
+      const label = W.fields[i];
+      ctx.font = fs + 'px "Lilita One", "Arial Black", sans-serif';
+      const maxW = R * 0.66;
+      while (ctx.measureText(label).width > maxW && fs > 18) { fs -= 2; ctx.font = fs + 'px "Lilita One", "Arial Black", sans-serif'; }
+      let txt = label;
+      if (ctx.measureText(txt).width > maxW) { while (txt.length > 1 && ctx.measureText(txt + '…').width > maxW) txt = txt.slice(0, -1); txt += '…'; }
+      ctx.fillText(txt, R - 34, 2);
+      ctx.restore();
+    }
+    // Lämpchen am Rand
+    for (let i = 0; i < Math.max(n, 16); i++) {
+      const t = (i / Math.max(n, 16)) * Math.PI * 2;
+      ctx.beginPath(); ctx.arc(Math.cos(t) * (R + 1), Math.sin(t) * (R + 1), 7, 0, Math.PI * 2); ctx.fillStyle = '#fff6d0'; ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* Ton */
+  let ac = null;
+  function tick() {
+    $$('#wPointer').classList.remove('tick'); void $$('#wPointer').offsetWidth; $$('#wPointer').classList.add('tick');
+    if (!W.sound) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'square'; o.frequency.value = 1300; g.gain.setValueAtTime(0.05, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.04);
+      o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.05);
+    } catch (e) {}
+  }
+  function fanfare() {
+    if (!W.sound) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      [523, 659, 784, 1047].forEach((f, i) => {
+        const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + i * 0.11;
+        o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+        o.connect(g).connect(ac.destination); o.start(t); o.stop(t + 0.4);
+      });
+    } catch (e) {}
+  }
+
+  /* Drehen */
+  const reducedW = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function spin() {
+    const n = W.fields.length;
+    if (spinning || !n) return;
+    spinning = true; $$('#wSpin').disabled = true; $$('#wHub').disabled = true; $$('#wResult').innerHTML = '';
+    const a = (Math.PI * 2) / n;
+    const pick = Math.floor(Math.random() * n);
+    // Zeiger steht oben: Mitte von Feld pick muss nach oben, mit etwas Zufall innerhalb des Feldes
+    const off = (Math.random() - 0.5) * a * 0.7;
+    const norm0 = ((rot % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    let target = -(pick * a + a / 2 + off);
+    target = ((target % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    let delta = target - norm0; if (delta < 0) delta += Math.PI * 2;
+    const turns = reducedW ? 1 : 5 + Math.floor(Math.random() * 3);
+    const from = rot, to = rot + delta + turns * Math.PI * 2;
+    const dur = reducedW ? 1200 : 5200 + Math.random() * 1200;
+    const t0 = performance.now();
+    let lastSeg = Math.floor(((-from) % (Math.PI * 2) + Math.PI * 4) % (Math.PI * 2) / a);
+    const ease = (t) => 1 - Math.pow(1 - t, 4);
+    function step(now) {
+      const t = Math.min(1, (now - t0) / dur);
+      rot = from + (to - from) * ease(t);
+      const seg = Math.floor((((-rot) % (Math.PI * 2)) + Math.PI * 4) % (Math.PI * 2) / a);
+      if (seg !== lastSeg) { lastSeg = seg; tick(); }
+      draw();
+      if (t < 1) requestAnimationFrame(step); else done(pick);
+    }
+    requestAnimationFrame(step);
+  }
+  function done(i) {
+    const prize = W.fields[i], who = W.buyer.trim();
+    const col = colorFor(i, W.fields.length);
+    $$('#wResult').innerHTML = '<div class="big"></div>';
+    $$('#wResult .big').textContent = prize;
+    if (who) { const sm = document.createElement('small'); sm.textContent = 'für ' + who; $$('#wResult .big').appendChild(sm); }
+    fanfare();
+    const d = new Date();
+    W.log.unshift({ t: d.toTimeString().slice(0, 5), who, prize, col });
+    W.log = W.log.slice(0, 200);
+    if (W.remove) { W.fields.splice(i, 1); $$('#wFields').value = unparse(W.fields); }
+    save(); renderLog();
+    setTimeout(() => { spinning = false; $$('#wSpin').disabled = false; $$('#wHub').disabled = false; draw(); }, W.remove ? 1400 : 300);
+  }
+
+  function renderLog() {
+    const ul = $$('#wLog'); ul.innerHTML = '';
+    if (!W.log.length) { ul.innerHTML = '<li class="none">Noch nicht gedreht</li>'; return; }
+    W.log.forEach((e) => {
+      const li = document.createElement('li');
+      const t = document.createElement('span'); t.className = 't'; t.textContent = e.t;
+      const w = document.createElement('span'); w.className = 'who'; w.textContent = e.who || '–';
+      const p = document.createElement('span'); p.className = 'what'; p.textContent = e.prize; p.style.background = e.col; p.style.color = textOn(e.col);
+      li.append(t, w, p); ul.appendChild(li);
+    });
+  }
+
+  if (ov) return;
+  $$('#wFields').value = unparse(W.fields);
+  $$('#wBuyer').value = W.buyer || '';
+  $$('#wRemove').checked = !!W.remove;
+  $$('#wSound').checked = W.sound !== false;
+  $$('#wFields').addEventListener('input', (e) => { if (spinning) return; W.fields = parse(e.target.value); save(); draw(); });
+  $$('#wBuyer').addEventListener('input', (e) => { W.buyer = e.target.value; save(); });
+  $$('#wRemove').onchange = (e) => { W.remove = e.target.checked; save(); };
+  $$('#wSound').onchange = (e) => { W.sound = e.target.checked; save(); };
+  $$('#wSpin').onclick = spin; $$('#wHub').onclick = spin;
+  $$('#wClear').onclick = (e) => {
+    const b = e.currentTarget;
+    if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Wirklich? Nochmal klicken'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'Verlauf leeren'; }, 3500); return; }
+    delete b.dataset.sure; b.textContent = 'Verlauf leeren'; W.log = []; save(); renderLog();
+  };
+  document.addEventListener('keydown', (e) => { if (window.crashTab() === 'wheel' && (e.key === ' ' || e.key === 'Enter') && !e.target.closest('input, textarea, select, button')) { e.preventDefault(); spin(); } });
+  renderLog();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+  draw();
+  let t0 = 'fang'; try { t0 = localStorage.getItem('crash.tab') || 'fang'; } catch (e) {}
+  if (location.hash === '#wheel') t0 = 'wheel';
+  setTab(t0);
+})();
 </script>
 
 </body>
