@@ -487,8 +487,11 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
 .wb-meter .fill::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(255,255,255,.28) 0 calc(var(--k) * 1.2), transparent calc(var(--k) * 1.2) calc(var(--k) * 2.6)); animation: wstripe 1.2s linear infinite; }
 @keyframes wstripe { to { background-position: calc(var(--k) * 5.6) 0; } }
 .wb-meter .seg { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - var(--k) * .3), rgba(16,23,61,.7) calc(10% - var(--k) * .3) 10%); }
-.wb-say { font-size: calc(var(--k) * 3.5); line-height: 1.15; text-align: center; color: #fff; }
-.wb-say em { font-style: normal; color: var(--hc); }
+.wb-turn { display: flex; align-items: center; gap: calc(var(--k) * 2); padding: calc(var(--k) * 1.1) calc(var(--k) * 2); border-radius: calc(var(--k) * 2.2); background: linear-gradient(90deg, rgba(47,214,181,.25), rgba(47,214,181,.06)); box-shadow: inset 0 0 0 calc(var(--k) * .3) rgba(47,214,181,.5); }
+.wb-turn span { flex: none; font-family: var(--body); font-weight: 800; font-size: calc(var(--k) * 2.3); letter-spacing: .1em; color: #2fd6b5; }
+.wb-turn b { font-weight: 400; font-size: calc(var(--k) * 5.6); line-height: 1.05; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-turn.pop b { animation: wpop .5s cubic-bezier(.3,1.6,.5,1); }
+@keyframes wpop { from { transform: scale(.5); opacity: 0; } }
 /* Laufbänder (Hits und Gewinner) */
 .wb-run { display: grid; gap: calc(var(--k) * .6); }
 .wb-run .rh { display: flex; align-items: center; gap: calc(var(--k) * 1); font-size: calc(var(--k) * 2.8); letter-spacing: .05em; color: #ffc93d; padding-left: calc(var(--k) * .6); }
@@ -748,7 +751,8 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
     <div class="w-sec">
       <h3>Spot verkauft</h3>
       <div class="w-pending" id="wPending" hidden></div>
-      <input type="text" id="wBuyer" placeholder="Käufer (optional), z. B. pika_paul" autocomplete="off">
+      <label class="w-hint" for="wBuyer" style="font-weight:700">Jetzt dran (kommt automatisch von Whatnot, sonst hier eintippen)</label>
+      <input type="text" id="wBuyer" placeholder="Name des Käufers, z. B. pika_paul" autocomplete="off">
       <div class="w-big">
         <button class="w-hit" id="wHitBtn">Pokémon gefangen!<small>Treffer, mit Fang-Animation</small></button>
         <button class="w-miss" id="wMissBtn">Kein Treffer<small>Spot ohne Pokémon</small></button>
@@ -770,7 +774,7 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
       <label class="w-check"><input type="checkbox" id="wLive"> <b>Leiste im Stream zeigen</b></label>
       <label class="w-check"><input type="checkbox" id="wShowChance"> Fang-Chance</label>
       <label class="w-check"><input type="checkbox" id="wShowHits"> Hits im Laufband</label>
-      <label class="w-check"><input type="checkbox" id="wShowWin"> Aktuelle Gewinner</label>
+      <label class="w-check"><input type="checkbox" id="wShowTurn"> Wer gerade dran ist</label>
       <label class="w-check"><input type="checkbox" id="wAnim"> Fang-Animation bei Treffer</label>
       <label class="w-check"><input type="checkbox" id="wSound"> Ton</label>
     </div>
@@ -1792,7 +1796,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   window.crashTab = () => document.body.classList.contains('tab-wheel') ? 'wheel' : 'fang';
 
   /* Zustand */
-  const DEF = { round: 1, spots: 50, tickets: 15, sold: [], hits: [], live: true, showChance: true, showHits: true, showWin: true, anim: true, sound: true, lastHit: null };
+  const DEF = { round: 1, spots: 50, tickets: 15, sold: [], hits: [], live: true, showChance: true, showHits: true, showTurn: true, turn: '', anim: true, sound: true, lastHit: null };
   const W = () => { if (!S.wheel) S.wheel = JSON.parse(JSON.stringify(DEF)); return Object.assign(S.wheel, Object.assign({}, DEF, S.wheel)); };
   const stats = () => {
     const w = W(), hitsDone = w.sold.filter((x) => x.hit).length;
@@ -1844,17 +1848,6 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   }
   const hitIcon = (name) => { const m = findMon(name); return m ? `<img src="${m.img}" alt="${esc(m.name)}" title="${esc(m.name)}">` : BALL; };
 
-  // Spruch für die Zuschauer, je nach Lage
-  function sayText(st, h) {
-    if (!st.tLeft) return 'Alle Pokémon sind gefangen! <em>Gleich startet die nächste Runde</em>';
-    if (!st.spotsLeft) return 'Alle Spots sind weg! <em>Gleich geht es weiter</em>';
-    const n = st.spotsLeft;
-    if (st.pct >= 40) return `<em>Jetzt zuschlagen!</em> Fast jeder ${Math.max(2, Math.round(100 / st.pct))}. Spot fängt ein Pokémon`;
-    if (st.pct >= 28) return `Die Chance ist <em>heiß</em>! Sichere dir jetzt deinen Spot`;
-    if (st.pct >= 18) return `Schnapp dir einen Spot und <em>fang dir ein Pokémon</em>`;
-    return `Noch ${n} Spot${n === 1 ? '' : 's'}, <em>jeder kann ein Treffer sein</em>`;
-  }
-
   // Laufband von rechts nach links: Inhalt so oft wiederholen, dass es lückenlos läuft
   function marquee(tr, html, speed) {
     tr.classList.remove('run'); tr.innerHTML = html;
@@ -1874,17 +1867,16 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   function makeBar(root) {
     root.innerHTML = `<div class="wb hide"><div class="wb-bar"><div class="wb-card0">
       <div class="wb-head"><span class="wb-live"><i></i>LIVE-WHEEL <span>· RUNDE <b data-r></b></span></span><span class="wb-cta-top">Hol dir deinen Spot!</span></div>
+      <div class="wb-turn" data-turn><span>JETZT DRAN</span><b data-who></b></div>
       <div class="wb-tiles">
         <div class="wb-tile gold"><b data-t></b><small>Pokémon<em>kannst du noch fangen</em></small></div>
         <div class="wb-tile"><b data-s></b><small>Spots<em>sind noch frei</em></small></div>
       </div>
       <div class="wb-chance" data-chance>
-        <div class="wb-crow"><span><small>DEINE FANG-CHANCE</small><b class="hl" data-hl></b></span><b class="pct" data-pct></b></div>
+        <div class="wb-crow"><span><small>FANG-CHANCE:</small><b class="hl" data-hl></b></span><b class="pct" data-pct></b></div>
         <div class="wb-meter"><div class="fill" data-fill></div><div class="seg"></div></div>
       </div>
       <div class="wb-run" data-hits><div class="rh">${BALL}DIESE HITS KANNST DU ZIEHEN</div><div class="vp"><div class="tr" data-htr></div></div></div>
-      <div class="wb-say" data-say></div>
-      <div class="wb-run win" data-win><div class="rh">GLÜCKWUNSCH AN DIE FÄNGER</div><div class="vp"><div class="tr" data-tr></div></div></div>
     </div></div>
     <div class="wb-catch" data-catch><div class="wb-glow"></div><img class="wb-mon" alt=""><div class="wb-stars"></div><div class="wb-ball">${BALL}</div><div class="wb-text"><b>Gefangen!</b><span></span></div></div></div>`;
     const q = (a) => root.querySelector('[data-' + a + ']');
@@ -1900,7 +1892,9 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       q('chance').hidden = !w.showChance;
       bar.wb.style.setProperty('--hc', h[2]); q('hl').textContent = h[1].toUpperCase();
       q('fill').style.width = Math.max(st.pct ? 6 : 0, st.pct) + '%'; q('pct').innerHTML = st.pct + '<small>%</small>';
-      q('say').innerHTML = sayText(st, h);
+      const who = (w.turn || '').trim();
+      q('turn').hidden = !w.showTurn || !who;
+      if (q('who').textContent !== who) { q('who').textContent = who; const t = q('turn'); t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); }
       // Hits-Laufband
       const hits = w.hits.filter((x) => (x.name || '').trim());
       q('hits').hidden = !w.showHits || !hits.length;
@@ -1908,14 +1902,6 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       if (hk !== bar.hitKey) {
         bar.hitKey = hk;
         marquee(q('htr'), hits.map((x) => { const m = findMon(x.name); return `<span class="it">${m ? `<img src="${m.img}" alt="">` : BALL}${esc(x.name.trim())}</span>`; }).join(''), 9);
-      }
-      // Gewinner-Laufband
-      const winners = w.sold.filter((x) => x.hit);
-      q('win').hidden = !w.showWin || !winners.length;
-      const key = winners.map((x) => x.who + x.mon).join('|') + '|' + bar.wb.clientWidth;
-      if (key !== bar.winKey) {
-        bar.winKey = key;
-        marquee(q('tr'), winners.slice().reverse().map((x) => { const m = monOf(x.mon); return `<span class="it"><img src="${m.img}" alt="">${esc(x.who || 'Spot ' + x.n)} <em>${esc(m.name)}</em></span>`; }).join(''), 7);
       }
     };
     new ResizeObserver(() => bar.update()).observe(bar.wb);
@@ -2020,7 +2006,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       let id; do { id = 1 + Math.floor(Math.random() * 151); } while (used.has(id) && used.size < 151);
       e.mon = id; w.lastHit = { id: Date.now(), who, mon: id };
     }
-    w.sold.push(e); $$('#wBuyer').value = '';
+    w.sold.push(e);
     // Ton kommt aus der OBS-Quelle, sonst hier
     prev.sound = !(typeof obsOk !== 'undefined' && obsOk);
     commit();
@@ -2040,7 +2026,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   [['#wRound', 'round', 1], ['#wSpots', 'spots', 1], ['#wTickets', 'tickets', 0]].forEach(([id, k, min]) => {
     $$(id).addEventListener('change', (e) => { const v = Math.max(min, parseInt(e.target.value, 10) || min); snap(); W()[k] = v; commit(); });
   });
-  [['#wLive', 'live'], ['#wShowChance', 'showChance'], ['#wShowHits', 'showHits'], ['#wShowWin', 'showWin'], ['#wAnim', 'anim'], ['#wSound', 'sound']].forEach(([id, k]) => {
+  [['#wLive', 'live'], ['#wShowChance', 'showChance'], ['#wShowHits', 'showHits'], ['#wShowTurn', 'showTurn'], ['#wAnim', 'anim'], ['#wSound', 'sound']].forEach(([id, k]) => {
     $$(id).onchange = (e) => { W()[k] = e.target.checked; commit(); };
   });
 
@@ -2057,8 +2043,12 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   /* ---------- Whatnot-Verbindung ----------
      Whatnot hat keine offene Schnittstelle fürs Wheel. Das Wheel ist dort ein „Surprise Set“ mit „X of Y left“.
      Das Lesezeichen „Wheel-Leser“ läuft im Whatnot-Tab, liest diese Zahl jede Sekunde und schickt sie per postMessage hierher. */
-  const BM = "(function(){var O='__ORIGIN__',t=window.opener;if(!t||t.closed){t=window.open(O+'#wheel','ckwheel');}if(window.__ck)clearInterval(window.__ck);var b=document.getElementById('ckbadge');if(!b){b=document.createElement('div');b.id='ckbadge';document.body.appendChild(b);}b.style.cssText='position:fixed;z-index:2147483647;left:12px;bottom:12px;background:#10173d;color:#fff;font:600 13px/1.35 system-ui,sans-serif;padding:8px 12px;border-radius:10px;border:2px solid #ffc93d;max-width:380px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4)';var num=function(s){return parseInt(String(s).replace(/[^\\d]/g,''),10)||0};var RX=/([\\d.,]+)\\s*(?:of|von|\\/)\\s*([\\d.,]+)\\s*(?:spots?\\s*)?(?:left|\u00fcbrig|verbleibend|remaining|frei)/i;function scan(){var sets=[],seen=[],els=document.querySelectorAll('strong,span,div,p,small');for(var i=0;i<els.length;i++){var e=els[i];if(e.children.length>3)continue;var tx=(e.textContent||'').trim();if(tx.length>60)continue;var m=tx.match(RX);if(!m)continue;var card=e.closest('section,li,article')||e.parentElement;if(seen.indexOf(card)>=0)continue;seen.push(card);var te=card.querySelector('strong[title]'),title=te?(te.getAttribute('title')||te.textContent):'';if(!title){var ss=card.querySelectorAll('strong,h2,h3,h4,span');for(var j=0;j<ss.length;j++){var x=(ss[j].textContent||'').trim();if(x&&!RX.test(x)&&!/surprise|\u00fcberraschung/i.test(x)&&x.length<80){title=x;break;}}}var it={title:(title||'Wheel').trim(),remaining:num(m[1]),total:num(m[2])};if(!sets.some(function(o){return o.title==it.title&&o.total==it.total}))sets.push(it);}var q=function(s){var e=document.querySelector(s);return e?(e.textContent||'').trim():''};var d={ck:'whatnot',v:1,sets:sets,status:q(\"[data-testid='show-winning-status']\"),product:q(\"[data-testid='show-product-title']\")};var ok=t&&!t.closed;try{if(ok)t.postMessage(d,'*')}catch(x){}b.textContent='crashketchum Wheel-Leser: '+(sets.length?sets.map(function(s){return s.title+' '+s.remaining+'/'+s.total}).join(' \u00b7 '):'kein Wheel auf der Seite gefunden')+(ok?'':' \u00b7 Steuerseite geschlossen, Lesezeichen nochmal klicken');}scan();window.__ck=setInterval(scan,1000);})();";
-  const wn = { last: 0, set: null, pick: '', status: '', log: [] };
+  const BM = "(function(){var O='__ORIGIN__',t=window.opener;if(!t||t.closed){t=window.open(O+'#wheel','ckwheel');}if(window.__ck)clearInterval(window.__ck);var b=document.getElementById('ckbadge');if(!b){b=document.createElement('div');b.id='ckbadge';document.body.appendChild(b);}b.style.cssText='position:fixed;z-index:2147483647;left:12px;bottom:12px;background:#10173d;color:#fff;font:600 13px/1.35 system-ui,sans-serif;padding:8px 12px;border-radius:10px;border:2px solid #ffc93d;max-width:380px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4)';var num=function(s){return parseInt(String(s).replace(/[^\\d]/g,''),10)||0};var RX=/([\\d.,]+)\\s*(?:of|von|\\/)\\s*([\\d.,]+)\\s*(?:spots?\\s*)?(?:left|\u00fcbrig|verbleibend|remaining|frei)/i;function scan(){var sets=[],seen=[],els=document.querySelectorAll('strong,span,div,p,small');for(var i=0;i<els.length;i++){var e=els[i];if(e.children.length>3)continue;var tx=(e.textContent||'').trim();if(tx.length>60)continue;var m=tx.match(RX);if(!m)continue;var card=e.closest('section,li,article')||e.parentElement;if(seen.indexOf(card)>=0)continue;seen.push(card);var te=card.querySelector('strong[title]'),title=te?(te.getAttribute('title')||te.textContent):'';if(!title){var ss=card.querySelectorAll('strong,h2,h3,h4,span');for(var j=0;j<ss.length;j++){var x=(ss[j].textContent||'').trim();if(x&&!RX.test(x)&&!/surprise|\u00fcberraschung/i.test(x)&&x.length<80){title=x;break;}}}var it={title:(title||'Wheel').trim(),remaining:num(m[1]),total:num(m[2])};if(!sets.some(function(o){return o.title==it.title&&o.total==it.total}))sets.push(it);}var q=function(s){var e=document.querySelector(s);return e?(e.textContent||'').trim():''};var d={ck:'whatnot',v:1,sets:sets,status:q(\"[data-testid='show-winning-status']\"),product:q(\"[data-testid='show-product-title']\"),chat:[].slice.call(document.querySelectorAll(\"[data-testid='chat-message']\"),-8).map(function(e){return (e.innerText||e.textContent||'').trim().slice(0,200)})};var ok=t&&!t.closed;try{if(ok)t.postMessage(d,'*')}catch(x){}b.textContent='crashketchum Wheel-Leser: '+(sets.length?sets.map(function(s){return s.title+' '+s.remaining+'/'+s.total}).join(' \u00b7 '):'kein Wheel auf der Seite gefunden')+(ok?'':' \u00b7 Steuerseite geschlossen, Lesezeichen nochmal klicken');}scan();window.__ck=setInterval(scan,1000);})();";
+  const wn = { last: 0, set: null, pick: '', status: '', log: [], chatSeen: new Set(), chatReady: false };
+  function setTurn(name, src) {
+    name = String(name).replace(/^@/, '').trim(); if (!name || name === W().turn) return;
+    W().turn = name; $$('#wBuyer').value = name; wnLog('Jetzt dran: ' + name + ' (' + src + ')'); commit();
+  }
   try { wn.pick = localStorage.getItem('crash.wnpick') || ''; } catch (e) {}
   const home = new URL('./', location.href); home.hash = ''; home.search = '';
   $$('#wBm').href = 'javascript:' + encodeURIComponent(BM.replace('__ORIGIN__', home.href));
@@ -2096,10 +2086,20 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     if (status && status !== wn.status) {
       wn.status = status; wnLog(status);
       const m = (d.status || '').match(/^(.+?)\s+(?:is\s+)?(?:won|wins|gewinnt|hat gewonnen|winning)/i);
-      if (m && !$$('#wBuyer').value) $$('#wBuyer').value = m[1].replace(/^@/, '').trim();
+      if (m) setTurn(m[1], 'Anzeige');
       const key = $$('#wWnKey').value.trim();
       if (key && (w.pending || 0) > 0 && status.toLowerCase().includes(key.toLowerCase())) { wnLog('→ Treffer erkannt (' + key + ')'); sell(true); }
     }
+    // Kauf-Meldungen im Whatnot-Chat („name bought …“, „name hat … gekauft“)
+    (d.chat || []).forEach((line) => {
+      if (wn.chatSeen.has(line)) return; wn.chatSeen.add(line);
+      if (!wn.chatReady) return; // beim ersten Lesen nur merken, nicht alte Käufe übernehmen
+      const t = line.replace(/\s+/g, ' ').trim();
+      const m = t.match(/^@?([^\s:]{2,30}):?\s+(?:just\s+)?(?:bought|purchased|won|spun|got|snagged|kauft|gewinnt|hat\s+(?:sich\s+)?.{0,60}?(?:gekauft|gewonnen|gesichert|gedreht))\b/i);
+      if (m) setTurn(m[1], 'Chat');
+    });
+    wn.chatReady = true;
+    if (wn.chatSeen.size > 400) wn.chatSeen = new Set([...wn.chatSeen].slice(-100));
     if (!cur) { wn.set = null; renderWn(); return; }
     const before = wn.set;
     wn.set = cur;
@@ -2133,7 +2133,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const w = W(), st = stats();
     const set = (id, v) => { const el = $$(id); if (document.activeElement !== el) el.value = v; };
     set('#wRound', w.round); set('#wSpots', w.spots); set('#wTickets', w.tickets);
-    $$('#wLive').checked = w.live; $$('#wShowChance').checked = w.showChance; $$('#wShowHits').checked = w.showHits; $$('#wShowWin').checked = w.showWin; $$('#wAnim').checked = w.anim; $$('#wSound').checked = w.sound;
+    $$('#wLive').checked = w.live; $$('#wShowChance').checked = w.showChance; $$('#wShowHits').checked = w.showHits; $$('#wShowTurn').checked = w.showTurn; $$('#wAnim').checked = w.anim; $$('#wSound').checked = w.sound;
     const pend = w.pending || 0;
     $$('#wHitBtn').disabled = (!st.spotsLeft && !pend) || !st.tLeft;
     $$('#wMissBtn').disabled = !pend && (!st.spotsLeft || st.spotsLeft <= st.tLeft);
@@ -2155,6 +2155,9 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   }
 
   $$('#wBuyer').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); } });
+  let turnT = 0;
+  $$('#wBuyer').addEventListener('input', (e) => { W().turn = e.target.value.trim(); bars.forEach((b) => b.update()); clearTimeout(turnT); turnT = setTimeout(save, 400); });
+  if (W().turn) $$('#wBuyer').value = W().turn;
   render();
   let t0 = 'fang'; try { t0 = localStorage.getItem('crash.tab') || 'fang'; } catch (e) {}
   if (location.hash === '#wheel') t0 = 'wheel';
