@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>crashketchum</title>
-<meta name="description" content="crashketchum: Pokémon-Karten live auf Whatnot. Hier findest du den Stream und alle Kanäle.">
-<meta name="theme-color" content="#c41e2e">
+<meta name="description" content="crashketchum: Pokémon-Karten live auf Whatnot. Hier siehst du, ob gerade ein Stream läuft, und findest alle Kanäle.">
+<meta name="theme-color" content="#2a070d">
 <script>
 /* Alte Links auf die Steuerseite (#wheel, #obs, #buehne) weiterleiten, z. B. aus dem Lesezeichen „Wheel-Leser“ */
 if (/^#(wheel|obs|buehne|fang)/.test(location.hash)) location.replace('steuerung/' + location.search + location.hash);
@@ -15,99 +15,116 @@ if (/^#(wheel|obs|buehne|fang)/.test(location.hash)) location.replace('steuerung
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  color-scheme: light;
-  --red: #e0303f;
-  --red-dark: #a3182a;
+  color-scheme: dark;
+  --panel: #2e0a10;
+  --line: #5e1c27;
+  --muted: #e0a3aa;
+  --fg: #fff4f5;
+  --red: #ee3b4c;
+  --live: #ff2d42;
   --ink: #15151d;
-  --white: #fbfbfd;
   --gold: #ffd85e;
   --display: 'Lilita One', 'Arial Black', Impact, system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
-  min-height: 100vh; color: #fff; font: 600 16px/1.45 'Nunito', system-ui, sans-serif;
-  background: radial-gradient(circle at 50% -10%, #ff5a66 0%, transparent 55%), linear-gradient(180deg, #e0303f 0%, #b81f30 60%, #8f1424 100%) fixed;
-  background-color: #b81f30;
+  min-height: 100vh; color: var(--fg); font: 600 16px/1.45 'Nunito', system-ui, sans-serif;
+  background-color: #2a070d;
+  background-image: radial-gradient(circle at 10% 6%, rgba(238,59,76,.35), transparent 40%), radial-gradient(circle at 92% 94%, rgba(255,201,61,.16), transparent 42%), linear-gradient(160deg, #4a0d16 0%, #22060b 55%, #3a0a12 100%);
+  background-attachment: fixed;
   display: flex; flex-direction: column;
 }
 a { color: inherit; }
-.wrap { width: 100%; max-width: 520px; margin: 0 auto; padding: 0 16px; flex: 1; display: flex; flex-direction: column; }
 
-/* Kopf: Pokéball, Name */
-.hero { text-align: center; padding: 56px 0 28px; }
-.ball { width: 112px; height: 112px; display: block; margin: 0 auto 18px; filter: drop-shadow(0 8px 0 rgba(0,0,0,.18)); animation: wob 3.6s ease-in-out infinite; transform-origin: 50% 90%; }
-@keyframes wob { 0%, 70%, 100% { transform: rotate(0); } 76% { transform: rotate(-14deg); } 84% { transform: rotate(10deg); } 90% { transform: rotate(-4deg); } }
-h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(40px, 11vw, 58px); line-height: 1; letter-spacing: .5px; color: #fff; text-shadow: 0 4px 0 var(--red-dark); }
-h1 span { color: var(--gold); }
-.tag { margin: 12px 0 0; font-size: 17px; opacity: .9; }
+/* Header wie auf der Steuerseite */
+.hdr { position: sticky; top: 0; z-index: 50; background: rgba(40,6,12,.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.hdr-in { max-width: 1300px; margin: 0 auto; display: flex; align-items: center; gap: 18px; padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); }
+.hdr-logo { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 24px; letter-spacing: .5px; white-space: nowrap; }
+.hdr-logo svg { width: 42px; height: 42px; flex: none; transition: transform .5s cubic-bezier(.3,1.6,.5,1); }
+.hdr-logo:hover svg { transform: rotate(-25deg); }
+.hdr-logo span { color: var(--red); }
+.hdr-tabs { display: flex; gap: 6px; margin-left: auto; }
+.hdr-tabs a { border: 1px solid var(--line); color: var(--muted); text-decoration: none; font-family: var(--display); font-size: 19px; letter-spacing: .4px; padding: 7px 20px; border-radius: 999px; }
+.hdr-tabs a:hover { color: var(--fg); border-color: var(--muted); }
+@media (max-width: 560px) { .hdr-logo b { display: none; } .hdr-tabs a { padding: 7px 14px; font-size: 17px; } }
 
-/* Hauptknopf Whatnot */
-.main { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-radius: 22px; text-decoration: none; background: var(--white); color: var(--ink); box-shadow: 0 6px 0 rgba(0,0,0,.2); transition: transform .12s, box-shadow .12s; }
-.main:hover { transform: translateY(-2px); box-shadow: 0 8px 0 rgba(0,0,0,.2); }
-.main:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.2); }
-.main .ic { width: 56px; height: 56px; border-radius: 16px; background: #ffde00; color: var(--ink); display: grid; place-items: center; flex: none; }
-.main .ic svg { width: 32px; height: 32px; }
-.main div { flex: 1; min-width: 0; }
-.main b { display: block; font-family: var(--display); font-weight: 400; font-size: 23px; line-height: 1.1; letter-spacing: .3px; }
-.main small { display: block; color: #5b5b6b; font-size: 14px; }
-.main .go { width: 40px; height: 40px; border-radius: 50%; background: var(--red); color: #fff; display: grid; place-items: center; flex: none; }
-.main .go svg { width: 18px; height: 18px; }
+.wrap { width: 100%; max-width: 560px; margin: 0 auto; padding: 36px 16px 40px; flex: 1; }
+
+/* Stream-Karte */
+.stream { background: #fbfbfd; color: var(--ink); border-radius: 26px; padding: 26px 24px 24px; text-align: center; box-shadow: 0 6px 0 rgba(0,0,0,.25), 0 20px 50px rgba(0,0,0,.3); border: 3px solid transparent; transition: border-color .3s, box-shadow .3s; }
+.stream.is-live { border-color: var(--live); box-shadow: 0 0 0 6px rgba(255,45,66,.25), 0 6px 0 rgba(0,0,0,.25), 0 20px 50px rgba(0,0,0,.3); }
+.status { display: inline-flex; align-items: center; gap: 9px; padding: 7px 16px 7px 12px; border-radius: 999px; font-family: var(--display); font-size: 19px; letter-spacing: .6px; background: #e9e9ef; color: #6b6b7b; }
+.status[hidden] { display: none; }
+.status i { width: 12px; height: 12px; border-radius: 50%; background: currentColor; flex: none; }
+.status.live { background: var(--live); color: #fff; }
+.status.live i { background: #fff; animation: pulse 1.4s infinite; }
+.status.wait i { animation: blink 1s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,.85); } 100% { box-shadow: 0 0 0 10px rgba(255,255,255,0); } }
+@keyframes blink { 50% { opacity: .3; } }
+h1 { margin: 16px 0 6px; font-family: var(--display); font-weight: 400; font-size: clamp(28px, 7.5vw, 38px); line-height: 1.08; letter-spacing: .3px; }
+.sub { margin: 0 auto 20px; color: #5b5b6b; max-width: 36ch; }
+.cta { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 15px 22px; border-radius: 16px; text-decoration: none; font-family: var(--display); font-size: 21px; letter-spacing: .5px; background: var(--red); color: #fff; box-shadow: 0 5px 0 #a3182a; transition: transform .1s, box-shadow .1s; }
+.cta:active { transform: translateY(3px); box-shadow: 0 2px 0 #a3182a; }
+.cta svg { width: 20px; height: 20px; }
 
 /* Socials */
-.socials { display: grid; gap: 10px; margin-top: 14px; }
-.social { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 18px; text-decoration: none; background: rgba(255,255,255,.12); border: 2px solid rgba(255,255,255,.22); transition: background .15s, transform .12s; }
-.social:hover { background: rgba(255,255,255,.2); transform: translateY(-1px); }
+h2 { margin: 34px 0 12px; font-family: var(--display); font-weight: 400; font-size: 22px; letter-spacing: .4px; }
+.socials { display: grid; gap: 10px; }
+.social { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 18px; text-decoration: none; background: rgba(255,255,255,.06); border: 1px solid var(--line); transition: background .15s, border-color .15s; }
+.social:hover { background: rgba(255,255,255,.11); border-color: var(--muted); }
 .social .ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #fff; color: var(--ink); flex: none; }
 .social .ic svg { width: 22px; height: 22px; }
+.social > div { min-width: 0; flex: 1; }
 .social b { display: block; font-size: 16px; }
-.social div span { display: block; font-size: 13px; opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.social > div { min-width: 0; }
-
-footer { margin-top: auto; padding: 40px 0 24px; text-align: center; font-size: 13px; opacity: .75; }
-footer a { text-decoration: none; margin: 0 6px; display: inline-flex; align-items: center; gap: 4px; }
-footer a:hover { text-decoration: underline; }
-footer svg { width: 11px; height: 11px; }
+.social div span { display: block; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="hero">
-    <svg class="ball" viewBox="0 0 100 100" aria-hidden="true">
-      <circle cx="50" cy="50" r="45" fill="#fbfbfd"/>
-      <path d="M5 50a45 45 0 0 1 90 0z" fill="#e0303f"/>
-      <path d="M20 31a32 32 0 0 1 20-14" stroke="#fff" stroke-opacity=".6" stroke-width="6" fill="none" stroke-linecap="round"/>
-      <path d="M5 50h90" stroke="#15151d" stroke-width="8"/>
-      <circle cx="50" cy="50" r="45" fill="none" stroke="#15151d" stroke-width="6"/>
-      <circle cx="50" cy="50" r="14" fill="#fbfbfd" stroke="#15151d" stroke-width="6"/>
-      <circle cx="50" cy="50" r="6" fill="#fff" stroke="#15151d" stroke-opacity=".25" stroke-width="2"/>
-    </svg>
-    <h1>crash<span>ketchum</span></h1>
-    <p class="tag">Pokémon-Karten live auf Whatnot</p>
-  </header>
-
-  <main>
-    <a class="main" id="main" href="#" target="_blank" rel="noopener">
-      <span class="ic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h3.2l2.3 8.2L10 6h4l2.5 8.2L18.8 6H22l-4 12h-3.3L12 9.6 9.3 18H6z"/></svg></span>
-      <div><b>Zum Livestream</b><small>auf Whatnot folgen und keinen Stream verpassen</small></div>
-      <span class="go"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg></span>
+<header class="hdr">
+  <div class="hdr-in">
+    <a class="hdr-logo" href="./">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="45" fill="#f3f4fa"/>
+        <path d="M5 50a45 45 0 0 1 90 0z" fill="#ee3b4c"/>
+        <path d="M20 31a32 32 0 0 1 20-14" stroke="#fff" stroke-opacity=".6" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path d="M5 50h90" stroke="#15151d" stroke-width="8"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#15151d" stroke-width="6"/>
+        <circle cx="50" cy="50" r="14" fill="#f3f4fa" stroke="#15151d" stroke-width="6"/>
+        <circle cx="50" cy="50" r="6" fill="#fff" stroke="#15151d" stroke-opacity=".25" stroke-width="2"/>
+      </svg>
+      <b>crash<span>ketchum</span></b>
     </a>
-    <nav class="socials" id="socials" aria-label="Socials"></nav>
-  </main>
+    <nav class="hdr-tabs" aria-label="Bereiche mit Code">
+      <a href="steuerung/" title="Nur mit Code">Fangen</a>
+      <a href="steuerung/#wheel" title="Nur mit Code">Wheel</a>
+    </nav>
+  </div>
+</header>
 
-  <footer>
-    <a href="steuerung/" title="Nur mit Code"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3z"/></svg>Fangen</a>
-    <a href="steuerung/#wheel" title="Nur mit Code"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3z"/></svg>Wheel</a>
-  </footer>
+<div class="wrap">
+  <section class="stream" id="stream" aria-live="polite">
+    <div class="status wait" id="status"><i></i><span id="statusText">Status wird geladen</span></div>
+    <h1 id="headline">Pokémon-Karten live auf Whatnot</h1>
+    <p class="sub" id="sub">Folge crashketchum auf Whatnot, dann verpasst du keinen Stream.</p>
+    <a class="cta" id="cta" href="https://www.whatnot.com/user/crashketchum" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+      <span id="ctaText">Zu Whatnot</span>
+    </a>
+  </section>
+
+  <h2>Folge crashketchum</h2>
+  <nav class="socials" id="socials" aria-label="Socials"></nav>
 </div>
 
 <script>
 /* ---------- Hier die Links eintragen. Einträge ohne url werden nicht angezeigt. ---------- */
-const WHATNOT = 'https://www.whatnot.com/user/crashketchum';
+const WHATNOT_USER = 'crashketchum';
 const SOCIALS = [
-  { name: 'Instagram', handle: '', url: '', icon: 'instagram' },
+  { name: 'Whatnot', handle: '@' + WHATNOT_USER, url: 'https://www.whatnot.com/user/' + WHATNOT_USER, icon: 'whatnot' },
+  { name: 'Instagram', handle: '@crashketchumtcg', url: 'https://www.instagram.com/crashketchumtcg/', icon: 'instagram' },
   { name: 'TikTok', handle: '', url: '', icon: 'tiktok' },
   { name: 'YouTube', handle: '', url: '', icon: 'youtube' },
   { name: 'Twitch', handle: '', url: '', icon: 'twitch' },
@@ -117,6 +134,7 @@ const SOCIALS = [
 ];
 
 const ICONS = {
+  whatnot: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 6h3.2l2.3 8.2L10 6h4l2.5 8.2L18.8 6H22l-4 12h-3.3L12 9.6 9.3 18H6z"/></svg>',
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg>',
   tiktok: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 3c.4 2.3 1.9 3.8 4.2 4v3.1c-1.6 0-3-.5-4.2-1.3v6.4A5.8 5.8 0 1 1 10.7 9.4v3.2a2.7 2.7 0 1 0 2.6 2.7V3z"/></svg>',
   youtube: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 8.2c-.2-1.6-1-2.7-2.6-2.9C17 5 12 5 12 5s-5 0-7.4.3C3 5.5 2.2 6.6 2 8.2 1.8 9.5 1.8 12 1.8 12s0 2.5.2 3.8c.2 1.6 1 2.7 2.6 2.9C7 19 12 19 12 19s5 0 7.4-.3c1.6-.2 2.4-1.3 2.6-2.9.2-1.3.2-3.8.2-3.8s0-2.5-.2-3.8zM10 15.2V8.8l5.5 3.2z"/></svg>',
@@ -126,13 +144,38 @@ const ICONS = {
   facebook: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 22v-8h2.7l.4-3.2h-3.1V8.8c0-.9.3-1.5 1.6-1.5h1.7V4.4c-.3 0-1.3-.1-2.5-.1-2.4 0-4.1 1.5-4.1 4.2v2.3H7.5V14h2.7v8z"/></svg>',
   link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>'
 };
+const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-document.getElementById('main').href = WHATNOT;
-document.getElementById('socials').innerHTML = SOCIALS.filter((s) => s.url).map((s) =>
+const profile = 'https://www.whatnot.com/user/' + WHATNOT_USER;
+
+$('socials').innerHTML = SOCIALS.filter((s) => s.url).map((s) =>
   `<a class="social" href="${esc(s.url)}" target="_blank" rel="noopener">
     <span class="ic">${ICONS[s.icon] || ICONS.link}</span>
     <div><b>${esc(s.name)}</b><span>${esc(s.handle || s.url.replace(/^https?:\/\/(www\.)?/, ''))}</span></div>
   </a>`).join('');
+
+/* Live-Status kommt von der Vercel-Funktion api/whatnot.js (liest das öffentliche Whatnot-Profil) */
+function show(d) {
+  const live = !!d && d.live === true;
+  $('stream').classList.toggle('is-live', live);
+  $('status').className = 'status ' + (live ? 'live' : 'off');
+  $('status').hidden = !d || typeof d.live !== 'boolean'; // ohne Antwort von Whatnot lieber nichts anzeigen als etwas Falsches
+  $('statusText').textContent = live ? 'JETZT LIVE' : d && d.live === false ? 'Gerade offline' : 'Live-Status unbekannt';
+  $('headline').textContent = live ? 'crashketchum ist gerade live!' : 'Pokémon-Karten live auf Whatnot';
+  $('sub').textContent = live ? 'Komm in den Stream, sag Hallo und sichere dir deinen Spot.' : d && d.live === false ? 'Gerade läuft kein Stream. Folge crashketchum auf Whatnot, dann bekommst du Bescheid, sobald es losgeht.' : 'Folge crashketchum auf Whatnot, dann verpasst du keinen Stream.';
+  $('ctaText').textContent = live ? 'Jetzt zuschauen' : 'Auf Whatnot folgen';
+  $('cta').href = (live && d.liveUrl) || profile;
+}
+async function refresh() {
+  try {
+    const r = await fetch('/api/whatnot?u=' + encodeURIComponent(WHATNOT_USER), { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    show(await r.json());
+  } catch (e) { show(null); }
+}
+refresh();
+setInterval(() => { if (!document.hidden) refresh(); }, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 </script>
 </body>
 </html>
