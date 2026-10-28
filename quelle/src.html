@@ -402,7 +402,9 @@ body.tab-wheel .w-prev { background: repeating-conic-gradient(#3a0d14 0 25%, #2c
 .w-panel input[type=text], .w-panel input[type=number] { width: 100%; background: var(--night); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; }
 .w-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .w-nums label { font-size: 12px; color: var(--muted); font-weight: 700; display: grid; gap: 4px; }
-.w-big { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; }
+.w-big { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.w-big .w-miss { grid-column: 1 / -1; }
+.w-flee { background: #f3f4fa; color: #15151d; box-shadow: 0 5px 16px rgba(0,0,0,.25); }
 .w-big button { border: 0; border-radius: 12px; padding: 14px 10px; font-family: var(--display); font-size: 19px; letter-spacing: .3px; line-height: 1.1; }
 .w-big button small { display: block; font-family: var(--body); font-size: 12px; font-weight: 700; opacity: .8; margin-top: 3px; }
 .w-hit { background: var(--gold); color: #1a1530; box-shadow: 0 5px 16px rgba(255,201,61,.3); }
@@ -426,7 +428,7 @@ body.tab-wheel .w-prev { background: repeating-conic-gradient(#3a0d14 0 25%, #2c
 .w-log .n { font-family: var(--mono); color: var(--muted); font-size: 12px; min-width: 2.2em; }
 .w-log .who { font-weight: 800; }
 .w-log .res { margin-left: auto; font-weight: 800; font-size: 12px; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
-.w-log .res.hit { background: var(--gold); color: #1a1530; } .w-log .res.miss { color: var(--muted); border: 1px solid var(--line); }
+.w-log .res.hit { background: var(--gold); color: #1a1530; } .w-log .res.flee { background: #f3f4fa; color: #15151d; } .w-log .res.miss { color: var(--muted); border: 1px solid var(--line); }
 .w-log .none { color: var(--muted); padding: 14px; justify-content: center; }
 .w-hint { font-size: 12.5px; color: var(--muted); margin: 0; }
 
@@ -517,6 +519,7 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
 .wb-stars i { position: absolute; width: calc(var(--k) * 3.4); height: calc(var(--k) * 3.4); margin: calc(var(--k) * -1.7); background: #ffc93d; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); opacity: 0; }
 .wb-text { position: absolute; left: 4%; right: 4%; top: calc(var(--k) * 14); text-align: center; opacity: 0; }
 .wb-text b { display: block; font-weight: 400; font-size: calc(var(--k) * 11); line-height: 1; color: #ffd85e; -webkit-text-stroke: calc(var(--k) * .5) #7e0f1d; paint-order: stroke fill; text-shadow: 0 calc(var(--k) * .8) 0 #7e0f1d; }
+.wb-text.flee b { color: #f3f4fa; -webkit-text-stroke-color: #15151d; text-shadow: 0 calc(var(--k) * .8) 0 #15151d; }
 .wb-text span { display: inline-block; margin-top: calc(var(--k) * 1.4); font-size: calc(var(--k) * 4.4); padding: calc(var(--k) * .8) calc(var(--k) * 3); border-radius: 999px; background: linear-gradient(180deg, #e0303f, #a3182a); box-shadow: inset 0 0 0 calc(var(--k) * .35) #15151d; }
 .wb-text span em { font-style: normal; color: #ffd85e; }
 </style>
@@ -721,7 +724,7 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
 
 <div class="wheel-app" id="wheelApp" hidden>
   <div class="w-prev-col">
-    <div class="w-prev-head"><span>Stream-Vorschau (transparent, 9:16)</span><button class="btn" id="wTestCatch" style="padding:6px 10px;font-size:12.5px">Fang-Animation testen</button></div>
+    <div class="w-prev-head"><span>Stream-Vorschau (transparent, 9:16)</span><button class="btn" id="wTestCatch" style="padding:6px 10px;font-size:12.5px">Fang testen</button></div>
     <div class="w-prev" id="wPrev"><div class="wov" id="wovPrev"></div><div class="w-prev-note" id="wPrevNote"></div></div>
   </div>
   <div class="w-panel">
@@ -747,8 +750,9 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
       <label class="w-hint" for="wBuyer" style="font-weight:700">Jetzt dran (kommt automatisch von Whatnot, sonst hier eintippen)</label>
       <input type="text" id="wBuyer" placeholder="Name des Käufers, z. B. pika_paul" autocomplete="off">
       <div class="w-big">
-        <button class="w-hit" id="wHitBtn">Pokémon gefangen!<small>Treffer, mit Fang-Animation</small></button>
-        <button class="w-miss" id="wMissBtn">Kein Treffer<small>Spot ohne Pokémon</small></button>
+        <button class="w-hit" id="wHitBtn">Gefangen!<small>Pokémon gezogen, Hit</small></button>
+        <button class="w-flee" id="wFleeBtn">Flieht!<small>Pokémon gezogen, Niete / Trostpreis</small></button>
+        <button class="w-miss" id="wMissBtn">Kein Pokémon<small>Spot ohne Ticket</small></button>
       </div>
       <div class="w-status" id="wStatus"></div>
       <div class="w-row"><button class="btn" id="wUndo">↶ Zurück</button><button class="btn" id="wNewRound">Neue Runde</button></div>
@@ -1879,7 +1883,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       </div>
       <div class="wb-run" data-hits><div class="rh">${BALL}DIESE HITS KANNST DU ZIEHEN</div><div class="vp"><div class="tr" data-htr></div></div></div>
     </div></div>
-    <div class="wb-catch" data-catch><div class="wb-glow"></div><img class="wb-mon" alt=""><div class="wb-stars"></div><div class="wb-ball">${BALL}</div><div class="wb-text"><b>Gefangen!</b><span></span></div></div></div>`;
+    <div class="wb-catch" data-catch><div class="wb-glow"></div><img class="wb-mon" alt=""><div class="wb-stars"></div><div class="wb-ball">${BALL}</div><div class="wb-text"><b>Gefangen!</b></div></div></div>`;
     const q = (a) => root.querySelector('[data-' + a + ']');
     const bar = { root, wb: root.firstChild, last: {}, winKey: '', hitKey: '' };
     bar.update = () => {
@@ -1917,7 +1921,9 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     (bar.anims || []).forEach((a) => a.cancel()); bar.anims = [];
     clearTimeout(bar.ct);
     mon.src = m.img; ball.classList.remove('click');
-    txt.querySelector('span').innerHTML = (hit.who ? esc(hit.who) + ' fängt ' : '') + '<em>' + esc(m.name) + '</em> · Hit!';
+    const flee = !!hit.flee;
+    txt.querySelector('b').textContent = flee ? 'Flieht!' : 'Gefangen!';
+    txt.classList.toggle('flee', flee);
     stars.innerHTML = Array.from({ length: 10 }, () => '<i></i>').join('');
     c.classList.add('on');
     const k = bar.wb.getBoundingClientRect().width / 100 || 10;
@@ -1937,6 +1943,32 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     A(ball, [{ transform: `translate(0, ${-12 * k}px)` }, { transform: 'translate(0, 0)', offset: .6 }, { transform: `translate(0, ${-2.5 * k}px)`, offset: .8 }, { transform: 'translate(0, 0)' }], { delay: 2150, duration: 450, easing: 'ease-in' });
     const wob = [{ transform: 'rotate(0)' }, { transform: 'rotate(-22deg)', offset: .25 }, { transform: 'rotate(18deg)', offset: .6 }, { transform: 'rotate(0)' }];
     [2800, 3600, 4400].forEach((d) => { const a = ball.querySelector('svg').animate(wob, { delay: d, duration: 520, easing: 'ease-in-out' }); bar.anims.push(a); });
+    if (flee) {
+      // Niete: beim dritten Wackeln bricht der Ball auf, das Pokémon kommt raus und rennt weg
+      bar.ct = setTimeout(() => {
+        if (bar.sound) sfx('pop');
+        A(ball, [{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(0, ${-3 * k}px) scale(1.25)`, opacity: 1, offset: .3 }, { transform: `translate(0, ${-3 * k}px) scale(1.5)`, opacity: 0 }], { duration: 450 });
+        A(glow, [{ opacity: .25, transform: 'scale(1)' }, { opacity: 1, transform: 'scale(1.4)', offset: .3 }, { opacity: .2, transform: 'scale(1)' }], { duration: 700 });
+        A(mon, [{ opacity: 0, filter: 'brightness(6)', transform: `translateY(${-6 * k}px) scale(.05)` }, { opacity: 1, filter: 'brightness(6)', transform: 'scale(1.1)', offset: .45 }, { opacity: 1, filter: 'brightness(1)', transform: 'scale(1)' }], { duration: 650, easing: 'cubic-bezier(.3,1.5,.5,1)' });
+        A(txt, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1.1)', offset: .6 }, { opacity: 1, transform: 'scale(1)' }], { delay: 300, duration: 500, easing: 'cubic-bezier(.3,1.6,.5,1)' });
+        bar.ct = setTimeout(() => {
+          // kleine Hüpfer, dann seitlich raus
+          A(mon, [
+            { opacity: 1, transform: 'translate(0, 0) scaleX(-1)' },
+            { opacity: 1, transform: `translate(${12 * k}px, ${-6 * k}px) scaleX(-1)`, offset: .2 },
+            { opacity: 1, transform: `translate(${24 * k}px, 0) scaleX(-1)`, offset: .4 },
+            { opacity: 1, transform: `translate(${38 * k}px, ${-6 * k}px) scaleX(-1)`, offset: .6 },
+            { opacity: 0, transform: `translate(${70 * k}px, 0) scaleX(-1)` }
+          ], { duration: 1300, easing: 'linear' });
+          bar.ct = setTimeout(() => {
+            [txt, glow].forEach((el) => A(el, [{ opacity: 1 }, { opacity: 0 }], { duration: 600 }));
+            bar.ct = setTimeout(() => { c.classList.remove('on'); (bar.anims || []).forEach((a) => a.cancel()); bar.anims = []; }, 650);
+          }, 2200);
+        }, 1100);
+      }, 4900);
+      if (bar.sound) { sfx('throw'); [2800, 3600, 4400].forEach((d) => setTimeout(() => sfx('wob'), d)); }
+      return;
+    }
     bar.ct = setTimeout(() => {
       ball.classList.add('click');
       if (bar.sound) sfx('click');
@@ -1960,6 +1992,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       const tone = (f, t, dur, type = 'square', vol = 0.06, f2) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, now + t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, now + t + dur); g.gain.setValueAtTime(0.0001, now + t); g.gain.exponentialRampToValueAtTime(vol, now + t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, now + t + dur); o.connect(g).connect(ac.destination); o.start(now + t); o.stop(now + t + dur + 0.02); };
       if (kind === 'throw') tone(300, 0.9, 0.5, 'triangle', 0.08, 900);
       if (kind === 'wob') tone(180, 0, 0.12, 'square', 0.05, 140);
+      if (kind === 'pop') { tone(900, 0, 0.18, 'sawtooth', 0.06, 200); [392, 330, 262].forEach((f, i) => tone(f, 0.25 + i * 0.13, 0.25, 'triangle', 0.1)); }
       if (kind === 'click') { tone(1200, 0, 0.05, 'square', 0.06); [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.12 + i * 0.11, 0.3, 'triangle', 0.12)); }
     } catch (e) {}
   }
@@ -1995,17 +2028,18 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   const undoStack = [];
   const snap = () => { undoStack.push(JSON.stringify(W())); if (undoStack.length > 50) undoStack.shift(); };
   const commit = () => { save(); render(); };
-  function sell(hit) {
+  function sell(hit, flee) {
     const w = W(), st = stats(), pend = w.pending || 0;
     if ((!st.spotsLeft && !pend) || (hit && !st.tLeft) || (!hit && !pend && st.spotsLeft <= st.tLeft)) return;
     snap();
     if (pend) w.pending = pend - 1; // ein auf Whatnot verkaufter Spot wird damit eingeordnet
     const who = $$('#wBuyer').value.trim();
     const e = { n: w.sold.length + 1, who, hit, t: new Date().toTimeString().slice(0, 5) };
+    if (hit && flee) e.flee = true; // Pokémon gezogen, aber Niete: es flieht
     if (hit) {
       const used = new Set(w.sold.filter((x) => x.hit).map((x) => x.mon));
       let id; do { id = 1 + Math.floor(Math.random() * 151); } while (used.has(id) && used.size < 151);
-      e.mon = id; w.lastHit = { id: Date.now(), who, mon: id };
+      e.mon = id; w.lastHit = { id: Date.now(), who, mon: id, flee: !!flee };
     }
     w.sold.push(e);
     // Ton kommt aus der OBS-Quelle, sonst hier
@@ -2013,6 +2047,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     commit();
   }
   $$('#wHitBtn').onclick = () => sell(true);
+  $$('#wFleeBtn').onclick = () => sell(true, true);
   $$('#wMissBtn').onclick = () => sell(false);
   $$('#wUndo').onclick = () => { if (!undoStack.length) return; S.wheel = JSON.parse(undoStack.pop()); seenHit = Math.max(seenHit, (S.wheel.lastHit || {}).id || 0); commit(); };
   $$('#wNewRound').onclick = (ev) => {
@@ -2123,7 +2158,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const log = $$('#wWnLog'); log.hidden = !wn.log.length; log.innerHTML = wn.log.map((t) => `<li>${esc(t)}</li>`).join('');
   }
   setInterval(() => { if (window.crashTab() === 'wheel') renderWn(); }, 1000);
-  $$('#wTestCatch').onclick = () => { prev.sound = true; playCatch(prev, { who: 'Test', mon: 1 + Math.floor(Math.random() * 151) }); };
+  let testFlee = false;
+  $$('#wTestCatch').onclick = () => { prev.sound = true; playCatch(prev, { who: 'Test', mon: 1 + Math.floor(Math.random() * 151), flee: testFlee }); testFlee = !testFlee; $$('#wTestCatch').textContent = testFlee ? 'Flucht testen' : 'Fang testen'; };
   $$('#wObsConnect').onclick = () => { const b = $$('#obsBtn'); if (b) b.click(); setTimeout(renderPanel, 300); };
   if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('wheel/', location.href); u.hash = ''; u.search = ''; $$('#wObsUrl').textContent = u.href; }
   $$('#wObsCopy').onclick = () => { try { navigator.clipboard.writeText($$('#wObsUrl').textContent); $$('#wObsCopy').textContent = 'Kopiert ✓'; setTimeout(() => $$('#wObsCopy').textContent = 'Kopieren', 1500); } catch (e) {} };
@@ -2136,7 +2172,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     set('#wRound', w.round); set('#wSpots', w.spots); set('#wTickets', w.tickets);
     $$('#wLive').checked = w.live; $$('#wShowChance').checked = w.showChance; $$('#wShowHits').checked = w.showHits; $$('#wShowTurn').checked = w.showTurn; $$('#wAnim').checked = w.anim; $$('#wSound').checked = w.sound;
     const pend = w.pending || 0;
-    $$('#wHitBtn').disabled = (!st.spotsLeft && !pend) || !st.tLeft;
+    $$('#wHitBtn').disabled = $$('#wFleeBtn').disabled = (!st.spotsLeft && !pend) || !st.tLeft;
     $$('#wMissBtn').disabled = !pend && (!st.spotsLeft || st.spotsLeft <= st.tLeft);
     $$('#wPending').hidden = !pend;
     if (pend) $$('#wPending').innerHTML = `<span><b>${pend}</b> ${pend === 1 ? 'neuer Spot' : 'neue Spots'} auf Whatnot verkauft. Jetzt antippen: Pokémon gefangen oder Kein Treffer.</span>` + (pend > 1 ? '<span class="w-row"><button class="btn" id="wPendMiss">Alle als „Kein Treffer“</button></span>' : '');
@@ -2151,7 +2187,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       $$('#wHits').innerHTML = w.hits.length ? w.hits.map((h, i) => `<div class="w-hitrow" data-i="${i}"><span class="ph">${hitIcon(h.name)}</span><input type="text" value="${esc(h.name)}" placeholder="z. B. Pikachu Trainer Box"><button class="x" aria-label="Entfernen">✕</button></div>`).join('') : '<p class="w-hint">Noch keine Hits. Einfach eintragen, z. B. „Glurak ex SAR“. Das passende Pokémon erscheint automatisch daneben und alles läuft im Stream unter der Fang-Chance durch.</p>';
     }
     const log = $$('#wLog');
-    log.innerHTML = w.sold.length ? w.sold.slice().reverse().map((x) => { const m = x.hit ? monOf(x.mon) : null; return `<li><span class="n">#${x.n}</span>${m ? `<img src="${m.img}" alt="">` : ''}<span class="who">${esc(x.who || '–')}</span><span class="res ${x.hit ? 'hit' : 'miss'}">${x.hit ? esc(m.name) + ' gefangen' : 'kein Treffer'}</span></li>`; }).join('') : '<li class="none">Noch kein Spot verkauft</li>';
+    log.innerHTML = w.sold.length ? w.sold.slice().reverse().map((x) => { const m = x.hit ? monOf(x.mon) : null; return `<li><span class="n">#${x.n}</span>${m ? `<img src="${m.img}" alt="">` : ''}<span class="who">${esc(x.who || '–')}</span><span class="res ${x.hit ? (x.flee ? 'flee' : 'hit') : 'miss'}">${x.hit ? esc(m.name) + (x.flee ? ' geflohen' : ' gefangen') : 'kein Pokémon'}</span></li>`; }).join('') : '<li class="none">Noch kein Spot verkauft</li>';
     renderObsState();
   }
 
