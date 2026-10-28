@@ -2,12 +2,15 @@
 
 Overlay und Steuerseite für die Pokémon-Fangrunden im Whatnot-Stream.
 
-- **index.html**: Steuerseite für Chris (mit Code geschützt). Hier werden Preise verteilt, Käufer und Pokémon eingetragen und die Fänge gestartet. Der Tab „Gewinner“ zeigt, wer was gewonnen hat.
+- **index.html**: öffentliche Startseite (aus `quelle/start.html`): Whatnot-Livestream mit Live/Offline-Status und Zahlen (Follower, Bewertung, Verkäufe) und alle Social-Links. Die Links stehen oben im Skript in `SOCIALS`.
+- **api/whatnot.js**: Vercel-Funktion, liest das öffentliche Whatnot-Profil und liefert Live-Status und Zahlen als JSON (`/api/whatnot`, mit `?debug=1` zur Fehlersuche). Läuft nur auf Vercel, nicht auf GitHub Pages.
+- **steuerung/index.html**: Steuerseite für Chris (mit Code geschützt), Tabs Fangen und Wheel. Hier werden Preise verteilt, Käufer und Pokémon eingetragen und die Fänge gestartet. Der Tab „Gewinner“ zeigt, wer was gewonnen hat.
 - **obs.html**: Browserquelle für OBS (1080 × 1920, transparent). Zeigt Fang-Animation und Übersicht im Stream.
 - **wheel/index.html**: Browserquelle fürs Wheel (1080 × 1920, transparent). Leiste oben mit Runde, Pokémon (Tickets), Spots, Fang-Chance, Top-Hits und Gewinnern, dazu eine Fang-Animation bei jedem Treffer. Gesteuert im Tab „Wheel“ der Steuerseite.
 
 Live über Vercel (jeder Push auf `main` geht automatisch online):
-- Steuerseite: https://crashketchum.de/
+- Startseite: https://crashketchum.de/
+- Steuerseite: https://crashketchum.de/steuerung/
 - OBS-Browserquelle Fangen: https://crashketchum.de/obs/
 - OBS-Browserquelle Wheel: https://crashketchum.de/wheel/
 
@@ -17,6 +20,6 @@ Die Steuerseite schickt den Spielstand über den OBS-WebSocket-Server (OBS 28 od
 
 ## Ändern
 
-Die Quelle liegt in `quelle/`. Nach Änderungen an `quelle/src.html` im Ordner `quelle` `python3 build.py` ausführen. Das baut `index.html` und `obs.html` neu.
+Die Quelle liegt in `quelle/`. Nach Änderungen an `quelle/src.html` im Ordner `quelle` `python3 build.py` ausführen. Das baut `index.html`, `steuerung/index.html`, `obs.html`, `obs/index.html` und `wheel/index.html` neu.
 
 Pokémon-Bilder: offizielle Artworks über PokeAPI. Namensschrift: Luckiest Guy (Apache-2.0).

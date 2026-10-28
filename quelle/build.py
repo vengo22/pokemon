@@ -1,4 +1,4 @@
-"""Baut index.html (Steuerseite), obs.html (OBS-Browserquelle Fangen) und wheel/index.html (OBS-Quelle Wheel) aus quelle/src.html.
+"""Baut index.html (öffentliche Startseite aus start.html), steuerung/index.html (Steuerseite mit Code), obs.html (OBS-Browserquelle Fangen) und wheel/index.html (OBS-Quelle Wheel) aus quelle/src.html.
 Aufruf im Ordner quelle:  python3 build.py
 """
 import os
@@ -16,7 +16,10 @@ ov = art.replace('<title>Fangrunde crashketchum</title>', '<title>Fangrunde OBS<
     '<script>\n/* ---------- Passwort-Sperre', '<script>window.FANG_OVERLAY = true;</script>\n<script>\n/* ---------- Passwort-Sperre', 1)
 assert 'FANG_OVERLAY = true' in ov
 out = os.path.dirname(here)
-open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(full(art))
+# Startseite für alle, Steuerseite (Fangen/Wheel, mit Code) unter /steuerung/
+open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(rd('start.html'))
+os.makedirs(os.path.join(out, 'steuerung'), exist_ok=True)
+open(os.path.join(out, 'steuerung', 'index.html'), 'w', encoding='utf-8').write(full(art))
 open(os.path.join(out, 'obs.html'), 'w', encoding='utf-8').write(full(ov))
 os.makedirs(os.path.join(out, 'obs'), exist_ok=True)
 open(os.path.join(out, 'obs', 'index.html'), 'w', encoding='utf-8').write(full(ov))
@@ -25,4 +28,4 @@ wh = ov.replace('<title>Fangrunde OBS</title>', '<title>Wheel OBS</title>', 1).r
 assert 'WHEEL_OVERLAY = true' in wh
 os.makedirs(os.path.join(out, 'wheel'), exist_ok=True)
 open(os.path.join(out, 'wheel', 'index.html'), 'w', encoding='utf-8').write(full(wh))
-print('index.html, obs.html, obs/index.html und wheel/index.html gebaut')
+print('index.html, steuerung/index.html, obs.html, obs/index.html und wheel/index.html gebaut')

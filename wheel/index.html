@@ -376,7 +376,7 @@ html.unlocked .gate { display: none; }
 /* ---------- Header mit Tabs (Fangen / Wheel), nur Steuerseite ---------- */
 .hdr { position: sticky; top: 0; z-index: 50; background: rgba(13,20,48,.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
 .hdr-in { max-width: 1300px; margin: 0 auto; display: flex; align-items: center; gap: 18px; padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); }
-.hdr-logo { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 24px; letter-spacing: .5px; white-space: nowrap; }
+.hdr-logo { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 24px; letter-spacing: .5px; white-space: nowrap; }
 .hdr-logo svg { width: 42px; height: 42px; flex: none; transition: transform .5s cubic-bezier(.3,1.6,.5,1); }
 .hdr-logo:hover svg { transform: rotate(-25deg); }
 .hdr-logo span { color: var(--red); }
@@ -545,7 +545,7 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
 </div>
 <header class="hdr">
   <div class="hdr-in">
-    <div class="hdr-logo">
+    <a class="hdr-logo" href="../" title="Zur Startseite">
     <svg viewBox="0 0 100 100" aria-hidden="true">
       <circle cx="50" cy="50" r="45" fill="#f3f4fa"/>
       <path d="M5 50a45 45 0 0 1 90 0z" fill="#ee3b4c"/>
@@ -556,7 +556,7 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
       <circle cx="50" cy="50" r="6" fill="#fff" stroke="#15151d" stroke-opacity=".25" stroke-width="2"/>
     </svg>
       <b>crash<span>ketchum</span></b>
-    </div>
+    </a>
     <nav class="hdr-tabs" role="tablist" aria-label="Bereich">
       <button role="tab" id="tabFang" data-tab="fang" aria-selected="true">Fangen</button>
       <button role="tab" id="tabWheel" data-tab="wheel" aria-selected="false">Wheel</button>
@@ -1650,7 +1650,7 @@ document.querySelectorAll('#perBuyer button').forEach((b) => (b.onclick = () => 
 }));
 $('#copyObs').onclick = async (e) => { const b = e.currentTarget; try { await navigator.clipboard.writeText($('#obsUrl').textContent); b.textContent = 'Kopiert'; } catch (err) { b.textContent = 'Bitte markieren'; } setTimeout(() => (b.textContent = 'Kopieren'), 2000); };
 /* OBS-Link passend zur Adresse, unter der diese Seite läuft (Vercel, GitHub Pages ...) */
-if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('obs/', location.href); u.hash = ''; u.search = ''; $('#obsUrl').textContent = u.href; }
+if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('../obs/', location.href); u.hash = ''; u.search = ''; $('#obsUrl').textContent = u.href; }
 $('#wTabWin').onclick = () => { wView = 'win'; renderWinners(); };
 $('#wTabNone').onclick = () => { wView = 'none'; renderWinners(); };
 $('#copyWin').onclick = async (e) => {
@@ -1925,7 +1925,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     return bar;
   }
 
-  /* Fang-Animation: Pokémon erscheint, Ball fliegt rein, wackelt dreimal, klick, Sterne */
+  /* Fang-Animation: Pokémon erscheint, Ball fliegt rein, wackelt (dreimal bzw. 1 bis 3 Mal beim Fliehen), klick, Sterne */
   function playCatch(bar, hit) {
     const c = bar.root.querySelector('[data-catch]'), m = monOf(hit.mon);
     const mon = c.querySelector('.wb-mon'), ball = c.querySelector('.wb-ball'), glow = c.querySelector('.wb-glow'), txt = c.querySelector('.wb-text'), stars = c.querySelector('.wb-stars');
@@ -1953,9 +1953,11 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     // Ball fällt runter und wackelt
     A(ball, [{ transform: `translate(0, ${-12 * k}px)` }, { transform: 'translate(0, 0)', offset: .6 }, { transform: `translate(0, ${-2.5 * k}px)`, offset: .8 }, { transform: 'translate(0, 0)' }], { delay: 2150, duration: 450, easing: 'ease-in' });
     const wob = [{ transform: 'rotate(0)' }, { transform: 'rotate(-22deg)', offset: .25 }, { transform: 'rotate(18deg)', offset: .6 }, { transform: 'rotate(0)' }];
-    [2800, 3600, 4400].forEach((d) => { const a = ball.querySelector('svg').animate(wob, { delay: d, duration: 520, easing: 'ease-in-out' }); bar.anims.push(a); });
+    // Gefangen: dreimal wackeln. Flieht: zufällig 1 bis 3 Mal, dann bricht der Ball auf
+    const wobs = flee ? [2800, 3600, 4400].slice(0, 1 + Math.floor(Math.random() * 3)) : [2800, 3600, 4400];
+    wobs.forEach((d) => { const a = ball.querySelector('svg').animate(wob, { delay: d, duration: 520, easing: 'ease-in-out' }); bar.anims.push(a); });
     if (flee) {
-      // Niete: beim dritten Wackeln bricht der Ball auf, das Pokémon kommt raus und rennt weg
+      // Niete: nach dem letzten Wackeln bricht der Ball auf, das Pokémon kommt raus und rennt weg
       bar.ct = setTimeout(() => {
         if (bar.sound) sfx('pop');
         A(ball, [{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(0, ${-3 * k}px) scale(1.25)`, opacity: 1, offset: .3 }, { transform: `translate(0, ${-3 * k}px) scale(1.5)`, opacity: 0 }], { duration: 450 });
@@ -1976,8 +1978,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
             bar.ct = setTimeout(() => { c.classList.remove('on'); (bar.anims || []).forEach((a) => a.cancel()); bar.anims = []; }, 650);
           }, 2200);
         }, 1100);
-      }, 4900);
-      if (bar.sound) { sfx('throw'); [2800, 3600, 4400].forEach((d) => setTimeout(() => sfx('wob'), d)); }
+      }, wobs[wobs.length - 1] + 500);
+      if (bar.sound) { sfx('throw'); wobs.forEach((d) => setTimeout(() => sfx('wob'), d)); }
       return;
     }
     bar.ct = setTimeout(() => {
@@ -2172,7 +2174,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   let testFlee = false;
   $$('#wTestCatch').onclick = () => { prev.sound = true; playCatch(prev, { who: 'Test', mon: 1 + Math.floor(Math.random() * 151), flee: testFlee }); testFlee = !testFlee; $$('#wTestCatch').textContent = testFlee ? 'Flucht testen' : 'Fang testen'; };
   $$('#wObsConnect').onclick = () => { const b = $$('#obsBtn'); if (b) b.click(); setTimeout(renderPanel, 300); };
-  if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('wheel/', location.href); u.hash = ''; u.search = ''; $$('#wObsUrl').textContent = u.href; }
+  if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('../wheel/', location.href); u.hash = ''; u.search = ''; $$('#wObsUrl').textContent = u.href; }
   $$('#wObsCopy').onclick = () => { try { navigator.clipboard.writeText($$('#wObsUrl').textContent); $$('#wObsCopy').textContent = 'Kopiert ✓'; setTimeout(() => $$('#wObsCopy').textContent = 'Kopieren', 1500); } catch (e) {} };
   setInterval(() => { if (window.crashTab() === 'wheel') renderObsState(); }, 1500);
   function renderObsState() { const t = $$('#obsText'); $$('#wObsState').textContent = t ? t.textContent : ''; $$('#wObsConnect').hidden = typeof obsOk !== 'undefined' && obsOk; }
