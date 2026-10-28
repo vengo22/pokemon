@@ -426,6 +426,20 @@ html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
 .w-log .none { color: var(--muted); padding: 14px; justify-content: center; }
 .w-hint { font-size: 12.5px; color: var(--muted); margin: 0; }
 
+.w-wnstate { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; }
+.w-wnstate .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--dud); flex: none; }
+.w-wnstate.on .dot { background: var(--teal); box-shadow: 0 0 8px var(--teal); }
+.w-wnstate.warn .dot { background: var(--gold); }
+.w-wn select { background: var(--night); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.w-wn details summary { cursor: pointer; font-weight: 800; font-size: 13px; color: var(--muted); }
+.w-wn details .steps { margin-top: 10px; }
+.w-wn .steps input { flex: 1; min-width: 0; }
+.w-bm { display: inline-block; padding: 4px 12px; border-radius: 999px; background: var(--gold); color: #1a1530; font-weight: 800; text-decoration: none; cursor: grab; }
+.w-wnlog { list-style: none; margin: 0; padding: 0; font-size: 12px; color: var(--muted); font-family: var(--mono); display: grid; gap: 2px; }
+.w-pending { border: 1px solid var(--gold); background: rgba(255,201,61,.1); border-radius: 12px; padding: 10px 12px; font-size: 13.5px; display: grid; gap: 8px; animation: wpend 1.2s ease-in-out 3; }
+@keyframes wpend { 50% { box-shadow: 0 0 0 4px rgba(255,201,61,.35); } }
+.w-pending b { color: var(--gold); font-size: 16px; }
+
 /* ---------- Wheel: Stream-Leiste (OBS und Vorschau). Größen in --k = 1/100 der Leistenbreite ---------- */
 .wov { position: fixed; inset: 0; pointer-events: none; display: none; }
 body.wheel-ov .wov { display: block; }
@@ -701,8 +715,25 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
     <div class="w-prev" id="wPrev"><div class="wov" id="wovPrev"></div><div class="w-prev-note" id="wPrevNote"></div></div>
   </div>
   <div class="w-panel">
+    <div class="w-sec w-wn">
+      <h3>Whatnot-Verbindung</h3>
+      <div class="w-wnstate" id="wWnState"><span class="dot"></span><span id="wWnText">Nicht verbunden</span></div>
+      <select id="wWnSet" hidden aria-label="Welches Wheel"></select>
+      <details id="wWnHelp">
+        <summary>So verbindest du Whatnot (einmal einrichten)</summary>
+        <ol class="steps">
+          <li>Diesen Knopf in die <b>Lesezeichenleiste</b> ziehen: <a class="w-bm" id="wBm" href="#">Wheel-Leser</a></li>
+          <li>Link deiner Whatnot-Show eintragen und öffnen: <span class="w-row" style="margin-top:6px"><input type="text" id="wWnUrl" placeholder="https://www.whatnot.com/live/…" autocomplete="off"><button class="btn" id="wWnOpen">Öffnen</button></span></li>
+          <li>Im Whatnot-Tab auf das Lesezeichen <b>Wheel-Leser</b> klicken. Unten links erscheint ein gelber Kasten, der die Spots mitliest.</li>
+        </ol>
+        <p class="w-hint">Der Whatnot-Tab muss im Browser offen bleiben (darf im Hintergrund sein). Jeder verkaufte Spot wird dann hier automatisch abgezogen.</p>
+      </details>
+      <label class="w-check" style="flex-wrap:wrap">Treffer automatisch erkennen, wenn Whatnot meldet: <input type="text" id="wWnKey" placeholder="z. B. Ticket" style="width:130px;padding:5px 8px"></label>
+      <ul class="w-wnlog" id="wWnLog" hidden></ul>
+    </div>
     <div class="w-sec">
       <h3>Spot verkauft</h3>
+      <div class="w-pending" id="wPending" hidden></div>
       <input type="text" id="wBuyer" placeholder="Käufer (optional), z. B. pika_paul" autocomplete="off">
       <div class="w-big">
         <button class="w-hit" id="wHitBtn">Pokémon gefangen!<small>Treffer, mit Fang-Animation</small></button>
@@ -1752,7 +1783,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   const W = () => { if (!S.wheel) S.wheel = JSON.parse(JSON.stringify(DEF)); return Object.assign(S.wheel, Object.assign({}, DEF, S.wheel)); };
   const stats = () => {
     const w = W(), hitsDone = w.sold.filter((x) => x.hit).length;
-    const spotsLeft = Math.max(0, w.spots - w.sold.length), tLeft = Math.max(0, w.tickets - hitsDone);
+    const spotsLeft = Math.max(0, w.spots - w.sold.length - (w.pending || 0)), tLeft = Math.max(0, w.tickets - hitsDone);
     return { spotsLeft, tLeft, pct: spotsLeft ? Math.min(100, Math.round((tLeft / spotsLeft) * 100)) : 0 };
   };
   const HEAT = [[40, 'Glühend', '#ff5a3d'], [28, 'Heiß', '#ff8a3d'], [18, 'Warm', '#ffc93d'], [8, 'Lauwarm', '#9be36b'], [0, 'Kalt', '#3dc1ff']];
@@ -1901,9 +1932,10 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   const snap = () => { undoStack.push(JSON.stringify(W())); if (undoStack.length > 50) undoStack.shift(); };
   const commit = () => { save(); render(); };
   function sell(hit) {
-    const w = W(), st = stats();
-    if (!st.spotsLeft || (hit && !st.tLeft) || (!hit && st.spotsLeft <= st.tLeft)) return;
+    const w = W(), st = stats(), pend = w.pending || 0;
+    if ((!st.spotsLeft && !pend) || (hit && !st.tLeft) || (!hit && !pend && st.spotsLeft <= st.tLeft)) return;
     snap();
+    if (pend) w.pending = pend - 1; // ein auf Whatnot verkaufter Spot wird damit eingeordnet
     const who = $$('#wBuyer').value.trim();
     const e = { n: w.sold.length + 1, who, hit, t: new Date().toTimeString().slice(0, 5) };
     if (hit) {
@@ -1923,7 +1955,10 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const b = ev.currentTarget;
     if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Wirklich? Nochmal klicken'; b.classList.add('warn'); setTimeout(() => { delete b.dataset.sure; b.textContent = 'Neue Runde'; b.classList.remove('warn'); }, 3500); return; }
     delete b.dataset.sure; b.textContent = 'Neue Runde'; b.classList.remove('warn');
-    snap(); const w = W(); w.round = (+w.round || 0) + 1; w.sold = []; commit();
+    snap(); const w = W(); w.round = (+w.round || 0) + 1; w.sold = []; w.pending = 0;
+    // das alte Whatnot-Wheel nicht in die neue Runde übernehmen
+    if (wn.set) { w.wnSkip = wn.set.title + '|' + wn.set.total + '|' + wn.set.remaining; } wn.set = null; wn.pick = '';
+    commit();
   };
   [['#wRound', 'round', 1], ['#wSpots', 'spots', 1], ['#wTickets', 'tickets', 0]].forEach(([id, k, min]) => {
     $$(id).addEventListener('change', (e) => { const v = Math.max(min, parseInt(e.target.value, 10) || min); snap(); W()[k] = v; commit(); });
@@ -1957,6 +1992,75 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     img.src = url;
   };
 
+
+  /* ---------- Whatnot-Verbindung ----------
+     Whatnot hat keine offene Schnittstelle fürs Wheel. Das Wheel ist dort ein „Surprise Set“ mit „X of Y left“.
+     Das Lesezeichen „Wheel-Leser“ läuft im Whatnot-Tab, liest diese Zahl jede Sekunde und schickt sie per postMessage hierher. */
+  const BM = "(function(){var O='__ORIGIN__',t=window.opener;if(!t||t.closed){t=window.open(O+'#wheel','ckwheel');}if(window.__ck)clearInterval(window.__ck);var b=document.getElementById('ckbadge');if(!b){b=document.createElement('div');b.id='ckbadge';document.body.appendChild(b);}b.style.cssText='position:fixed;z-index:2147483647;left:12px;bottom:12px;background:#10173d;color:#fff;font:600 13px/1.35 system-ui,sans-serif;padding:8px 12px;border-radius:10px;border:2px solid #ffc93d;max-width:380px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4)';var num=function(s){return parseInt(String(s).replace(/[^\\d]/g,''),10)||0};var RX=/([\\d.,]+)\\s*(?:of|von|\\/)\\s*([\\d.,]+)\\s*(?:spots?\\s*)?(?:left|\u00fcbrig|verbleibend|remaining|frei)/i;function scan(){var sets=[],seen=[],els=document.querySelectorAll('strong,span,div,p,small');for(var i=0;i<els.length;i++){var e=els[i];if(e.children.length>3)continue;var tx=(e.textContent||'').trim();if(tx.length>60)continue;var m=tx.match(RX);if(!m)continue;var card=e.closest('section,li,article')||e.parentElement;if(seen.indexOf(card)>=0)continue;seen.push(card);var te=card.querySelector('strong[title]'),title=te?(te.getAttribute('title')||te.textContent):'';if(!title){var ss=card.querySelectorAll('strong,h2,h3,h4,span');for(var j=0;j<ss.length;j++){var x=(ss[j].textContent||'').trim();if(x&&!RX.test(x)&&!/surprise|\u00fcberraschung/i.test(x)&&x.length<80){title=x;break;}}}var it={title:(title||'Wheel').trim(),remaining:num(m[1]),total:num(m[2])};if(!sets.some(function(o){return o.title==it.title&&o.total==it.total}))sets.push(it);}var q=function(s){var e=document.querySelector(s);return e?(e.textContent||'').trim():''};var d={ck:'whatnot',v:1,sets:sets,status:q(\"[data-testid='show-winning-status']\"),product:q(\"[data-testid='show-product-title']\")};var ok=t&&!t.closed;try{if(ok)t.postMessage(d,'*')}catch(x){}b.textContent='crashketchum Wheel-Leser: '+(sets.length?sets.map(function(s){return s.title+' '+s.remaining+'/'+s.total}).join(' \u00b7 '):'kein Wheel auf der Seite gefunden')+(ok?'':' \u00b7 Steuerseite geschlossen, Lesezeichen nochmal klicken');}scan();window.__ck=setInterval(scan,1000);})();";
+  const wn = { last: 0, set: null, pick: '', status: '', log: [] };
+  try { wn.pick = localStorage.getItem('crash.wnpick') || ''; } catch (e) {}
+  const home = new URL('./', location.href); home.hash = ''; home.search = '';
+  $$('#wBm').href = 'javascript:' + encodeURIComponent(BM.replace('__ORIGIN__', home.href));
+  $$('#wBm').onclick = (e) => { e.preventDefault(); alert('Den Knopf „Wheel-Leser“ mit der Maus in die Lesezeichenleiste ziehen. Angeklickt wird er später im Whatnot-Tab.'); };
+  try { $$('#wWnUrl').value = localStorage.getItem('crash.wnurl') || ''; $$('#wWnKey').value = localStorage.getItem('crash.wnkey') || ''; } catch (e) {}
+  $$('#wWnUrl').onchange = (e) => { try { localStorage.setItem('crash.wnurl', e.target.value.trim()); } catch (x) {} };
+  $$('#wWnKey').onchange = (e) => { try { localStorage.setItem('crash.wnkey', e.target.value.trim()); } catch (x) {} };
+  $$('#wWnOpen').onclick = () => { const u = $$('#wWnUrl').value.trim(); if (!/^https:\/\/([a-z0-9-]+\.)*whatnot\.com\//i.test(u)) { $$('#wWnUrl').classList.add('need'); $$('#wWnUrl').focus(); return; } $$('#wWnUrl').classList.remove('need'); window.open(u, '_blank'); };
+  if (!$$('#wWnUrl').value) $$('#wWnHelp').open = true;
+  $$('#wWnSet').onchange = (e) => { wn.pick = e.target.value; try { localStorage.setItem('crash.wnpick', wn.pick); } catch (x) {} wn.set = null; };
+  document.addEventListener('click', (e) => {
+    if (e.target.id !== 'wPendMiss') return;
+    const w = W(); if (!w.pending) return; snap();
+    for (let i = 0; i < w.pending; i++) w.sold.push({ n: w.sold.length + 1, who: '', hit: false, t: new Date().toTimeString().slice(0, 5) });
+    w.pending = 0; commit();
+  });
+  window.addEventListener('message', (ev) => {
+    const d = ev.data; if (!d || d.ck !== 'whatnot' || !Array.isArray(d.sets)) return;
+    let host = ''; try { host = new URL(ev.origin).hostname; } catch (e) {}
+    if (!/(^|\.)whatnot\.com$/i.test(host) && location.protocol !== 'file:') return;
+    wn.last = Date.now(); onWhatnot(d);
+  });
+  function wnLog(t) { wn.log.unshift(new Date().toTimeString().slice(0, 8) + '  ' + t); wn.log = wn.log.slice(0, 5); }
+  function onWhatnot(d) {
+    const w = W();
+    const sets = d.sets.filter((x) => x.total > 0 && x.title + '|' + x.total + '|' + x.remaining !== w.wnSkip);
+    // Auswahl, falls mehrere Wheels in der Show sind
+    const sel = $$('#wWnSet'), titles = sets.map((x) => x.title);
+    sel.hidden = sets.length < 2;
+    if (sel.dataset.t !== titles.join('\n')) { sel.dataset.t = titles.join('\n'); sel.innerHTML = titles.map((t) => `<option>${esc(t)}</option>`).join(''); }
+    let cur = sets.find((x) => x.title === wn.pick) || sets[0];
+    if (cur) { sel.value = cur.title; if (wn.pick !== cur.title && sets.length < 2) wn.pick = cur.title; }
+    // Meldungen von Whatnot (z. B. Gewinner) mitschreiben, Käufer vorschlagen, Treffer per Stichwort erkennen
+    const status = [d.status, d.product].filter(Boolean).join(' · ');
+    if (status && status !== wn.status) {
+      wn.status = status; wnLog(status);
+      const m = (d.status || '').match(/^(.+?)\s+(?:is\s+)?(?:won|wins|gewinnt|hat gewonnen|winning)/i);
+      if (m && !$$('#wBuyer').value) $$('#wBuyer').value = m[1].replace(/^@/, '').trim();
+      const key = $$('#wWnKey').value.trim();
+      if (key && (w.pending || 0) > 0 && status.toLowerCase().includes(key.toLowerCase())) { wnLog('→ Treffer erkannt (' + key + ')'); sell(true); }
+    }
+    if (!cur) { wn.set = null; renderWn(); return; }
+    const before = wn.set;
+    wn.set = cur;
+    if (before && before.title === cur.title && before.remaining === cur.remaining && before.total === cur.total) { renderWn(); return; }
+    // Abgleich: auf Whatnot verkauft = total - remaining. Was hier noch nicht eingeordnet ist, wird „offen“.
+    const soldWn = Math.max(0, cur.total - cur.remaining);
+    const known = w.sold.length + (w.pending || 0);
+    let changed = false;
+    if (w.spots !== cur.total) { w.spots = cur.total; changed = true; }
+    if (soldWn > known) { w.pending = (w.pending || 0) + soldWn - known; changed = true; if (before) wnLog(`${soldWn - known} Spot${soldWn - known > 1 ? 's' : ''} verkauft, noch ${cur.remaining} von ${cur.total}`); }
+    else if (soldWn < known && (w.pending || 0) > 0) { w.pending = Math.max(0, w.pending - (known - soldWn)); changed = true; }
+    if (changed) commit(); else renderWn();
+  }
+  function renderWn() {
+    const on = Date.now() - wn.last < 4000, el = $$('#wWnState');
+    el.classList.toggle('on', on && !!wn.set); el.classList.toggle('warn', on && !wn.set);
+    $$('#wWnText').textContent = !on ? (wn.last ? 'Verbindung weg: Ist der Whatnot-Tab noch offen? Sonst Lesezeichen dort nochmal klicken.' : 'Nicht verbunden')
+      : !wn.set ? 'Whatnot-Tab verbunden, aber dort ist gerade kein Wheel zu sehen'
+      : `Verbunden ✓ „${wn.set.title}“: noch ${wn.set.remaining} von ${wn.set.total} Spots`;
+    const log = $$('#wWnLog'); log.hidden = !wn.log.length; log.innerHTML = wn.log.map((t) => `<li>${esc(t)}</li>`).join('');
+  }
+  setInterval(() => { if (window.crashTab() === 'wheel') renderWn(); }, 1000);
   $$('#wTestCatch').onclick = () => { prev.sound = true; playCatch(prev, { who: 'Test', mon: 1 + Math.floor(Math.random() * 151) }); };
   $$('#wObsConnect').onclick = () => { const b = $$('#obsBtn'); if (b) b.click(); setTimeout(renderPanel, 300); };
   if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('wheel/', location.href); u.hash = ''; u.search = ''; $$('#wObsUrl').textContent = u.href; }
@@ -1969,8 +2073,11 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const set = (id, v) => { const el = $$(id); if (document.activeElement !== el) el.value = v; };
     set('#wRound', w.round); set('#wSpots', w.spots); set('#wTickets', w.tickets);
     $$('#wLive').checked = w.live; $$('#wShowChance').checked = w.showChance; $$('#wShowHits').checked = w.showHits; $$('#wShowWin').checked = w.showWin; $$('#wAnim').checked = w.anim; $$('#wSound').checked = w.sound;
-    $$('#wHitBtn').disabled = !st.spotsLeft || !st.tLeft;
-    $$('#wMissBtn').disabled = !st.spotsLeft || st.spotsLeft <= st.tLeft;
+    const pend = w.pending || 0;
+    $$('#wHitBtn').disabled = (!st.spotsLeft && !pend) || !st.tLeft;
+    $$('#wMissBtn').disabled = !pend && (!st.spotsLeft || st.spotsLeft <= st.tLeft);
+    $$('#wPending').hidden = !pend;
+    if (pend) $$('#wPending').innerHTML = `<span><b>${pend}</b> ${pend === 1 ? 'neuer Spot' : 'neue Spots'} auf Whatnot verkauft. Jetzt antippen: Pokémon gefangen oder Kein Treffer.</span>` + (pend > 1 ? '<span class="w-row"><button class="btn" id="wPendMiss">Alle als „Kein Treffer“</button></span>' : '');
     $$('#wStatus').innerHTML = `<span>Noch <b>${st.tLeft}</b> Pokémon</span><span>in <b>${st.spotsLeft}</b> Spots</span><span>Chance <b>${st.pct}%</b></span>` + (!st.spotsLeft ? '<span style="color:var(--gold)">Runde ausverkauft</span>' : '');
     $$('#wUndo').disabled = !undoStack.length;
     $$('#wPrev').classList.toggle('off', !w.live);
