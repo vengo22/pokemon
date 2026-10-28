@@ -12,7 +12,7 @@ def full(a):
     a = a.replace('\n<div class="gate"', '\n</head>\n<body>\n<div class="gate"', 1)
     return head + a + '\n</body>\n</html>\n'
 
-ov = art.replace('<title>Fangrunde crashketchum</title>', '<title>Fangrunde OBS</title>', 1).replace(
+ov = art.replace('<title>crashketchum Steuerung</title>', '<title>Fangrunde OBS</title>', 1).replace(
     '<script>\n/* ---------- Passwort-Sperre', '<script>window.FANG_OVERLAY = true;</script>\n<script>\n/* ---------- Passwort-Sperre', 1)
 assert 'FANG_OVERLAY = true' in ov
 out = os.path.dirname(here)
