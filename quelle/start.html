@@ -55,12 +55,7 @@ a { color: inherit; }
 .profile { position: relative; background: #fbfbfd; color: var(--ink); border-radius: 26px; overflow: hidden; text-align: center; box-shadow: 0 6px 0 rgba(0,0,0,.25), 0 20px 50px rgba(0,0,0,.3); outline: 3px solid transparent; transition: outline-color .3s, box-shadow .3s; }
 .profile.is-live { outline-color: var(--live); box-shadow: 0 0 0 9px rgba(255,45,66,.22), 0 6px 0 rgba(0,0,0,.25), 0 20px 50px rgba(0,0,0,.3); }
 .banner { height: 118px; position: relative; overflow: hidden;
-  background: radial-gradient(circle at 18% 120%, rgba(255,216,94,.55), transparent 45%), linear-gradient(120deg, #ee3b4c 0%, #c41e2e 55%, #7e0f1d 100%); }
-.banner::before, .banner::after { /* angedeutete Pokébälle im Hintergrund */
-  content: ''; position: absolute; border-radius: 50%; border: 10px solid rgba(255,255,255,.14);
-  background: linear-gradient(transparent 46%, rgba(255,255,255,.14) 46% 54%, transparent 54%); }
-.banner::before { width: 170px; height: 170px; right: -40px; top: -50px; }
-.banner::after { width: 90px; height: 90px; left: 24px; top: 40px; opacity: .7; }
+  background: linear-gradient(120deg, rgba(238,59,76,.55) 0%, rgba(126,15,29,.55) 100%), url(banner.jpg) center / cover, #c41e2e; }
 .avatar-wrap { position: relative; width: 124px; height: 124px; margin: -64px auto 0; }
 .avatar { width: 124px; height: 124px; border-radius: 50%; object-fit: cover; display: block; background: #fbfbfd; border: 5px solid #fbfbfd; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
 .avatar.fallback { padding: 14px; background: #f1f1f6; }
@@ -130,13 +125,13 @@ h2 { margin: 34px 0 12px; font-family: var(--display); font-weight: 400; font-si
   <section class="profile" id="profile" aria-live="polite">
     <div class="banner"></div>
     <div class="avatar-wrap">
-      <img class="avatar fallback" id="avatar" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23f3f4fa'/%3E%3Cpath d='M5 50a45 45 0 0 1 90 0z' fill='%23ee3b4c'/%3E%3Cpath d='M5 50h90' stroke='%2315151d' stroke-width='8'/%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%2315151d' stroke-width='6'/%3E%3Ccircle cx='50' cy='50' r='14' fill='%23f3f4fa' stroke='%2315151d' stroke-width='6'/%3E%3C/svg%3E">
+      <img class="avatar" id="avatar" alt="Profilbild crashketchum" data-src="profilbild.jpg" src="profilbild.jpg">
       <span class="live-badge">LIVE</span>
     </div>
     <div class="pbody">
-      <h1 id="name">crashketchum</h1>
+      <h1 id="name">CrAshKetchum</h1>
       <div class="handle">@crashketchum · Pokémon-Karten auf Whatnot</div>
-      <p class="bio" id="bio"></p>
+      <p class="bio" id="bio">Herzlich Willkommen und schön, dass du hier bist 💚 Bekannt sind meine „Magic-Rip-Hands“.</p>
       <div class="tracker wait" id="tracker">
         <span class="dot"></span>
         <div><b id="trackText">Live-Status wird geprüft …</b><small id="trackSub">einen Moment</small></div>
@@ -181,15 +176,7 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const profile = 'https://www.whatnot.com/user/' + WHATNOT_USER;
 
-/* Profilbild (Whatnot-Profilbild als profilbild.jpg im Repo-Root), sonst bleibt der Pokéball */
-const AVATARS = ['profilbild.jpg'];
-(function nextAvatar(i) {
-  if (i >= AVATARS.length) return;
-  const im = new Image();
-  im.onload = () => { if (im.naturalWidth < 40) return nextAvatar(i + 1); $('avatar').src = AVATARS[i]; $('avatar').dataset.src = AVATARS[i]; $('avatar').classList.remove('fallback'); };
-  im.onerror = () => nextAvatar(i + 1);
-  im.src = AVATARS[i];
-})(0);
+
 
 $('socials').innerHTML = SOCIALS.filter((s) => s.url).map((s) =>
   `<a class="social" href="${esc(s.url)}" target="_blank" rel="noopener">
@@ -208,8 +195,6 @@ function show(d) {
     im.onload = () => { $('avatar').src = d.avatar; $('avatar').dataset.src = d.avatar; $('avatar').classList.remove('fallback'); };
     im.src = d.avatar;
   }
-  if (d && d.name) $('name').textContent = d.name;
-  if (d && d.bio) $('bio').textContent = d.bio;
   $('trackText').textContent = live ? 'Jetzt live auf Whatnot!' : known ? 'Gerade offline' : 'Live-Status nicht abrufbar';
   $('trackSub').textContent = live ? 'Komm rein, sag Hallo und sichere dir deinen Spot.'
     : known ? 'Zuletzt geprüft um ' + time() + ' Uhr. Folge auf Whatnot, dann bekommst du Bescheid.'
