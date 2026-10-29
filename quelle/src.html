@@ -440,18 +440,17 @@ html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
 .w-hitrow .x { background: none; border: 1px solid var(--line); border-radius: 8px; width: 34px; height: 34px; color: var(--muted); }
 .w-hitrow .x:hover { color: var(--red); border-color: var(--red); }
 /* Hits 1:1 wie im Whatnot-Wheel, mit eigenem Pokémon pro Hit (David 2026-10-29) */
-.w-hits.manual .w-hitrow { grid-template-columns: 52px 1fr auto auto; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
-.w-hits.manual .w-hitrow .ph { grid-row: span 2; }
-.w-hits.manual .w-hitrow input:not(.pm) { grid-column: 2 / 5; }
+#wHits .w-hitrow { grid-template-columns: 52px 1fr auto auto; }
+#wTix .w-hitrow { grid-template-columns: 52px 1fr auto auto; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+#wTix .w-hitrow .ph { grid-row: span 2; }
+#wTix .w-hitrow input:not(.pm) { grid-column: 2 / 5; }
+.w-hitrow .got[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
 .w-hitrow .pm { min-width: 0; }
 .w-hitrow .got { padding: 0 10px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); font: 800 12.5px 'Nunito', system-ui, sans-serif; white-space: nowrap; }
 .w-hitrow .got:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
 .w-hitrow .got:disabled { opacity: .35; }
 .w-setup label:has(#wName) { grid-column: 1 / -1; }
 .w-setup #wName { font-size: 17px; text-align: left; }
-.w-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
-.w-mode button { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--night); color: var(--muted); font: 800 13px 'Nunito', system-ui, sans-serif; }
-.w-mode button[aria-pressed="true"] { border-color: var(--red); background: var(--red); color: #fff; }
 .w-log { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
 .w-log li { display: flex; gap: 10px; align-items: center; padding: 6px 10px; border-top: 1px solid var(--line); font-size: 13px; }
 .w-log li:first-child { border-top: 0; }
@@ -828,13 +827,15 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
       <label class="w-check"><input type="checkbox" id="wSound"> Ton</label>
     </div>
     <div class="w-sec">
-      <h3>Hits im Wheel (laufen im Stream durch)</h3>
-      <div class="w-mode" id="wHitMode">
-        <button data-mode="auto" aria-pressed="true">Pokémon automatisch erkennen</button>
-        <button data-mode="manual" aria-pressed="false">Pokémon selbst festlegen</button>
-      </div>
-      <p class="w-hint" id="wHitModeHint"></p>
+      <h3>Tickets im Whatnot-Wheel (werden automatisch erkannt)</h3>
+      <p class="w-hint">Trag jedes Ticket genau so ein, wie es im Whatnot-Wheel steht (z. B. „Bisasam Ticket 14“), und wähl darunter ein Pokémon. Wird das Ticket gezogen, erkennt der Wheel-Leser es und fängt genau dieses Pokémon. Bleibt gespeichert, bis du es mit ✕ löschst.</p>
       <datalist id="wMonList"></datalist>
+      <div class="w-hits" id="wTix"></div>
+      <div class="w-row"><button class="btn" id="wAddTix">+ Ticket hinzufügen</button></div>
+    </div>
+    <div class="w-sec">
+      <h3>Hits im Laufband (nur von Hand)</h3>
+      <p class="w-hint">Diese Hits laufen im Stream unten durch. Hier passiert nichts automatisch: Tipp auf „Gefangen“, wenn einer weg ist, dann verschwindet er aus dem Laufband.</p>
       <div class="w-hits" id="wHits"></div>
       <div class="w-row"><button class="btn" id="wAddHit">+ Hit hinzufügen</button><span class="w-hint">Enter springt in die nächste Zeile</span></div>
     </div>
@@ -1967,8 +1968,14 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   window.crashTab = () => document.body.classList.contains('tab-wheel') ? 'wheel' : 'fang';
 
   /* Zustand */
-  const DEF = { round: 1, spots: 50, tickets: 15, sold: [], hits: [], live: true, showChance: true, showHits: true, showTurn: true, turn: '', anim: true, sound: true, lastHit: null, hitMode: 'auto' };
-  const W = () => { if (!S.wheel) S.wheel = JSON.parse(JSON.stringify(DEF)); return Object.assign(S.wheel, Object.assign({}, DEF, S.wheel)); };
+  const DEF = { round: 1, spots: 50, tickets: 15, sold: [], hits: [], live: true, showChance: true, showHits: true, showTurn: true, turn: '', anim: true, sound: true, lastHit: null, tix: null };
+  const W = () => {
+    if (!S.wheel) S.wheel = JSON.parse(JSON.stringify(DEF));
+    const w = Object.assign(S.wheel, Object.assign({}, DEF, S.wheel));
+    // Tickets (automatisch erkannt) und Hits fürs Laufband (von Hand) sind getrennt (David 2026-10-29). Alte Hits mit Pokémon werden zu Tickets.
+    if (!Array.isArray(w.tix)) { w.tix = w.hits.filter((h) => (h.mon || '').trim()).map((h) => ({ name: h.name, mon: h.mon })); w.hits = w.hits.filter((h) => !(h.mon || '').trim()); delete w.hitMode; }
+    return w;
+  };
   const stats = () => {
     const w = W(), hitsDone = w.sold.filter((x) => x.hit).length;
     const spotsLeft = Math.max(0, w.spots - w.sold.length - (w.pending || 0)), tLeft = Math.max(0, w.tickets - hitsDone);
@@ -2030,7 +2037,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     monCache.set(key, res); return res;
   }
   // Pokémon zu einem Hit: im Modus „selbst festlegen“ das eingetragene, sonst aus dem Namen erkannt
-  const monForHit = (h) => (h && W().hitMode === 'manual' && (h.mon || '').trim() && findMon(h.mon)) || (h ? findMon(h.name) : null);
+  // Pokémon zu einem Ticket: das eingetragene, sonst aus dem Namen erkannt
+  const monForHit = (h) => (h && (h.mon || '').trim() && findMon(h.mon)) || (h ? findMon(h.name) : null);
   const iconOf = (m) => m ? `<img src="${m.img}" alt="${esc(m.name)}" title="${esc(m.name)}">` : BALL;
   const hitIcon = (name) => iconOf(findMon(name));
 
@@ -2086,10 +2094,10 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       // Hits-Laufband
       const hits = w.hits.filter((x) => (x.name || '').trim() && !x.won);
       q('hits').hidden = !w.showHits || !hits.length;
-      const hk = hits.map((x) => x.name + '/' + (w.hitMode === 'manual' ? x.mon || '' : '')).join('|') + '|' + bar.wb.clientWidth;
+      const hk = hits.map((x) => x.name).join('|') + '|' + bar.wb.clientWidth;
       if (hk !== bar.hitKey) {
         bar.hitKey = hk;
-        marquee(q('htr'), hits.map((x) => { const m = monForHit(x); return `<span class="it">${m ? `<img src="${m.img}" alt="">` : BALL}${esc(x.name.trim())}</span>`; }).join(''), 9);
+        marquee(q('htr'), hits.map((x) => { const m = findMon(x.name); return `<span class="it">${m ? `<img src="${m.img}" alt="">` : BALL}${esc(x.name.trim())}</span>`; }).join(''), 9);
       }
     };
     new ResizeObserver(() => bar.update()).observe(bar.wb);
@@ -2225,10 +2233,10 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const who = $$('#wBuyer').value.trim();
     const e = { n: w.sold.length + 1, who, hit, t: new Date().toTimeString().slice(0, 5) };
     if (!hit) e.flee = true;
-    if (hit && hitIdx >= 0 && w.hits[hitIdx]) { w.hits[hitIdx].won = true; e.prize = w.hits[hitIdx].name; }
+    if (hit && hitIdx >= 0 && w.tix[hitIdx]) { w.tix[hitIdx].won = true; e.prize = w.tix[hitIdx].name; }
     {
       const used = new Set(w.sold.map((x) => x.mon).filter(Boolean));
-      const hm = hit && hitIdx >= 0 ? monForHit(w.hits[hitIdx]) : null;
+      const hm = hit && hitIdx >= 0 ? monForHit(w.tix[hitIdx]) : null;
       let id = hm && hm.id;
       if (!id) do { id = 1 + Math.floor(Math.random() * 151); } while (used.has(id) && used.size < 151);
       e.mon = id; w.lastHit = { id: Date.now(), who, mon: id, flee: !hit, ball: heat(st.pct)[1] };
@@ -2246,7 +2254,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Wirklich? Nochmal klicken'; b.classList.add('warn'); setTimeout(() => { delete b.dataset.sure; b.textContent = 'Neues Wheel'; b.classList.remove('warn'); }, 3500); return; }
     delete b.dataset.sure; b.textContent = 'Neues Wheel'; b.classList.remove('warn');
     setTimeout(() => { $$('#wSetup').scrollIntoView({ behavior: 'smooth', block: 'center' }); $$('#wSetup').classList.remove('flash'); void $$('#wSetup').offsetWidth; $$('#wSetup').classList.add('flash'); $$('#wSpots').focus(); $$('#wSpots').select(); }, 50);
-    snap(); const w = W(); w.name = ''; w.sold = []; w.pending = 0; w.hits.forEach((h) => { delete h.won; });
+    snap(); const w = W(); w.name = ''; w.sold = []; w.pending = 0; w.hits.forEach((h) => { delete h.won; }); w.tix.forEach((h) => { delete h.won; });
     // das alte Whatnot-Wheel nicht ins neue übernehmen
     if (wn.set) { w.wnSkip = wn.set.title + '|' + wn.set.total + '|' + wn.set.remaining; } wn.set = null; wn.pick = '';
     commit();
@@ -2262,13 +2270,21 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   /* Hits im Wheel (Pokémon wird am Namen erkannt) */
   $$('#wAddHit').onclick = () => { const w = W(); if (w.hits.length >= 20) return; w.hits.push({ name: '' }); commit(); const ins = document.querySelectorAll('#wHits input'); ins[ins.length - 1] && ins[ins.length - 1].focus(); };
   $$('#wHits').addEventListener('click', (e) => {
-    const row = e.target.closest('.w-hitrow'); if (!row) return; const i = +row.dataset.i;
+    const row = e.target.closest('.w-hitrow'); if (!row) return; const i = +row.dataset.i, h = W().hits[i];
     if (e.target.closest('.x')) { W().hits.splice(i, 1); commit(); }
-    if (e.target.closest('.got')) { $$('#wHits').dataset.sig = ''; sell(true, i); }
+    if (e.target.closest('.got')) { snap(); h.won = !h.won; commit(); } // nur Laufband, keine Animation, keine Zähler
   });
-  $$('#wHits').addEventListener('input', (e) => { const row = e.target.closest('.w-hitrow'); if (!row) return; const h = W().hits[+row.dataset.i]; h[e.target.classList.contains('pm') ? 'mon' : 'name'] = e.target.value; row.querySelector('.ph').innerHTML = iconOf(monForHit(h)); save(); bars.forEach((b) => b.update()); });
+  $$('#wHits').addEventListener('input', (e) => { const row = e.target.closest('.w-hitrow'); if (!row) return; const h = W().hits[+row.dataset.i]; h.name = e.target.value; row.querySelector('.ph').innerHTML = hitIcon(h.name); save(); bars.forEach((b) => b.update()); });
+  /* Tickets im Whatnot-Wheel: Name + Pokémon, gezogenes Ticket erkennt der Wheel-Leser */
+  $$('#wAddTix').onclick = () => { const w = W(); if (w.tix.length >= 100) return; w.tix.push({ name: '', mon: '' }); commit(); const ins = document.querySelectorAll('#wTix input:not(.pm)'); ins[ins.length - 1] && ins[ins.length - 1].focus(); };
+  $$('#wTix').addEventListener('click', (e) => {
+    const row = e.target.closest('.w-hitrow'); if (!row) return; const i = +row.dataset.i;
+    if (e.target.closest('.x')) { W().tix.splice(i, 1); commit(); }
+    if (e.target.closest('.got')) { $$('#wTix').dataset.sig = ''; sell(true, i); }
+  });
+  $$('#wTix').addEventListener('input', (e) => { const row = e.target.closest('.w-hitrow'); if (!row) return; const h = W().tix[+row.dataset.i]; h[e.target.classList.contains('pm') ? 'mon' : 'name'] = e.target.value; row.querySelector('.ph').innerHTML = iconOf(monForHit(h)); save(); });
+  $$('#wTix').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.closest('.w-hitrow')) { e.preventDefault(); $$('#wAddTix').click(); } });
   $$('#wMonList').innerHTML = DEX.map((x) => `<option value="${esc(x.split('|')[0])}">`).join('');
-  $$('#wHitMode').addEventListener('click', (e) => { const b = e.target.closest('button[data-mode]'); if (!b) return; W().hitMode = b.dataset.mode; commit(); });
   $$('#wHits').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.closest('.w-hitrow')) { e.preventDefault(); $$('#wAddHit').click(); } });
 
 
@@ -2297,7 +2313,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const has = (w) => words.some((x) => x === w || (w.length >= 5 && x.length >= 5 && lev(x, w, 1) <= 1));
     // Ticketname wie im Whatnot-Wheel („Bisasam Ticket 14“): Nummern müssen genau stimmen, damit Ticket 1 nicht auf Ticket 14 passt.
     // Passen mehrere, gewinnt der längste Name.
-    const hits = W().hits, tp = ' ' + t + ' ';
+    const hits = W().tix, tp = ' ' + t + ' ';
     let best = -1, bestLen = 0;
     for (let i = 0; i < hits.length; i++) {
       const h = hits[i]; if (h.won || !(h.name || '').trim()) continue;
@@ -2317,7 +2333,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     while ((W().pending || 0) > 0 && wn.results.length) {
       const r = wn.results.shift(), c = classify(r.text);
       if (!c) continue;
-      wnLog(c.hit ? '→ Hit erkannt: ' + (W().hits[c.idx] || {}).name : '→ Niete erkannt, Pokémon flieht');
+      wnLog(c.hit ? '→ Ticket erkannt: ' + (W().tix[c.idx] || {}).name : '→ Niete erkannt, Pokémon flieht');
       sell(c.hit, c.idx);
     }
   }
@@ -2412,16 +2428,15 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     $$('#wPrev').classList.toggle('off', !w.live);
     $$('#wPrevNote').textContent = w.live ? '' : 'Leiste ist im Stream gerade ausgeblendet';
     // Top-Hits-Liste nur neu bauen, wenn sich die Anzahl oder Bilder ändern (sonst springt der Cursor)
-    const manual = w.hitMode === 'manual';
-    $$('#wHitMode').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === (manual ? 'manual' : 'auto'))));
-    $$('#wHitModeHint').textContent = manual
-      ? 'Trag jedes Ticket genau so ein, wie es im Whatnot-Wheel steht (z. B. „Bisasam Ticket 14“), und wähl darunter ein Pokémon. Wird das Ticket gezogen, erkennt der Wheel-Leser es am Namen und fängt genau dieses Pokémon. Die Liste bleibt gespeichert, bis du einen Eintrag mit ✕ löschst.'
-      : 'Das Pokémon wird aus dem Namen des Hits erkannt (z. B. „Glurak ex SAR“ → Glurak). Gezogene Hits erkennt der Wheel-Leser am Gewinn-Text.';
-    $$('#wHits').classList.toggle('manual', manual);
-    const sig = (manual ? 'm' : 'a') + w.hits.map((h) => (h.won ? 1 : 0)).join('');
-    if ($$('#wHits').dataset.sig !== sig) {
-      $$('#wHits').dataset.sig = sig;
-      $$('#wHits').innerHTML = w.hits.length ? w.hits.map((h, i) => `<div class="w-hitrow${h.won ? ' won' : ''}" data-i="${i}" title="${h.won ? 'Schon gewonnen, läuft nicht mehr im Stream' : ''}"><span class="ph">${iconOf(monForHit(h))}</span><input type="text" value="${esc(h.name)}" placeholder="${manual ? 'Name wie im Whatnot-Wheel' : 'z. B. Pikachu Trainer Box'}">${manual ? `<input type="text" class="pm" list="wMonList" value="${esc(h.mon || '')}" placeholder="Pokémon" aria-label="Pokémon für diesen Hit">` : ''}<button class="got" title="Diesen Hit als gezogen eintragen"${h.won ? ' disabled' : ''}>Gezogen</button><button class="x" aria-label="Entfernen">✕</button></div>`).join('') : '<p class="w-hint">Noch keine Hits. Einfach eintragen, z. B. „Glurak ex SAR“. Das passende Pokémon erscheint automatisch daneben und alles läuft im Stream unter der Fang-Chance durch.</p>';
+    const hsig = w.hits.map((h) => (h.won ? 1 : 0)).join('');
+    if ($$('#wHits').dataset.sig !== hsig) {
+      $$('#wHits').dataset.sig = hsig;
+      $$('#wHits').innerHTML = w.hits.length ? w.hits.map((h, i) => `<div class="w-hitrow${h.won ? ' won' : ''}" data-i="${i}" title="${h.won ? 'Gefangen, läuft nicht mehr im Stream' : ''}"><span class="ph">${hitIcon(h.name)}</span><input type="text" value="${esc(h.name)}" placeholder="z. B. Glurak ex SAR"><button class="got" aria-pressed="${!!h.won}" title="${h.won ? 'Wieder ins Laufband' : 'Als gefangen markieren'}">${h.won ? 'Gefangen ✓' : 'Gefangen'}</button><button class="x" aria-label="Entfernen">✕</button></div>`).join('') : '<p class="w-hint">Noch keine Hits. Einfach eintragen, z. B. „Glurak ex SAR“. Sie laufen im Stream unter der Fang-Chance durch.</p>';
+    }
+    const tsig = w.tix.map((h) => (h.won ? 1 : 0)).join('');
+    if ($$('#wTix').dataset.sig !== tsig) {
+      $$('#wTix').dataset.sig = tsig;
+      $$('#wTix').innerHTML = w.tix.length ? w.tix.map((h, i) => `<div class="w-hitrow${h.won ? ' won' : ''}" data-i="${i}" title="${h.won ? 'Schon gezogen' : ''}"><span class="ph">${iconOf(monForHit(h))}</span><input type="text" value="${esc(h.name)}" placeholder="Ticket wie im Whatnot-Wheel, z. B. Bisasam Ticket 14"><input type="text" class="pm" list="wMonList" value="${esc(h.mon || '')}" placeholder="Pokémon" aria-label="Pokémon für dieses Ticket"><button class="got" title="Dieses Ticket als gezogen eintragen"${h.won ? ' disabled' : ''}>Gezogen</button><button class="x" aria-label="Entfernen">✕</button></div>`).join('') : '<p class="w-hint">Noch keine Tickets eingetragen.</p>';
     }
     const log = $$('#wLog');
     log.innerHTML = w.sold.length ? w.sold.slice().reverse().map((x) => { const m = x.mon ? monOf(x.mon) : null; return `<li><span class="n">#${x.n}</span>${m ? `<img src="${m.img}" alt="">` : ''}<span class="who">${esc(x.who || '–')}</span><span class="res ${x.hit ? 'hit' : 'flee'}">${x.hit ? 'Hit' + (x.prize ? ': ' + esc(x.prize) : '') : 'Niete, geflohen'}</span></li>`; }).join('') : '<li class="none">Noch kein Spot verkauft</li>';
