@@ -448,6 +448,8 @@ html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
 .w-hitrow .x { background: none; border: 1px solid var(--line); border-radius: 8px; width: 34px; height: 34px; color: var(--muted); }
 .w-hitrow .x:hover { color: var(--red); border-color: var(--red); }
 /* Hits 1:1 wie im Whatnot-Wheel, mit eigenem Pokémon pro Hit (David 2026-10-29) */
+.w-sold { margin: 8px 0 0; font-size: 13.5px; color: var(--fg); }
+.w-sold .btn { margin-left: 6px; padding: 4px 10px; font-size: 12.5px; }
 #wHits .w-hitrow { grid-template-columns: 52px 1fr auto auto; }
 button.ph { padding: 0; cursor: pointer; }
 button.ph:hover { border-color: var(--gold); }
@@ -808,6 +810,7 @@ html:not(.unlocked) #cloudBox { display: none; }
         <label>Spots im Wheel<input type="number" id="wSpots" min="1"></label>
         <label>davon Gewinne (Hits)<input type="number" id="wTickets" min="0"></label>
       </div>
+      <p class="w-sold" id="wSoldInfo"></p>
       <p class="w-hint">Die Hits sind die Pokémon, die man fangen kann. Bei „Gefangen“ gehen Hits und Spots runter, bei „Flieht“ (Niete) nur die Spots. Daraus rechnet die Leiste die Fang-Chance.</p>
     </div>
     <div class="w-sec w-wn">
@@ -2336,6 +2339,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   [['#wSpots', 'spots', 1], ['#wTickets', 'tickets', 0]].forEach(([id, k, min]) => {
     $$(id).addEventListener('change', (e) => { const v = Math.max(min, parseInt(e.target.value, 10) || min); snap(); W()[k] = v; commit(); });
   });
+  document.addEventListener('click', (e) => { if (e.target.id !== 'wSoldReset') return; snap(); const w = W(); w.sold = []; w.pending = 0; commit(); });
   $$('#wName').addEventListener('change', (e) => { snap(); W().name = e.target.value.trim(); commit(); });
   [['#wLive', 'live'], ['#wShowChance', 'showChance'], ['#wShowHits', 'showHits'], ['#wShowTurn', 'showTurn'], ['#wAnim', 'anim'], ['#wSound', 'sound']].forEach(([id, k]) => {
     $$(id).onchange = (e) => { W()[k] = e.target.checked; commit(); };
@@ -2504,6 +2508,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const w = W(), st = stats();
     const set = (id, v) => { const el = $$(id); if (document.activeElement !== el) el.value = v; };
     if (document.activeElement !== $$('#wName')) $$('#wName').value = w.name || ''; set('#wSpots', w.spots); set('#wTickets', w.tickets);
+    // damit klar ist, warum die Leiste weniger zeigt als eingetragen (David 2026-10-29)
+    { const sold = w.sold.length + (w.pending || 0), hd = w.sold.filter((x) => x.hit).length; $$('#wSoldInfo').innerHTML = sold ? `Schon verkauft: <b>${sold}</b> Spots, davon <b>${hd}</b> Hits. Im Stream stehen deshalb noch <b>${st.spotsLeft}</b> Spots und <b>${st.tLeft}</b> Pokémon. <button class="btn" id="wSoldReset" type="button">Auf 0 setzen</button>` : 'Noch nichts verkauft, im Stream stehen alle Spots.'; }
     $$('#wLive').checked = w.live; $$('#wShowChance').checked = w.showChance; $$('#wShowHits').checked = w.showHits; $$('#wShowTurn').checked = w.showTurn; $$('#wAnim').checked = w.anim; $$('#wSound').checked = w.sound;
     const pend = w.pending || 0;
     $$('#wHitBtn').disabled = (!st.spotsLeft && !pend) || !st.tLeft;
