@@ -1984,7 +1984,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   };
   // Feste Stufen nach Prozent (David: 30 % ist warm)
   /* Fang-Chance als Bälle, aufsteigend (David 2026-10-29): [ab %, Name, Textfarbe, Ball-Grafik] */
-  const ballSVG = (top, bottom, deco = '') => `<svg class="tierball" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="bt"><path d="M4 50a46 46 0 0 1 92 0z"/></clipPath></defs><path d="M4 50a46 46 0 0 1 92 0z" fill="${top}"/><path d="M4 50a46 46 0 0 0 92 0z" fill="${bottom}"/><g clip-path="url(#bt)">${deco}</g><ellipse cx="34" cy="26" rx="12" ry="7" fill="#fff" opacity=".35" transform="rotate(-30 34 26)"/><circle cx="50" cy="50" r="46" fill="none" stroke="#111" stroke-width="6"/><path d="M4 50h30M66 50h30" stroke="#111" stroke-width="7"/><circle cx="50" cy="50" r="14" fill="#fff" stroke="#111" stroke-width="6"/><circle cx="50" cy="50" r="6" fill="#fff" stroke="#111" stroke-width="2.5"/></svg>`;
+  const ballSVG = (top, bottom, deco = '') => `<svg class="tierball" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="bt"><path d="M4 50a46 46 0 0 1 92 0z"/></clipPath></defs><path d="M4 50a46 46 0 0 1 92 0z" fill="${top}"/><path d="M4 50a46 46 0 0 0 92 0z" fill="${bottom}"/><g clip-path="url(#bt)">${deco}</g><ellipse cx="34" cy="26" rx="12" ry="7" fill="#fff" opacity=".35" transform="rotate(-30 34 26)"/><circle cx="50" cy="50" r="46" fill="none" stroke="#111" stroke-width="6"/><path d="M4 50h30M66 50h30" stroke="#111" stroke-width="7"/><circle class="btn" cx="50" cy="50" r="14" fill="#fff" stroke="#111" stroke-width="6"/><circle cx="50" cy="50" r="6" fill="#fff" stroke="#111" stroke-width="2.5"/></svg>`;
   const HEAT = [
     [100, 'Meisterball', '#e9a3ff', ballSVG('#7b3fb8', '#f4f4f8', '<circle cx="26" cy="30" r="9" fill="#e8559b"/><circle cx="74" cy="30" r="9" fill="#e8559b"/><path d="M38 34V18l12 10 12-10v16" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>')],
     [86, 'Hyperball', '#ffd23d', ballSVG('#1d1d24', '#f4f4f8', '<path d="M30 6v40M70 6v40" stroke="#f5c542" stroke-width="12"/>')],
@@ -2110,6 +2110,9 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const mon = c.querySelector('.wb-mon'), ball = c.querySelector('.wb-ball'), glow = c.querySelector('.wb-glow'), txt = c.querySelector('.wb-text'), stars = c.querySelector('.wb-stars');
     (bar.anims || []).forEach((a) => a.cancel()); bar.anims = [];
     clearTimeout(bar.ct);
+    // geworfen wird der Ball, der beim Kauf als Fang-Chance angezeigt wurde (David 2026-10-29)
+    const tier = HEAT.find((h) => h[1] === hit.ball) || heat(stats().pct);
+    ball.innerHTML = tier[3];
     mon.src = m.img; ball.classList.remove('click');
     const flee = !!hit.flee;
     txt.querySelector('b').textContent = flee ? 'Flieht!' : 'Gefangen!';
@@ -2235,7 +2238,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       const hm = hit && hitIdx >= 0 ? monForHit(w.hits[hitIdx]) : null;
       let id = hm && hm.id;
       if (!id) do { id = 1 + Math.floor(Math.random() * 151); } while (used.has(id) && used.size < 151);
-      e.mon = id; w.lastHit = { id: Date.now(), who, mon: id, flee: !hit };
+      e.mon = id; w.lastHit = { id: Date.now(), who, mon: id, flee: !hit, ball: heat(st.pct)[1] };
     }
     w.sold.push(e);
     // Ton kommt aus der OBS-Quelle, sonst hier
