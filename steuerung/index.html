@@ -450,6 +450,18 @@ html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
 /* Hits 1:1 wie im Whatnot-Wheel, mit eigenem Pokémon pro Hit (David 2026-10-29) */
 .w-sold { margin: 8px 0 0; font-size: 13.5px; color: var(--fg); }
 .w-sold .btn { margin-left: 6px; padding: 4px 10px; font-size: 12.5px; }
+.w-big:has(#wHitBtn[hidden]) { grid-template-columns: 1fr; }
+#wHitBtn[hidden] { display: none; }
+.w-tixbtns { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; margin: 6px 0 10px; }
+.w-tixbtns button { display: grid; justify-items: center; gap: 2px; padding: 8px 6px; border-radius: 12px; border: 2px solid var(--gold); background: linear-gradient(180deg, #ffd85e, #f0b93a); color: #2a1a00; font: 800 12.5px/1.2 'Nunito', system-ui, sans-serif; cursor: pointer; }
+.w-tixbtns button:hover { filter: brightness(1.08); }
+.w-tixbtns button:disabled { opacity: .45; cursor: default; }
+.w-tixbtns img, .w-tixbtns svg { width: 48px; height: 48px; object-fit: contain; }
+.w-wn > summary { cursor: pointer; list-style: none; }
+.w-wn > summary::-webkit-details-marker { display: none; }
+.w-wn > summary h3 { display: inline; }
+.w-wn > summary::after { content: ' ▸'; color: var(--muted); }
+.w-wn[open] > summary::after { content: ' ▾'; }
 #wHits .w-hitrow { grid-template-columns: 52px 1fr auto auto; }
 button.ph { padding: 0; cursor: pointer; }
 button.ph:hover { border-color: var(--gold); }
@@ -813,31 +825,16 @@ html:not(.unlocked) #cloudBox { display: none; }
       <p class="w-sold" id="wSoldInfo"></p>
       <p class="w-hint">Die Hits sind die Pokémon, die man fangen kann. Bei „Gefangen“ gehen Hits und Spots runter, bei „Flieht“ (Niete) nur die Spots. Daraus rechnet die Leiste die Fang-Chance.</p>
     </div>
-    <div class="w-sec w-wn">
-      <h3>Whatnot-Verbindung</h3>
-      <div class="w-wnstate" id="wWnState"><span class="dot"></span><span id="wWnText">Nicht verbunden</span></div>
-      <select id="wWnSet" hidden aria-label="Welches Wheel"></select>
-      <details id="wWnHelp">
-        <summary>So verbindest du Whatnot (einmal einrichten)</summary>
-        <ol class="steps">
-          <li>Diesen Knopf in die <b>Lesezeichenleiste</b> ziehen: <a class="w-bm" id="wBm" href="#">Wheel-Leser</a></li>
-          <li>Link deiner Whatnot-Show eintragen und öffnen: <span class="w-row" style="margin-top:6px"><input type="text" id="wWnUrl" placeholder="https://www.whatnot.com/live/…" autocomplete="off"><button class="btn" id="wWnOpen">Öffnen</button></span></li>
-          <li>Im Whatnot-Tab auf das Lesezeichen <b>Wheel-Leser</b> klicken. Unten links erscheint ein gelber Kasten, der die Spots mitliest.</li>
-        </ol>
-        <p class="w-hint">Der Whatnot-Tab muss im Browser offen bleiben (darf im Hintergrund sein). Jeder verkaufte Spot wird dann hier automatisch abgezogen.</p>
-      </details>
-      <label class="w-hint" for="wWnNiete" style="font-weight:700">Was auf Whatnot gewonnen wird, ordnet die Seite selbst ein: Steht dort ein Hit aus deiner Liste, wird gefangen. Steht dort eines dieser Wörter, flieht das Pokémon:</label>
-      <input type="text" id="wWnNiete" autocomplete="off" style="padding:7px 10px">
-      <ul class="w-wnlog" id="wWnLog" hidden></ul>
-    </div>
     <div class="w-sec">
-      <h3>Spot verkauft</h3>
+      <h3>Spot verkauft: was wurde gezogen?</h3>
       <div class="w-pending" id="wPending" hidden></div>
-      <label class="w-hint" for="wBuyer" style="font-weight:700">Jetzt dran (kommt automatisch von Whatnot, sonst hier eintippen)</label>
+      <label class="w-hint" for="wBuyer" style="font-weight:700">Jetzt dran (Name eintippen, optional)</label>
       <input type="text" id="wBuyer" placeholder="Name des Käufers, z. B. pika_paul" autocomplete="off">
+      <p class="w-hint" id="wTixBtnsHint" style="font-weight:700">Ticket gezogen? Einfach antippen, dann wird genau dieses Pokémon gefangen:</p>
+      <div class="w-tixbtns" id="wTixBtns"></div>
       <div class="w-big">
         <button class="w-hit" id="wHitBtn">Gefangen!<small>Hit gezogen</small></button>
-        <button class="w-flee" id="wFleeBtn">Flieht!<small>Niete, z. B. Booster</small></button>
+        <button class="w-flee" id="wFleeBtn">Niete: Flieht!<small>kein Ticket, z. B. Booster</small></button>
       </div>
       <div class="w-status" id="wStatus"></div>
       <div class="w-row"><button class="btn" id="wUndo">↶ Zurück</button><button class="btn" id="wNewRound">Neues Wheel</button></div>
@@ -863,8 +860,8 @@ html:not(.unlocked) #cloudBox { display: none; }
       <label class="w-check"><input type="checkbox" id="wSound"> Ton</label>
     </div>
     <div class="w-sec">
-      <h3>Tickets im Whatnot-Wheel (werden automatisch erkannt)</h3>
-      <p class="w-hint">Trag jedes Ticket genau so ein, wie es im Whatnot-Wheel steht (z. B. „Bisasam Ticket 14“), und wähl darunter ein Pokémon. Wird das Ticket gezogen, erkennt der Wheel-Leser es und fängt genau dieses Pokémon. Bleibt gespeichert, bis du es mit ✕ löschst.</p>
+      <h3>Tickets im Whatnot-Wheel</h3>
+      <p class="w-hint">Trag jedes Ticket so ein, wie es im Whatnot-Wheel steht (z. B. „Bisasam Ticket 14“). Das Pokémon wird automatisch erkannt, du kannst es ändern. Wird das Ticket gezogen, tippst du es oben unter „Spot verkauft“ an. Bleibt gespeichert, bis du es mit ✕ löschst.</p>
       <datalist id="wMonList"></datalist>
       <div class="w-hits" id="wTix"></div>
       <div class="w-row"><button class="btn" id="wAddTix">+ Ticket hinzufügen</button></div>
@@ -884,6 +881,24 @@ html:not(.unlocked) #cloudBox { display: none; }
         <div class="w-row"><span class="w-hint" id="wObsState"></span><button class="btn" id="wObsConnect" hidden style="padding:6px 10px;font-size:12.5px">Mit OBS verbinden</button></div>
       </div>
     </div>
+    <details class="w-sec w-wn" id="wWnBox">
+      <summary><h3>Automatisch mit Whatnot (optional)</h3></summary>
+      <p class="w-hint">Brauchst du nicht. Nur wer möchte, kann hier einen Wheel-Leser einrichten, der verkaufte Spots selbst mitzählt.</p>
+      <div class="w-wnstate" id="wWnState"><span class="dot"></span><span id="wWnText">Nicht verbunden</span></div>
+      <select id="wWnSet" hidden aria-label="Welches Wheel"></select>
+      <details id="wWnHelp">
+        <summary>So verbindest du Whatnot (einmal einrichten)</summary>
+        <ol class="steps">
+          <li>Diesen Knopf in die <b>Lesezeichenleiste</b> ziehen: <a class="w-bm" id="wBm" href="#">Wheel-Leser</a></li>
+          <li>Link deiner Whatnot-Show eintragen und öffnen: <span class="w-row" style="margin-top:6px"><input type="text" id="wWnUrl" placeholder="https://www.whatnot.com/live/…" autocomplete="off"><button class="btn" id="wWnOpen">Öffnen</button></span></li>
+          <li>Im Whatnot-Tab auf das Lesezeichen <b>Wheel-Leser</b> klicken. Unten links erscheint ein gelber Kasten, der die Spots mitliest.</li>
+        </ol>
+        <p class="w-hint">Der Whatnot-Tab muss im Browser offen bleiben (darf im Hintergrund sein). Jeder verkaufte Spot wird dann hier automatisch abgezogen.</p>
+      </details>
+      <label class="w-hint" for="wWnNiete" style="font-weight:700">Was auf Whatnot gewonnen wird, ordnet die Seite selbst ein: Steht dort ein Hit aus deiner Liste, wird gefangen. Steht dort eines dieser Wörter, flieht das Pokémon:</label>
+      <input type="text" id="wWnNiete" autocomplete="off" style="padding:7px 10px">
+      <ul class="w-wnlog" id="wWnLog" hidden></ul>
+    </details>
     <div class="w-sec">
       <h3>Verlauf</h3>
       <ul class="w-log" id="wLog"></ul>
@@ -2371,6 +2386,19 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   $$('#wHits').addEventListener('input', (e) => { const row = e.target.closest('.w-hitrow'); if (!row) return; const h = W().hits[+row.dataset.i]; h.name = e.target.value; row.querySelector('.ph').innerHTML = hitThumb(h); save(); bars.forEach((b) => b.update()); });
   /* Tickets im Whatnot-Wheel: Name + Pokémon, gezogenes Ticket erkennt der Wheel-Leser */
   $$('#wAddTix').onclick = () => { const w = W(); if (w.tix.length >= 100) return; w.tix.push({ name: '', mon: '' }); commit(); const ins = document.querySelectorAll('#wTix input:not(.pm)'); ins[ins.length - 1] && ins[ins.length - 1].focus(); };
+  // große Ticket-Knöpfe unter „Spot verkauft“ (David 2026-10-29: einfacher als der Wheel-Leser)
+  function renderTixBtns() {
+    const w = W(), st = stats(), pend = w.pending || 0;
+    const bsig = '#' + w.tix.map((h) => h.name + '\u0001' + (h.mon || '')).join('\u0002') + '|' + (st.tLeft > 0 && (st.spotsLeft > 0 || pend > 0));
+    if ($$('#wTixBtns').dataset.sig !== bsig) {
+      $$('#wTixBtns').dataset.sig = bsig;
+      const can = st.tLeft > 0 && (st.spotsLeft > 0 || pend > 0), list = w.tix.map((h, i) => [h, i]).filter(([h]) => (h.name || '').trim());
+      $$('#wTixBtns').innerHTML = list.map(([h, i]) => `<button type="button" data-i="${i}"${can ? '' : ' disabled'}>${iconOf(monForHit(h))}<span>${esc(h.name)}</span></button>`).join('');
+      $$('#wTixBtnsHint').hidden = !list.length;
+      $$('#wHitBtn').hidden = !!list.length; // mit Tickets reicht ein Knopf pro Ticket
+    }
+  }
+  $$('#wTixBtns').addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (!b || b.disabled) return; $$('#wTixBtns').dataset.sig = ''; sell(true, +b.dataset.i); });
   $$('#wTix').addEventListener('click', (e) => {
     const row = e.target.closest('.w-hitrow'); if (!row) return; const i = +row.dataset.i;
     if (e.target.closest('.x')) { W().tix.splice(i, 1); commit(); }
@@ -2384,7 +2412,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       // Pokémon im Ticketnamen erkannt → Feld automatisch ausfüllen, solange es nicht selbst gewählt wurde (David 2026-10-29)
       if (!h.monSet) { const m = findMon(h.name); h.mon = m ? m.name : ''; row.querySelector('.pm').value = h.mon; }
     }
-    row.querySelector('.ph').innerHTML = iconOf(monForHit(h)); save();
+    row.querySelector('.ph').innerHTML = iconOf(monForHit(h)); save(); renderTixBtns();
   });
   $$('#wTix').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.closest('.w-hitrow')) { e.preventDefault(); $$('#wAddTix').click(); } });
   $$('#wMonList').innerHTML = DEX.map((x) => `<option value="${esc(x.split('|')[0])}">`).join('');
@@ -2539,6 +2567,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       $$('#wHits').dataset.sig = hsig;
       $$('#wHits').innerHTML = w.hits.length ? w.hits.map((h, i) => `<div class="w-hitrow${h.won ? ' won' : ''}" data-i="${i}" title="${h.won ? 'Gefangen, läuft nicht mehr im Stream' : ''}"><button class="ph" title="Bild wählen" aria-label="Bild wählen">${hitThumb(h)}</button><input type="text" value="${esc(h.name)}" placeholder="z. B. Glurak ex SAR"><button class="got" aria-pressed="${!!h.won}" title="${h.won ? 'Wieder ins Laufband' : 'Als gefangen markieren'}">${h.won ? 'Gefangen ✓' : 'Gefangen'}</button><button class="x" aria-label="Entfernen">✕</button></div><div class="w-imgmenu" data-i="${i}" hidden><span>Bild:</span><button data-img="" aria-pressed="${!h.img}">Automatisch</button>${Object.entries(HIT_PRESETS).map(([k, [n, u]]) => `<button data-img="p:${k}" title="${n}" aria-pressed="${h.img === 'p:' + k}"><img src="${u}" alt="${n}"></button>`).join('')}${myLogos.map((u, k) => `<span class="mine"><button data-img="${u}" title="Eigenes Logo" aria-pressed="${h.img === u}"><img src="${u}" alt="Eigenes Logo"></button><button class="del" data-del="${k}" title="Logo löschen" aria-label="Logo löschen">✕</button></span>`).join('')}<button data-img="up">Hochladen…</button></div>`).join('') : '<p class="w-hint">Noch keine Hits. Einfach eintragen, z. B. „Glurak ex SAR“. Sie laufen im Stream unter der Fang-Chance durch.</p>';
     }
+    renderTixBtns();
     const tsig = '#' + w.tix.map((h) => h.name + '\u0001' + (h.mon || '')).join('\u0002');
     if ($$('#wTix').dataset.sig !== tsig) {
       $$('#wTix').dataset.sig = tsig;
