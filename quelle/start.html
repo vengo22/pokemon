@@ -181,8 +181,8 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const profile = 'https://www.whatnot.com/user/' + WHATNOT_USER;
 
-/* Profilbild wie auf seinen Socials: erst eigene Datei (profilbild.jpg im Repo-Root), sonst über unavatar.io von TikTok/Instagram, sonst bleibt der Pokéball */
-const AVATARS = ['profilbild.jpg', 'https://unavatar.io/tiktok/cr_ashketchum?fallback=false', 'https://unavatar.io/instagram/crashketchumtcg?fallback=false'];
+/* Profilbild (Whatnot-Profilbild als profilbild.jpg im Repo-Root), sonst bleibt der Pokéball */
+const AVATARS = ['profilbild.jpg'];
 (function nextAvatar(i) {
   if (i >= AVATARS.length) return;
   const im = new Image();
