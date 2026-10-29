@@ -2373,7 +2373,16 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     if (e.target.closest('.x')) { W().tix.splice(i, 1); commit(); }
     if (e.target.closest('.got')) { $$('#wTix').dataset.sig = ''; sell(true, i); }
   });
-  $$('#wTix').addEventListener('input', (e) => { const row = e.target.closest('.w-hitrow'); if (!row) return; const h = W().tix[+row.dataset.i]; h[e.target.classList.contains('pm') ? 'mon' : 'name'] = e.target.value; row.querySelector('.ph').innerHTML = iconOf(monForHit(h)); save(); });
+  $$('#wTix').addEventListener('input', (e) => {
+    const row = e.target.closest('.w-hitrow'); if (!row) return; const h = W().tix[+row.dataset.i];
+    if (e.target.classList.contains('pm')) { h.mon = e.target.value; h.monSet = !!e.target.value.trim(); } // selbst gewählt: nicht mehr automatisch überschreiben
+    else {
+      h.name = e.target.value;
+      // Pokémon im Ticketnamen erkannt → Feld automatisch ausfüllen, solange es nicht selbst gewählt wurde (David 2026-10-29)
+      if (!h.monSet) { const m = findMon(h.name); h.mon = m ? m.name : ''; row.querySelector('.pm').value = h.mon; }
+    }
+    row.querySelector('.ph').innerHTML = iconOf(monForHit(h)); save();
+  });
   $$('#wTix').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.closest('.w-hitrow')) { e.preventDefault(); $$('#wAddTix').click(); } });
   $$('#wMonList').innerHTML = DEX.map((x) => `<option value="${esc(x.split('|')[0])}">`).join('');
   $$('#wHits').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.closest('.w-hitrow')) { e.preventDefault(); $$('#wAddHit').click(); } });
