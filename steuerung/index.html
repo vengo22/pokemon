@@ -1986,7 +1986,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   /* Fang-Chance als Bälle, aufsteigend (David 2026-10-29): [ab %, Name, Textfarbe, Ball-Grafik] */
   const ballSVG = (top, bottom, deco = '') => `<svg class="tierball" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="bt"><path d="M4 50a46 46 0 0 1 92 0z"/></clipPath></defs><path d="M4 50a46 46 0 0 1 92 0z" fill="${top}"/><path d="M4 50a46 46 0 0 0 92 0z" fill="${bottom}"/><g clip-path="url(#bt)">${deco}</g><ellipse cx="34" cy="26" rx="12" ry="7" fill="#fff" opacity=".35" transform="rotate(-30 34 26)"/><circle cx="50" cy="50" r="46" fill="none" stroke="#111" stroke-width="6"/><path d="M4 50h30M66 50h30" stroke="#111" stroke-width="7"/><circle cx="50" cy="50" r="14" fill="#fff" stroke="#111" stroke-width="6"/><circle cx="50" cy="50" r="6" fill="#fff" stroke="#111" stroke-width="2.5"/></svg>`;
   const HEAT = [
-    [80, 'Meisterball', '#e9a3ff', ballSVG('#7b3fb8', '#f4f4f8', '<circle cx="26" cy="30" r="9" fill="#e8559b"/><circle cx="74" cy="30" r="9" fill="#e8559b"/><path d="M38 34V18l12 10 12-10v16" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>')],
+    [100, 'Meisterball', '#e9a3ff', ballSVG('#7b3fb8', '#f4f4f8', '<circle cx="26" cy="30" r="9" fill="#e8559b"/><circle cx="74" cy="30" r="9" fill="#e8559b"/><path d="M38 34V18l12 10 12-10v16" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>')],
     [60, 'Hyperball', '#ffd23d', ballSVG('#1d1d24', '#f4f4f8', '<path d="M30 6v40M70 6v40" stroke="#f5c542" stroke-width="12"/>')],
     [40, 'Luxusball', '#ffb37a', ballSVG('#1d1d24', '#1d1d24', '<rect x="0" y="34" width="100" height="10" fill="#d92b2b"/><path d="M14 34h72M14 44h72" stroke="#f5c542" stroke-width="2.5"/><path d="M40 12h20" stroke="#f5c542" stroke-width="4" stroke-linecap="round"/>')],
     [25, 'Superball', '#7fb4ff', ballSVG('#2f6fe0', '#f4f4f8', '<path d="M8 40c6-14 14-22 22-24l-4 26zM92 40c-6-14-14-22-22-24l4 26z" fill="#e0303f"/>')],
@@ -2426,7 +2426,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     log.innerHTML = w.sold.length ? w.sold.slice().reverse().map((x) => { const m = x.mon ? monOf(x.mon) : null; return `<li><span class="n">#${x.n}</span>${m ? `<img src="${m.img}" alt="">` : ''}<span class="who">${esc(x.who || '–')}</span><span class="res ${x.hit ? 'hit' : 'flee'}">${x.hit ? 'Hit' + (x.prize ? ': ' + esc(x.prize) : '') : 'Niete, geflohen'}</span></li>`; }).join('') : '<li class="none">Noch kein Spot verkauft</li>';
     document.querySelectorAll('#wThemes button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.theme === (w.theme || 'red'))));
     const cur = heat(st.pct);
-    $$('#wHeatList').innerHTML = HEAT.slice().reverse().map((h, i, arr) => { const next = arr[i + 1]; const range = next ? `${h[0]} bis ${next[0] - 1} %` : `ab ${h[0]} %`; return `<li class="${h === cur ? 'on' : ''}">${h[3]}<b>${h[1]}</b><span>${h[0] === 0 ? `unter ${next[0]} %` : range}</span></li>`; }).join('');
+    $$('#wHeatList').innerHTML = HEAT.slice().reverse().map((h, i, arr) => { const next = arr[i + 1]; const range = next ? `${h[0]} bis ${next[0] - 1} %` : h[0] === 100 ? 'genau 100 %' : `ab ${h[0]} %`; return `<li class="${h === cur ? 'on' : ''}">${h[3]}<b>${h[1]}</b><span>${h[0] === 0 ? `unter ${next[0]} %` : range}</span></li>`; }).join('');
     renderObsState();
   }
 
