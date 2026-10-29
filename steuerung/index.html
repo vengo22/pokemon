@@ -455,6 +455,8 @@ html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
 .w-hitrow .got { padding: 0 10px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); font: 800 12.5px 'Nunito', system-ui, sans-serif; white-space: nowrap; }
 .w-hitrow .got:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
 .w-hitrow .got:disabled { opacity: .35; }
+.w-setup label:has(#wName) { grid-column: 1 / -1; }
+.w-setup #wName { font-size: 17px; text-align: left; }
 .w-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
 .w-mode button { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--night); color: var(--muted); font: 800 13px 'Nunito', system-ui, sans-serif; }
 .w-mode button[aria-pressed="true"] { border-color: var(--red); background: var(--red); color: #fff; }
@@ -501,7 +503,7 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
 .wb-head { display: flex; align-items: center; justify-content: space-between; gap: calc(var(--k) * 2); }
 .wb-live { display: inline-flex; align-items: center; gap: calc(var(--k) * 1); font-size: calc(var(--k) * 2.9); letter-spacing: .06em; padding: calc(var(--k) * .5) calc(var(--k) * 1.8); border-radius: 999px; background: #fff; color: var(--t2); box-shadow: 0 calc(var(--k) * .4) 0 rgba(0,0,0,.25); }
 .wb-live i { width: calc(var(--k) * 1.3); height: calc(var(--k) * 1.3); border-radius: 50%; background: var(--t1); animation: tpulse 1.4s ease-in-out infinite; }
-.wb-live span { opacity: .85; }
+.wb-live b { font-weight: inherit; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: calc(var(--k) * 52); }
 .wb-cta-top { font-size: calc(var(--k) * 3.6); color: #ffd85e; text-align: right; text-shadow: 0 calc(var(--k) * .4) 0 rgba(0,0,0,.3); }
 /* Zahlen */
 .wb-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--k) * 1.3); }
@@ -778,10 +780,10 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
   </div>
   <div class="w-panel">
     <div class="w-sec" id="wSetup">
-      <h3>Diese Runde einstellen</h3>
+      <h3>Wheel einstellen</h3>
       <div class="w-nums w-setup">
-        <label>Runde<input type="number" id="wRound" min="1"></label>
-        <label>Spots in der Runde<input type="number" id="wSpots" min="1"></label>
+        <label>Name des Wheels<input type="text" id="wName" maxlength="40" placeholder="kommt von Whatnot"></label>
+        <label>Spots im Wheel<input type="number" id="wSpots" min="1"></label>
         <label>davon Gewinne (Hits)<input type="number" id="wTickets" min="0"></label>
       </div>
       <p class="w-hint">Die Hits sind die Pokémon, die man fangen kann. Bei „Gefangen“ gehen Hits und Spots runter, bei „Flieht“ (Niete) nur die Spots. Daraus rechnet die Leiste die Fang-Chance.</p>
@@ -813,7 +815,7 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
         <button class="w-flee" id="wFleeBtn">Flieht!<small>Niete, z. B. Booster</small></button>
       </div>
       <div class="w-status" id="wStatus"></div>
-      <div class="w-row"><button class="btn" id="wUndo">↶ Zurück</button><button class="btn" id="wNewRound">Neue Runde</button></div>
+      <div class="w-row"><button class="btn" id="wUndo">↶ Zurück</button><button class="btn" id="wNewRound">Neues Wheel</button></div>
     </div>
     <div class="w-sec">
       <div class="w-heat"><span class="w-hint" style="font-weight:700">So wird die Fang-Chance im Stream angezeigt:</span><ul id="wHeatList"></ul></div>
@@ -836,7 +838,7 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
       <label class="w-check"><input type="checkbox" id="wSound"> Ton</label>
     </div>
     <div class="w-sec">
-      <h3>Hits in dieser Runde (laufen im Stream durch)</h3>
+      <h3>Hits im Wheel (laufen im Stream durch)</h3>
       <div class="w-mode" id="wHitMode">
         <button data-mode="auto" aria-pressed="true">Pokémon automatisch erkennen</button>
         <button data-mode="manual" aria-pressed="false">Pokémon selbst festlegen</button>
@@ -855,7 +857,7 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
       </div>
     </div>
     <div class="w-sec">
-      <h3>Verlauf dieser Runde</h3>
+      <h3>Verlauf</h3>
       <ul class="w-log" id="wLog"></ul>
     </div>
   </div>
@@ -2060,7 +2062,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   /* Stream-Leiste: eine Instanz pro Wurzel (OBS-Seite und Vorschau) */
   function makeBar(root) {
     root.innerHTML = `<div class="wb hide"><div class="wb-bar"><div class="wb-card0">
-      <div class="wb-head"><span class="wb-live"><i></i>LIVE-WHEEL <span>· RUNDE <b data-r></b></span></span><span class="wb-cta-top">Hol dir deinen Spot!</span></div>
+      <div class="wb-head"><span class="wb-live"><i></i><b data-name>LIVE-WHEEL</b></span><span class="wb-cta-top">Hol dir deinen Spot!</span></div>
       <div class="wb-turn" data-turn><span>JETZT DRAN</span><b data-who></b></div>
       <div class="wb-tiles">
         <div class="wb-tile gold"><b data-t></b><small>Pokémon<em>kannst du noch fangen</em></small></div>
@@ -2079,7 +2081,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       const w = W(), st = stats(), h = heat(st.pct);
       bar.wb.classList.toggle('hide', !w.live && !bar.preview);
       ['red', 'blue', 'green'].forEach((t) => bar.wb.classList.toggle('t-' + t, (w.theme || 'red') === t));
-      q('r').textContent = w.round;
+      // Name des Whatnot-Wheels statt Rundennummer (David 2026-10-29)
+      q('name').textContent = ((w.name || '').trim() || 'Live-Wheel').toUpperCase();
       [['t', st.tLeft], ['s', st.spotsLeft]].forEach(([k, v]) => {
         const el = q(k); if (bar.last[k] !== undefined && bar.last[k] !== v) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
         bar.last[k] = v; el.textContent = v;
@@ -2250,22 +2253,23 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   $$('#wUndo').onclick = () => { if (!undoStack.length) return; S.wheel = JSON.parse(undoStack.pop()); seenHit = Math.max(seenHit, (S.wheel.lastHit || {}).id || 0); commit(); };
   $$('#wNewRound').onclick = (ev) => {
     const b = ev.currentTarget;
-    if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Wirklich? Nochmal klicken'; b.classList.add('warn'); setTimeout(() => { delete b.dataset.sure; b.textContent = 'Neue Runde'; b.classList.remove('warn'); }, 3500); return; }
-    delete b.dataset.sure; b.textContent = 'Neue Runde'; b.classList.remove('warn');
+    if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Wirklich? Nochmal klicken'; b.classList.add('warn'); setTimeout(() => { delete b.dataset.sure; b.textContent = 'Neues Wheel'; b.classList.remove('warn'); }, 3500); return; }
+    delete b.dataset.sure; b.textContent = 'Neues Wheel'; b.classList.remove('warn');
     setTimeout(() => { $$('#wSetup').scrollIntoView({ behavior: 'smooth', block: 'center' }); $$('#wSetup').classList.remove('flash'); void $$('#wSetup').offsetWidth; $$('#wSetup').classList.add('flash'); $$('#wSpots').focus(); $$('#wSpots').select(); }, 50);
-    snap(); const w = W(); w.round = (+w.round || 0) + 1; w.sold = []; w.pending = 0; w.hits.forEach((h) => { delete h.won; });
-    // das alte Whatnot-Wheel nicht in die neue Runde übernehmen
+    snap(); const w = W(); w.name = ''; w.sold = []; w.pending = 0; w.hits.forEach((h) => { delete h.won; });
+    // das alte Whatnot-Wheel nicht ins neue übernehmen
     if (wn.set) { w.wnSkip = wn.set.title + '|' + wn.set.total + '|' + wn.set.remaining; } wn.set = null; wn.pick = '';
     commit();
   };
-  [['#wRound', 'round', 1], ['#wSpots', 'spots', 1], ['#wTickets', 'tickets', 0]].forEach(([id, k, min]) => {
+  [['#wSpots', 'spots', 1], ['#wTickets', 'tickets', 0]].forEach(([id, k, min]) => {
     $$(id).addEventListener('change', (e) => { const v = Math.max(min, parseInt(e.target.value, 10) || min); snap(); W()[k] = v; commit(); });
   });
+  $$('#wName').addEventListener('change', (e) => { snap(); W().name = e.target.value.trim(); commit(); });
   [['#wLive', 'live'], ['#wShowChance', 'showChance'], ['#wShowHits', 'showHits'], ['#wShowTurn', 'showTurn'], ['#wAnim', 'anim'], ['#wSound', 'sound']].forEach(([id, k]) => {
     $$(id).onchange = (e) => { W()[k] = e.target.checked; commit(); };
   });
 
-  /* Hits der Runde (Pokémon wird am Namen erkannt) */
+  /* Hits im Wheel (Pokémon wird am Namen erkannt) */
   $$('#wAddHit').onclick = () => { const w = W(); if (w.hits.length >= 20) return; w.hits.push({ name: '' }); commit(); const ins = document.querySelectorAll('#wHits input'); ins[ins.length - 1] && ins[ins.length - 1].focus(); };
   $$('#wHits').addEventListener('click', (e) => {
     const row = e.target.closest('.w-hitrow'); if (!row) return; const i = +row.dataset.i;
@@ -2379,6 +2383,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const known = w.sold.length + (w.pending || 0);
     let changed = false;
     if (w.spots !== cur.total) { w.spots = cur.total; changed = true; }
+    if (cur.title && w.name !== cur.title) { w.name = cur.title; changed = true; }
     if (soldWn > known) { w.pending = (w.pending || 0) + soldWn - known; changed = true; if (before) wnLog(`${soldWn - known} Spot${soldWn - known > 1 ? 's' : ''} verkauft, noch ${cur.remaining} von ${cur.total}`); }
     else if (soldWn < known && (w.pending || 0) > 0) { w.pending = Math.max(0, w.pending - (known - soldWn)); changed = true; }
     if (changed) commit(); else renderWn();
@@ -2405,14 +2410,14 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   function renderPanel() {
     const w = W(), st = stats();
     const set = (id, v) => { const el = $$(id); if (document.activeElement !== el) el.value = v; };
-    set('#wRound', w.round); set('#wSpots', w.spots); set('#wTickets', w.tickets);
+    if (document.activeElement !== $$('#wName')) $$('#wName').value = w.name || ''; set('#wSpots', w.spots); set('#wTickets', w.tickets);
     $$('#wLive').checked = w.live; $$('#wShowChance').checked = w.showChance; $$('#wShowHits').checked = w.showHits; $$('#wShowTurn').checked = w.showTurn; $$('#wAnim').checked = w.anim; $$('#wSound').checked = w.sound;
     const pend = w.pending || 0;
     $$('#wHitBtn').disabled = (!st.spotsLeft && !pend) || !st.tLeft;
     $$('#wFleeBtn').disabled = !pend && (!st.spotsLeft || st.spotsLeft <= st.tLeft);
     $$('#wPending').hidden = !pend;
     if (pend) $$('#wPending').innerHTML = `<span><b>${pend}</b> ${pend === 1 ? 'neuer Spot' : 'neue Spots'} auf Whatnot verkauft. Wird automatisch eingeordnet, sobald Whatnot den Gewinn zeigt. Sonst antippen: Gefangen oder Flieht.</span>` + (pend > 1 ? '<span class="w-row"><button class="btn" id="wPendMiss">Alle als Niete (Flieht)</button></span>' : '');
-    $$('#wStatus').innerHTML = `<span>Noch <b>${st.tLeft}</b> Pokémon</span><span>in <b>${st.spotsLeft}</b> Spots</span><span>Chance <b>${st.pct}%</b></span>` + (!st.spotsLeft ? '<span style="color:var(--gold)">Runde ausverkauft</span>' : '');
+    $$('#wStatus').innerHTML = `<span>Noch <b>${st.tLeft}</b> Pokémon</span><span>in <b>${st.spotsLeft}</b> Spots</span><span>Chance <b>${st.pct}%</b></span>` + (!st.spotsLeft ? '<span style="color:var(--gold)">Wheel ausverkauft</span>' : '');
     $$('#wUndo').disabled = !undoStack.length;
     $$('#wPrev').classList.toggle('off', !w.live);
     $$('#wPrevNote').textContent = w.live ? '' : 'Leiste ist im Stream gerade ausgeblendet';
