@@ -1317,7 +1317,9 @@ function sfx(k) {
     CATCH_BASS.forEach(([f, at, d]) => tone(f, d, 'triangle', at, .09));
     if (k === 'main') CATCH_MAIN.forEach(([f, at, d]) => tone(f, d, 'square', at, .05));
   }
-  if (k === 'flee') [600, 450, 300].forEach((f, i) => tone(f, .14, 'triangle', i * .1, .07));
+  if (k === 'flee') { tone(1600, .18, 'sawtooth', 0, .05, 300); [392, 330, 262].forEach((f, i) => tone(f, .18, 'triangle', .2 + i * .12, .08)); }
+  // Flucht-Geräusch: schnelles Wusch nach unten, dreimal
+  if (k === 'run') [0, .07, .14].forEach((at) => tone(900, .09, 'square', at, .045, 220));
 }
 
 /* ---------- Animation ---------- */
@@ -1533,14 +1535,17 @@ async function catchOne(p, buyer) {
     await anim(mon, [M(0, groundY, .05, { filter: RED, opacity: 0 }), M(0, groundY * .3, .7, { filter: RED, opacity: 1, offset: .5 }), M(0, 0, 1, { filter: NORMAL, opacity: 1 })], { duration: 480, easing: 'ease-out' });
     sparks(['#c9cff0', '#7c86ab'], 8, fxX, fxY);
     banner(`<div class="line">Oh nein! ${esc(p.name)} ist entkommen</div><span class="pill none">NIETE</span>`);
-    await sleep(T(500));
-    anim(sh, [{ opacity: 1 }, { opacity: 0 }], { duration: 400 });
+    // wie im Spiel: kurz stehen bleiben, dann flitzt es seitlich aus dem Bild
+    await sleep(T(900));
+    sfx('run');
+    sparks(['#e8e1d0', '#b9ae96'], 8, fxX, fxY + size * .4);
+    anim(sh, [{ opacity: 1 }, { opacity: 0 }], { duration: 250 });
     await anim(mon, [
       M(0, 0, 1, { filter: NORMAL, opacity: 1 }),
-      M(W * .08, -size * .12, 1, { filter: NORMAL, opacity: 1, offset: .25 }),
-      M(W * .2, 0, 1, { filter: NORMAL, opacity: 1, offset: .5 }),
-      M(W * .55, -size * .08, .9, { filter: NORMAL, opacity: 0 })
-    ], { duration: 900, easing: 'ease-in' });
+      M(-W * .03, 0, 1, { filter: NORMAL, opacity: 1, offset: .2 }),
+      M(W * .9, 0, 1, { filter: NORMAL, opacity: 1 })
+    ], { duration: 420, easing: 'cubic-bezier(.6,0,1,.6)' });
+    mon.style.opacity = 0;
   }
   await sleep(T(1700));
   await Promise.all([hideBanner(), caught ? anim(ball, [{ opacity: 1 }, { opacity: 0 }], { duration: 300 }) : null, anim(sh, [{ opacity: 1 }, { opacity: 0 }], { duration: 300 })]);
@@ -2097,19 +2102,18 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
         A(mon, [{ opacity: 0, filter: 'brightness(6)', transform: `translateY(${-6 * k}px) scale(.05)` }, { opacity: 1, filter: 'brightness(6)', transform: 'scale(1.1)', offset: .45 }, { opacity: 1, filter: 'brightness(1)', transform: 'scale(1)' }], { duration: 650, easing: 'cubic-bezier(.3,1.5,.5,1)' });
         A(txt, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1.1)', offset: .6 }, { opacity: 1, transform: 'scale(1)' }], { delay: 300, duration: 500, easing: 'cubic-bezier(.3,1.6,.5,1)' });
         bar.ct = setTimeout(() => {
-          // kleine Hüpfer, dann seitlich raus
+          // wie im Spiel: kurz stehen bleiben, dann flitzt es seitlich aus dem Bild
+          if (bar.sound) sfx('run');
           A(mon, [
-            { opacity: 1, transform: 'translate(0, 0) scaleX(-1)' },
-            { opacity: 1, transform: `translate(${12 * k}px, ${-6 * k}px) scaleX(-1)`, offset: .2 },
-            { opacity: 1, transform: `translate(${24 * k}px, 0) scaleX(-1)`, offset: .4 },
-            { opacity: 1, transform: `translate(${38 * k}px, ${-6 * k}px) scaleX(-1)`, offset: .6 },
-            { opacity: 0, transform: `translate(${70 * k}px, 0) scaleX(-1)` }
-          ], { duration: 1300, easing: 'linear' });
+            { opacity: 1, transform: 'translate(0, 0)' },
+            { opacity: 1, transform: `translate(${-2 * k}px, 0)`, offset: .2 },
+            { opacity: 1, transform: `translate(${80 * k}px, 0)` }
+          ], { duration: 420, easing: 'cubic-bezier(.6,0,1,.6)', fill: 'forwards' });
           bar.ct = setTimeout(() => {
             [txt, glow].forEach((el) => A(el, [{ opacity: 1 }, { opacity: 0 }], { duration: 600 }));
             bar.ct = setTimeout(() => { c.classList.remove('on'); (bar.anims || []).forEach((a) => a.cancel()); bar.anims = []; }, 650);
-          }, 2200);
-        }, 1100);
+          }, 1400);
+        }, 1600);
       }, wobs[wobs.length - 1] + 500);
       if (bar.sound) { sfx('throw'); wobs.forEach((d) => setTimeout(() => sfx('wob'), d)); }
       return;
@@ -2137,7 +2141,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       const tone = (f, t, dur, type = 'square', vol = 0.06, f2) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, now + t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, now + t + dur); g.gain.setValueAtTime(0.0001, now + t); g.gain.exponentialRampToValueAtTime(vol, now + t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, now + t + dur); o.connect(g).connect(ac.destination); o.start(now + t); o.stop(now + t + dur + 0.02); };
       if (kind === 'throw') tone(300, 0.9, 0.5, 'triangle', 0.08, 900);
       if (kind === 'wob') tone(180, 0, 0.12, 'square', 0.05, 140);
-      if (kind === 'pop') { tone(900, 0, 0.18, 'sawtooth', 0.06, 200); [392, 330, 262].forEach((f, i) => tone(f, 0.25 + i * 0.13, 0.25, 'triangle', 0.1)); }
+      if (kind === 'pop') { tone(1600, 0, 0.18, 'sawtooth', 0.06, 300); [392, 330, 262].forEach((f, i) => tone(f, 0.25 + i * 0.13, 0.25, 'triangle', 0.1)); }
+      if (kind === 'run') [0, 0.07, 0.14].forEach((t) => tone(900, t, 0.09, 'square', 0.05, 220));
       if (kind === 'click') { tone(1200, 0, 0.05, 'square', 0.06); CATCH_LEAD.forEach(([f, at, d]) => tone(f, 0.15 + at, d, 'square', 0.06)); CATCH_BASS.forEach(([f, at, d]) => tone(f, 0.15 + at, d, 'triangle', 0.1)); }
     } catch (e) {}
   }
