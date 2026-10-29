@@ -2301,13 +2301,18 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const t = norm(text); if (!t) return null;
     const words = t.split(' ');
     const has = (w) => words.some((x) => x === w || (w.length >= 5 && x.length >= 5 && lev(x, w, 1) <= 1));
-    const hits = W().hits;
+    // Ticketname wie im Whatnot-Wheel („Bisasam Ticket 14“): Nummern müssen genau stimmen, damit Ticket 1 nicht auf Ticket 14 passt.
+    // Passen mehrere, gewinnt der längste Name.
+    const hits = W().hits, tp = ' ' + t + ' ';
+    let best = -1, bestLen = 0;
     for (let i = 0; i < hits.length; i++) {
       const h = hits[i]; if (h.won || !(h.name || '').trim()) continue;
-      const hn = norm(h.name); if (hn.length >= 3 && t.includes(hn)) return { hit: true, idx: i };
-      const sig = hn.split(' ').filter((x) => x.length >= 3 && !STOP.has(x));
-      if (sig.length && sig.every(has)) return { hit: true, idx: i };
+      const hn = norm(h.name), hw = hn.split(' ');
+      const nums = hw.filter((x) => /^\d+$/.test(x)), sig = hw.filter((x) => x.length >= 3 && !/^\d+$/.test(x) && !STOP.has(x));
+      const ok = (hn.length >= 3 && tp.includes(' ' + hn + ' ')) || (sig.length && sig.every(has) && nums.every((n) => words.includes(n)));
+      if (ok && hn.length > bestLen) { best = i; bestLen = hn.length; }
     }
+    if (best >= 0) return { hit: true, idx: best };
     const nieten = $$('#wWnNiete').value.split(/[,;\n]+/).map((x) => norm(x)).filter(Boolean);
     if (nieten.some((n) => t.includes(n))) return { hit: false };
     return null;
@@ -2415,7 +2420,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const manual = w.hitMode === 'manual';
     $$('#wHitMode').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === (manual ? 'manual' : 'auto'))));
     $$('#wHitModeHint').textContent = manual
-      ? 'Trag die Hits genau so ein, wie sie im Whatnot-Wheel stehen, und wähl darunter ein Pokémon. Wird der Hit gezogen, erkennt die Seite ihn am Namen und fängt genau dieses Pokémon.'
+      ? 'Trag jedes Ticket genau so ein, wie es im Whatnot-Wheel steht (z. B. „Bisasam Ticket 14“), und wähl darunter ein Pokémon. Wird das Ticket gezogen, erkennt der Wheel-Leser es am Namen und fängt genau dieses Pokémon. Die Liste bleibt gespeichert, bis du einen Eintrag mit ✕ löschst.'
       : 'Das Pokémon wird aus dem Namen des Hits erkannt (z. B. „Glurak ex SAR“ → Glurak). Gezogene Hits erkennt der Wheel-Leser am Gewinn-Text.';
     $$('#wHits').classList.toggle('manual', manual);
     const sig = (manual ? 'm' : 'a') + w.hits.map((h) => (h.won ? 1 : 0)).join('');
