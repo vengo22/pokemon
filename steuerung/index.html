@@ -425,6 +425,9 @@ body.tab-wheel .w-prev { background: repeating-conic-gradient(#3a0d14 0 25%, #2c
 .w-hits { display: flex; flex-direction: column; gap: 6px; }
 .w-hitrow { display: grid; grid-template-columns: 52px 1fr auto; gap: 8px; align-items: center; }
 .w-hitrow .ph { width: 52px; height: 52px; border-radius: 8px; border: 1px solid var(--line); background: var(--night); display: grid; place-items: center; }
+.w-hitrow.won input { text-decoration: line-through; opacity: .5; }
+.w-hitrow.won .ph { opacity: .4; filter: grayscale(1); }
+.w-log .res.flee { background: #f3f4fa; color: #15151d; }
 .w-hitrow .ph img { width: 48px; height: 48px; object-fit: contain; }
 .w-hitrow .ph svg { width: 26px; height: 26px; opacity: .5; }
 .w-hitrow .x { background: none; border: 1px solid var(--line); border-radius: 8px; width: 34px; height: 34px; color: var(--muted); }
@@ -751,7 +754,8 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
         </ol>
         <p class="w-hint">Der Whatnot-Tab muss im Browser offen bleiben (darf im Hintergrund sein). Jeder verkaufte Spot wird dann hier automatisch abgezogen.</p>
       </details>
-      <label class="w-check" style="flex-wrap:wrap">Treffer automatisch erkennen, wenn Whatnot meldet: <input type="text" id="wWnKey" placeholder="z. B. Ticket" style="width:130px;padding:5px 8px"></label>
+      <label class="w-hint" for="wWnNiete" style="font-weight:700">Was auf Whatnot gewonnen wird, ordnet die Seite selbst ein: Steht dort ein Hit aus deiner Liste, wird gefangen. Steht dort eines dieser Wörter, flieht das Pokémon:</label>
+      <input type="text" id="wWnNiete" autocomplete="off" style="padding:7px 10px">
       <ul class="w-wnlog" id="wWnLog" hidden></ul>
     </div>
     <div class="w-sec">
@@ -760,9 +764,8 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
       <label class="w-hint" for="wBuyer" style="font-weight:700">Jetzt dran (kommt automatisch von Whatnot, sonst hier eintippen)</label>
       <input type="text" id="wBuyer" placeholder="Name des Käufers, z. B. pika_paul" autocomplete="off">
       <div class="w-big">
-        <button class="w-hit" id="wHitBtn">Gefangen!<small>Pokémon gezogen, Hit</small></button>
-        <button class="w-flee" id="wFleeBtn">Flieht!<small>Pokémon gezogen, Niete / Trostpreis</small></button>
-        <button class="w-miss" id="wMissBtn">Kein Pokémon<small>Spot ohne Ticket</small></button>
+        <button class="w-hit" id="wHitBtn">Gefangen!<small>Hit gezogen</small></button>
+        <button class="w-flee" id="wFleeBtn">Flieht!<small>Niete, z. B. Booster</small></button>
       </div>
       <div class="w-status" id="wStatus"></div>
       <div class="w-row"><button class="btn" id="wUndo">↶ Zurück</button><button class="btn" id="wNewRound">Neue Runde</button></div>
@@ -772,9 +775,9 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
       <div class="w-nums">
         <label>Runde<input type="number" id="wRound" min="1"></label>
         <label>Spots gesamt<input type="number" id="wSpots" min="1"></label>
-        <label>Pokémon gesamt<input type="number" id="wTickets" min="0"></label>
+        <label>Hits gesamt<input type="number" id="wTickets" min="0"></label>
       </div>
-      <p class="w-hint">„Pokémon“ sind die Tickets: so viele Treffer stecken in den Spots. Die Leiste zählt beides runter und rechnet die Fang-Chance aus.</p>
+      <p class="w-hint">Die Hits sind die Pokémon, die man fangen kann. Bei „Gefangen“ gehen Hits und Spots runter, bei „Flieht“ (Niete) nur die Spots. Daraus rechnet die Leiste die Fang-Chance.</p>
     </div>
     <div class="w-sec">
       <h3>Im Stream anzeigen</h3>
@@ -1911,7 +1914,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       q('turn').hidden = !w.showTurn || !who;
       if (q('who').textContent !== who) { q('who').textContent = who; const t = q('turn'); t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); }
       // Hits-Laufband
-      const hits = w.hits.filter((x) => (x.name || '').trim());
+      const hits = w.hits.filter((x) => (x.name || '').trim() && !x.won);
       q('hits').hidden = !w.showHits || !hits.length;
       const hk = hits.map((x) => x.name).join('|') + '|' + bar.wb.clientWidth;
       if (hk !== bar.hitKey) {
@@ -2040,33 +2043,34 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   const undoStack = [];
   const snap = () => { undoStack.push(JSON.stringify(W())); if (undoStack.length > 50) undoStack.shift(); };
   const commit = () => { save(); render(); };
-  function sell(hit, flee) {
+  // hit = Hit gezogen (Pokémon gefangen, zählt die Hits runter). Sonst Niete: das Pokémon flieht, nur der Spot ist weg.
+  function sell(hit, hitIdx) {
     const w = W(), st = stats(), pend = w.pending || 0;
-    if ((!st.spotsLeft && !pend) || (hit && !st.tLeft) || (!hit && !pend && st.spotsLeft <= st.tLeft)) return;
+    if ((!st.spotsLeft && !pend) || (hit && !st.tLeft) || (!hit && !pend && st.spotsLeft <= st.tLeft)) return false;
     snap();
     if (pend) w.pending = pend - 1; // ein auf Whatnot verkaufter Spot wird damit eingeordnet
     const who = $$('#wBuyer').value.trim();
     const e = { n: w.sold.length + 1, who, hit, t: new Date().toTimeString().slice(0, 5) };
-    if (hit && flee) e.flee = true; // Pokémon gezogen, aber Niete: es flieht
-    if (hit) {
-      const used = new Set(w.sold.filter((x) => x.hit).map((x) => x.mon));
+    if (!hit) e.flee = true;
+    if (hit && hitIdx >= 0 && w.hits[hitIdx]) { w.hits[hitIdx].won = true; e.prize = w.hits[hitIdx].name; }
+    {
+      const used = new Set(w.sold.map((x) => x.mon).filter(Boolean));
       let id; do { id = 1 + Math.floor(Math.random() * 151); } while (used.has(id) && used.size < 151);
-      e.mon = id; w.lastHit = { id: Date.now(), who, mon: id, flee: !!flee };
+      e.mon = id; w.lastHit = { id: Date.now(), who, mon: id, flee: !hit };
     }
     w.sold.push(e);
     // Ton kommt aus der OBS-Quelle, sonst hier
     prev.sound = !(typeof obsOk !== 'undefined' && obsOk);
-    commit();
+    commit(); return true;
   }
   $$('#wHitBtn').onclick = () => sell(true);
-  $$('#wFleeBtn').onclick = () => sell(true, true);
-  $$('#wMissBtn').onclick = () => sell(false);
+  $$('#wFleeBtn').onclick = () => sell(false);
   $$('#wUndo').onclick = () => { if (!undoStack.length) return; S.wheel = JSON.parse(undoStack.pop()); seenHit = Math.max(seenHit, (S.wheel.lastHit || {}).id || 0); commit(); };
   $$('#wNewRound').onclick = (ev) => {
     const b = ev.currentTarget;
     if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Wirklich? Nochmal klicken'; b.classList.add('warn'); setTimeout(() => { delete b.dataset.sure; b.textContent = 'Neue Runde'; b.classList.remove('warn'); }, 3500); return; }
     delete b.dataset.sure; b.textContent = 'Neue Runde'; b.classList.remove('warn');
-    snap(); const w = W(); w.round = (+w.round || 0) + 1; w.sold = []; w.pending = 0;
+    snap(); const w = W(); w.round = (+w.round || 0) + 1; w.sold = []; w.pending = 0; w.hits.forEach((h) => { delete h.won; });
     // das alte Whatnot-Wheel nicht in die neue Runde übernehmen
     if (wn.set) { w.wnSkip = wn.set.title + '|' + wn.set.total + '|' + wn.set.remaining; } wn.set = null; wn.pick = '';
     commit();
@@ -2092,7 +2096,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
      Whatnot hat keine offene Schnittstelle fürs Wheel. Das Wheel ist dort ein „Surprise Set“ mit „X of Y left“.
      Das Lesezeichen „Wheel-Leser“ läuft im Whatnot-Tab, liest diese Zahl jede Sekunde und schickt sie per postMessage hierher. */
   const BM = "(function(){var O='__ORIGIN__',t=window.opener;if(!t||t.closed){t=window.open(O+'#wheel','ckwheel');}if(window.__ck)clearInterval(window.__ck);var b=document.getElementById('ckbadge');if(!b){b=document.createElement('div');b.id='ckbadge';document.body.appendChild(b);}b.style.cssText='position:fixed;z-index:2147483647;left:12px;bottom:12px;background:#10173d;color:#fff;font:600 13px/1.35 system-ui,sans-serif;padding:8px 12px;border-radius:10px;border:2px solid #ffc93d;max-width:380px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4)';var num=function(s){return parseInt(String(s).replace(/[^\\d]/g,''),10)||0};var RX=/([\\d.,]+)\\s*(?:of|von|\\/)\\s*([\\d.,]+)\\s*(?:spots?\\s*)?(?:left|\u00fcbrig|verbleibend|remaining|frei)/i;function scan(){var sets=[],seen=[],els=document.querySelectorAll('strong,span,div,p,small');for(var i=0;i<els.length;i++){var e=els[i];if(e.children.length>3)continue;var tx=(e.textContent||'').trim();if(tx.length>60)continue;var m=tx.match(RX);if(!m)continue;var card=e.closest('section,li,article')||e.parentElement;if(seen.indexOf(card)>=0)continue;seen.push(card);var te=card.querySelector('strong[title]'),title=te?(te.getAttribute('title')||te.textContent):'';if(!title){var ss=card.querySelectorAll('strong,h2,h3,h4,span');for(var j=0;j<ss.length;j++){var x=(ss[j].textContent||'').trim();if(x&&!RX.test(x)&&!/surprise|\u00fcberraschung/i.test(x)&&x.length<80){title=x;break;}}}var it={title:(title||'Wheel').trim(),remaining:num(m[1]),total:num(m[2])};if(!sets.some(function(o){return o.title==it.title&&o.total==it.total}))sets.push(it);}var q=function(s){var e=document.querySelector(s);return e?(e.textContent||'').trim():''};var d={ck:'whatnot',v:1,sets:sets,status:q(\"[data-testid='show-winning-status']\"),product:q(\"[data-testid='show-product-title']\"),chat:[].slice.call(document.querySelectorAll(\"[data-testid='chat-message']\"),-8).map(function(e){return (e.innerText||e.textContent||'').trim().slice(0,200)})};var ok=t&&!t.closed;try{if(ok)t.postMessage(d,'*')}catch(x){}b.textContent='crashketchum Wheel-Leser: '+(sets.length?sets.map(function(s){return s.title+' '+s.remaining+'/'+s.total}).join(' \u00b7 '):'kein Wheel auf der Seite gefunden')+(ok?'':' \u00b7 Steuerseite geschlossen, Lesezeichen nochmal klicken');}scan();window.__ck=setInterval(scan,1000);})();";
-  const wn = { last: 0, set: null, pick: '', status: '', log: [], chatSeen: new Set(), chatReady: false };
+  const wn = { last: 0, set: null, pick: '', status: '', log: [], chatSeen: new Set(), chatReady: false, results: [] };
   function setTurn(name, src) {
     name = String(name).replace(/^@/, '').trim(); if (!name || name === W().turn) return;
     W().turn = name; $$('#wBuyer').value = name; wnLog('Jetzt dran: ' + name + ' (' + src + ')'); commit();
@@ -2101,16 +2105,44 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   const home = new URL('./', location.href); home.hash = ''; home.search = '';
   $$('#wBm').href = 'javascript:' + encodeURIComponent(BM.replace('__ORIGIN__', home.href));
   $$('#wBm').onclick = (e) => { e.preventDefault(); alert('Den Knopf „Wheel-Leser“ mit der Maus in die Lesezeichenleiste ziehen. Angeklickt wird er später im Whatnot-Tab.'); };
-  try { $$('#wWnUrl').value = localStorage.getItem('crash.wnurl') || ''; $$('#wWnKey').value = localStorage.getItem('crash.wnkey') || ''; } catch (e) {}
+  const NIETE_DEF = 'Booster, Pack, Trostpreis, Niete, Sleeve, Sticker';
+  $$('#wWnNiete').value = NIETE_DEF;
+  try { $$('#wWnUrl').value = localStorage.getItem('crash.wnurl') || ''; const nv = localStorage.getItem('crash.wnniete'); if (nv !== null) $$('#wWnNiete').value = nv; } catch (e) {}
   $$('#wWnUrl').onchange = (e) => { try { localStorage.setItem('crash.wnurl', e.target.value.trim()); } catch (x) {} };
-  $$('#wWnKey').onchange = (e) => { try { localStorage.setItem('crash.wnkey', e.target.value.trim()); } catch (x) {} };
+  $$('#wWnNiete').onchange = (e) => { try { localStorage.setItem('crash.wnniete', e.target.value.trim()); } catch (x) {} };
+  // Gewinn-Text von Whatnot einordnen: Hit aus der Liste → gefangen, Nieten-Wort → flieht, sonst unbekannt
+  function classify(text) {
+    const t = norm(text); if (!t) return null;
+    const words = t.split(' ');
+    const has = (w) => words.some((x) => x === w || (w.length >= 5 && x.length >= 5 && lev(x, w, 1) <= 1));
+    const hits = W().hits;
+    for (let i = 0; i < hits.length; i++) {
+      const h = hits[i]; if (h.won || !(h.name || '').trim()) continue;
+      const hn = norm(h.name); if (hn.length >= 3 && t.includes(hn)) return { hit: true, idx: i };
+      const sig = hn.split(' ').filter((x) => x.length >= 3 && !STOP.has(x));
+      if (sig.length && sig.every(has)) return { hit: true, idx: i };
+    }
+    const nieten = $$('#wWnNiete').value.split(/[,;\n]+/).map((x) => norm(x)).filter(Boolean);
+    if (nieten.some((n) => t.includes(n))) return { hit: false };
+    return null;
+  }
+  function takeResults() {
+    const now = Date.now();
+    wn.results = wn.results.filter((r) => now - r.at < 15000);
+    while ((W().pending || 0) > 0 && wn.results.length) {
+      const r = wn.results.shift(), c = classify(r.text);
+      if (!c) continue;
+      wnLog(c.hit ? '→ Hit erkannt: ' + (W().hits[c.idx] || {}).name : '→ Niete erkannt, Pokémon flieht');
+      sell(c.hit, c.idx);
+    }
+  }
   $$('#wWnOpen').onclick = () => { const u = $$('#wWnUrl').value.trim(); if (!/^https:\/\/([a-z0-9-]+\.)*whatnot\.com\//i.test(u)) { $$('#wWnUrl').classList.add('need'); $$('#wWnUrl').focus(); return; } $$('#wWnUrl').classList.remove('need'); window.open(u, '_blank'); };
   if (!$$('#wWnUrl').value) $$('#wWnHelp').open = true;
   $$('#wWnSet').onchange = (e) => { wn.pick = e.target.value; try { localStorage.setItem('crash.wnpick', wn.pick); } catch (x) {} wn.set = null; };
   document.addEventListener('click', (e) => {
     if (e.target.id !== 'wPendMiss') return;
     const w = W(); if (!w.pending) return; snap();
-    for (let i = 0; i < w.pending; i++) w.sold.push({ n: w.sold.length + 1, who: '', hit: false, t: new Date().toTimeString().slice(0, 5) });
+    for (let i = 0; i < w.pending; i++) w.sold.push({ n: w.sold.length + 1, who: '', hit: false, flee: true, t: new Date().toTimeString().slice(0, 5) });
     w.pending = 0; commit();
   });
   window.addEventListener('message', (ev) => {
@@ -2135,8 +2167,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       wn.status = status; wnLog(status);
       const m = (d.status || '').match(/^(.+?)\s+(?:is\s+)?(?:won|wins|gewinnt|hat gewonnen|winning)/i);
       if (m) setTurn(m[1], 'Anzeige');
-      const key = $$('#wWnKey').value.trim();
-      if (key && (w.pending || 0) > 0 && status.toLowerCase().includes(key.toLowerCase())) { wnLog('→ Treffer erkannt (' + key + ')'); sell(true); }
+      if (wn.chatReady) wn.results.push({ at: Date.now(), text: status });
     }
     // Kauf-Meldungen im Whatnot-Chat („name bought …“, „name hat … gekauft“)
     (d.chat || []).forEach((line) => {
@@ -2144,14 +2175,14 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       if (!wn.chatReady) return; // beim ersten Lesen nur merken, nicht alte Käufe übernehmen
       const t = line.replace(/\s+/g, ' ').trim();
       const m = t.match(/^@?([^\s:]{2,30}):?\s+(?:just\s+)?(?:bought|purchased|won|spun|got|snagged|kauft|gewinnt|hat\s+(?:sich\s+)?.{0,60}?(?:gekauft|gewonnen|gesichert|gedreht))\b/i);
-      if (m) setTurn(m[1], 'Chat');
+      if (m) { setTurn(m[1], 'Chat'); wn.results.push({ at: Date.now(), text: t.slice(m[0].length) }); }
     });
     wn.chatReady = true;
     if (wn.chatSeen.size > 400) wn.chatSeen = new Set([...wn.chatSeen].slice(-100));
-    if (!cur) { wn.set = null; renderWn(); return; }
+    if (!cur) { wn.set = null; takeResults(); renderWn(); return; }
     const before = wn.set;
     wn.set = cur;
-    if (before && before.title === cur.title && before.remaining === cur.remaining && before.total === cur.total) { renderWn(); return; }
+    if (before && before.title === cur.title && before.remaining === cur.remaining && before.total === cur.total) { takeResults(); renderWn(); return; }
     // Abgleich: auf Whatnot verkauft = total - remaining. Was hier noch nicht eingeordnet ist, wird „offen“.
     const soldWn = Math.max(0, cur.total - cur.remaining);
     const known = w.sold.length + (w.pending || 0);
@@ -2160,6 +2191,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     if (soldWn > known) { w.pending = (w.pending || 0) + soldWn - known; changed = true; if (before) wnLog(`${soldWn - known} Spot${soldWn - known > 1 ? 's' : ''} verkauft, noch ${cur.remaining} von ${cur.total}`); }
     else if (soldWn < known && (w.pending || 0) > 0) { w.pending = Math.max(0, w.pending - (known - soldWn)); changed = true; }
     if (changed) commit(); else renderWn();
+    takeResults();
   }
   function renderWn() {
     const on = Date.now() - wn.last < 4000, el = $$('#wWnState');
@@ -2184,22 +2216,22 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     set('#wRound', w.round); set('#wSpots', w.spots); set('#wTickets', w.tickets);
     $$('#wLive').checked = w.live; $$('#wShowChance').checked = w.showChance; $$('#wShowHits').checked = w.showHits; $$('#wShowTurn').checked = w.showTurn; $$('#wAnim').checked = w.anim; $$('#wSound').checked = w.sound;
     const pend = w.pending || 0;
-    $$('#wHitBtn').disabled = $$('#wFleeBtn').disabled = (!st.spotsLeft && !pend) || !st.tLeft;
-    $$('#wMissBtn').disabled = !pend && (!st.spotsLeft || st.spotsLeft <= st.tLeft);
+    $$('#wHitBtn').disabled = (!st.spotsLeft && !pend) || !st.tLeft;
+    $$('#wFleeBtn').disabled = !pend && (!st.spotsLeft || st.spotsLeft <= st.tLeft);
     $$('#wPending').hidden = !pend;
-    if (pend) $$('#wPending').innerHTML = `<span><b>${pend}</b> ${pend === 1 ? 'neuer Spot' : 'neue Spots'} auf Whatnot verkauft. Jetzt antippen: Pokémon gefangen oder Kein Treffer.</span>` + (pend > 1 ? '<span class="w-row"><button class="btn" id="wPendMiss">Alle als „Kein Treffer“</button></span>' : '');
+    if (pend) $$('#wPending').innerHTML = `<span><b>${pend}</b> ${pend === 1 ? 'neuer Spot' : 'neue Spots'} auf Whatnot verkauft. Wird automatisch eingeordnet, sobald Whatnot den Gewinn zeigt. Sonst antippen: Gefangen oder Flieht.</span>` + (pend > 1 ? '<span class="w-row"><button class="btn" id="wPendMiss">Alle als Niete (Flieht)</button></span>' : '');
     $$('#wStatus').innerHTML = `<span>Noch <b>${st.tLeft}</b> Pokémon</span><span>in <b>${st.spotsLeft}</b> Spots</span><span>Chance <b>${st.pct}%</b></span>` + (!st.spotsLeft ? '<span style="color:var(--gold)">Runde ausverkauft</span>' : '');
     $$('#wUndo').disabled = !undoStack.length;
     $$('#wPrev').classList.toggle('off', !w.live);
     $$('#wPrevNote').textContent = w.live ? '' : 'Leiste ist im Stream gerade ausgeblendet';
     // Top-Hits-Liste nur neu bauen, wenn sich die Anzahl oder Bilder ändern (sonst springt der Cursor)
-    const sig = String(w.hits.length);
+    const sig = w.hits.map((h) => (h.won ? 1 : 0)).join('');
     if ($$('#wHits').dataset.sig !== sig) {
       $$('#wHits').dataset.sig = sig;
-      $$('#wHits').innerHTML = w.hits.length ? w.hits.map((h, i) => `<div class="w-hitrow" data-i="${i}"><span class="ph">${hitIcon(h.name)}</span><input type="text" value="${esc(h.name)}" placeholder="z. B. Pikachu Trainer Box"><button class="x" aria-label="Entfernen">✕</button></div>`).join('') : '<p class="w-hint">Noch keine Hits. Einfach eintragen, z. B. „Glurak ex SAR“. Das passende Pokémon erscheint automatisch daneben und alles läuft im Stream unter der Fang-Chance durch.</p>';
+      $$('#wHits').innerHTML = w.hits.length ? w.hits.map((h, i) => `<div class="w-hitrow${h.won ? ' won' : ''}" data-i="${i}" title="${h.won ? 'Schon gewonnen, läuft nicht mehr im Stream' : ''}"><span class="ph">${hitIcon(h.name)}</span><input type="text" value="${esc(h.name)}" placeholder="z. B. Pikachu Trainer Box"><button class="x" aria-label="Entfernen">✕</button></div>`).join('') : '<p class="w-hint">Noch keine Hits. Einfach eintragen, z. B. „Glurak ex SAR“. Das passende Pokémon erscheint automatisch daneben und alles läuft im Stream unter der Fang-Chance durch.</p>';
     }
     const log = $$('#wLog');
-    log.innerHTML = w.sold.length ? w.sold.slice().reverse().map((x) => { const m = x.hit ? monOf(x.mon) : null; return `<li><span class="n">#${x.n}</span>${m ? `<img src="${m.img}" alt="">` : ''}<span class="who">${esc(x.who || '–')}</span><span class="res ${x.hit ? (x.flee ? 'flee' : 'hit') : 'miss'}">${x.hit ? esc(m.name) + (x.flee ? ' geflohen' : ' gefangen') : 'kein Pokémon'}</span></li>`; }).join('') : '<li class="none">Noch kein Spot verkauft</li>';
+    log.innerHTML = w.sold.length ? w.sold.slice().reverse().map((x) => { const m = x.mon ? monOf(x.mon) : null; return `<li><span class="n">#${x.n}</span>${m ? `<img src="${m.img}" alt="">` : ''}<span class="who">${esc(x.who || '–')}</span><span class="res ${x.hit ? 'hit' : 'flee'}">${x.hit ? 'Hit' + (x.prize ? ': ' + esc(x.prize) : '') : 'Niete, geflohen'}</span></li>`; }).join('') : '<li class="none">Noch kein Spot verkauft</li>';
     renderObsState();
   }
 
