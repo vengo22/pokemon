@@ -569,10 +569,17 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
 .wb-text.flee b { color: #f3f4fa; -webkit-text-stroke-color: #15151d; text-shadow: 0 calc(var(--k) * .8) 0 #15151d; }
 .wb-text span { display: inline-block; margin-top: calc(var(--k) * 1.4); font-size: calc(var(--k) * 4.4); padding: calc(var(--k) * .8) calc(var(--k) * 3); border-radius: 999px; background: linear-gradient(180deg, var(--t1), var(--t2)); box-shadow: inset 0 0 0 calc(var(--k) * .35) #15151d; }
 .wb-text span em { font-style: normal; color: #ffd85e; }
-#cloudState { position: fixed; left: 12px; bottom: 10px; z-index: 60; padding: 5px 10px; border-radius: 999px; font: 800 12px 'Nunito', system-ui, sans-serif; background: rgba(28,6,9,.85); border: 1px solid var(--line); color: var(--muted); pointer-events: none; }
+#cloudBox { position: fixed; left: 12px; bottom: 10px; z-index: 60; display: grid; gap: 6px; justify-items: start; max-width: calc(100vw - 24px); }
+#cloudMenu { display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.4); max-width: 320px; }
+#cloudMenu[hidden] { display: none; }
+#cloudMenu p { margin: 0 0 2px; color: var(--muted); font-size: 12.5px; }
+#cloudMenu button { text-align: left; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); font: 800 13px 'Nunito', system-ui, sans-serif; cursor: pointer; }
+#cloudMenu button:hover { border-color: var(--gold); }
+#cloudMenu button[hidden] { display: none; }
+#cloudState { cursor: pointer; padding: 5px 10px; border-radius: 999px; font: 800 12px 'Nunito', system-ui, sans-serif; background: rgba(28,6,9,.85); border: 1px solid var(--line); color: var(--muted); }
 #cloudState:empty { display: none; }
 #cloudState.err { color: #ffb0a6; border-color: #a3182a; }
-html:not(.unlocked) #cloudState { display: none; }
+html:not(.unlocked) #cloudBox { display: none; }
 </style>
 
 <div class="gate" id="gate">
@@ -2535,8 +2542,20 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   const LS = ['crash.logos', 'crash.wnniete', 'crash.wnurl', 'fangrunde.room']; // Geräte-Einstellungen, die mitwandern
   let key = '', lastT = 0, timer = 0, busy = false, dirty = false, started = false;
   try { lastT = +localStorage.getItem('crash.cloud.t') || 0; } catch (e) {}
-  const el = document.createElement('div'); el.id = 'cloudState'; document.body.appendChild(el);
-  const show = (ok, t) => { el.className = ok ? 'ok' : 'err'; el.textContent = t; };
+  // Schild unten links, antippen öffnet: diesen PC hochladen / online neu laden / alten Stand zurückholen
+  const box = document.createElement('div'); box.id = 'cloudBox';
+  box.innerHTML = '<div id="cloudMenu" hidden><p>Online-Speicher: Auf allen PCs gilt der Stand, der zuletzt gespeichert wurde.</p><button data-c="up">Stand von diesem PC für alle übernehmen</button><button data-c="down">Online-Stand auf diesen PC laden</button><button data-c="back" hidden>Stand vor dem letzten Laden zurückholen</button></div><button id="cloudState" type="button"></button>';
+  document.body.appendChild(box);
+  const el = box.querySelector('#cloudState'), menu = box.querySelector('#cloudMenu');
+  const show = (ok, t) => { el.className = ok ? 'ok' : 'err'; el.textContent = t + '  ▾'; };
+  const hasBackup = () => { try { return !!localStorage.getItem('crash.backup'); } catch (e) { return false; } };
+  el.onclick = () => { menu.hidden = !menu.hidden; menu.querySelector('[data-c="back"]').hidden = !hasBackup(); };
+  menu.onclick = async (e) => {
+    const c = e.target.closest('button[data-c]'); if (!c) return; menu.hidden = true;
+    if (c.dataset.c === 'up') { clearTimeout(timer); timer = 0; await push(); }
+    if (c.dataset.c === 'down') { lastT = 0; await pull(false, true); }
+    if (c.dataset.c === 'back') { try { const b = JSON.parse(localStorage.getItem('crash.backup')); if (b) { unpack(b, true); clearTimeout(timer); timer = 0; await push(); } } catch (x) {} }
+  };
   const rpc = async (fn, body) => {
     const r = await fetch(URL_ + fn, { method: 'POST', headers: { apikey: KEY_, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     if (!r.ok) throw new Error(r.status); const txt = await r.text(); return txt ? JSON.parse(txt) : null;
@@ -2546,8 +2565,10 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     LS.forEach((k) => { try { const v = localStorage.getItem(k); if (v !== null) ls[k] = v; } catch (e) {} });
     return { S: pub, ls };
   };
-  const unpack = (d) => {
+  const unpack = (d, noBackup) => {
     if (!d || !d.S || !Array.isArray(d.S.round)) return;
+    // bisherigen Stand dieses PCs aufheben, damit nichts verloren geht
+    if (!noBackup) try { localStorage.setItem('crash.backup', JSON.stringify(pack())); } catch (e) {}
     const keep = { obsPass: S.obsPass, session: S.session };
     let roomChanged = false;
     Object.entries(d.ls || {}).forEach(([k, v]) => { try { if (k === 'fangrunde.room' && localStorage.getItem(k) !== v) roomChanged = true; localStorage.setItem(k, v); } catch (e) {} });
@@ -2572,8 +2593,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     busy = false;
     if (dirty) { clearTimeout(timer); timer = setTimeout(() => { timer = 0; push(); }, 3000); }
   }
-  async function pull(first) {
-    if (!key || busy || timer) return;
+  async function pull(first, force) {
+    if (!key || busy || (timer && !force)) return;
     try {
       const r = await rpc('get_state', { k: key });
       if (r && r.t > lastT && r.d) { lastT = r.t; try { localStorage.setItem('crash.cloud.t', String(r.t)); } catch (e) {} unpack(r.d); show(true, '☁ Online geladen ' + hhmm()); }
