@@ -714,26 +714,31 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
 
       <div class="tabpanel" data-panel="conn" hidden>
         <div class="obslink">
-          <span class="lbl">Link für OBS (Browserquelle)</span>
+          <span class="lbl">Link für OBS (Browserquelle Fangen)</span>
           <div class="obslink-row"><code id="obsUrl">https://crashketchum.de/obs/</code><button class="btn" id="copyObs">Kopieren</button></div>
-          <p class="hint">In OBS als Browserquelle einfügen, Breite 1080, Höhe 1920.</p>
+          <p class="hint">In OBS als Quelle <b>Browser</b> einfügen, „Lokale Datei“ <b>nicht</b> anhaken, Breite <b>1080</b>, Höhe <b>1920</b> (quer: 1920 × 1080). Mehr ist nicht nötig: Die Daten kommen übers Internet, ohne Passwort und ohne OBS-Einstellungen.</p>
         </div>
-        <div class="field">
-          <span class="lbl">Einmal in OBS einrichten</span>
-          <ol class="steps">
-            <li>In OBS eine neue Quelle <b>Browser</b> hinzufügen. „Lokale Datei“ <b>nicht</b> anhaken, als URL den Link von oben eintragen. Hochkant: Breite <b>1080</b>, Höhe <b>1920</b> (quer: 1920 × 1080). Zum Prüfen kann man hinten <b>?test</b> anhängen: dann steht dauerhaft „OBS-Link funktioniert ✓“ im Bild.</li>
-            <li>In OBS unter <b>Werkzeuge → WebSocket-Servereinstellungen</b> „WebSocket-Server aktivieren“ anhaken. Bei „Verbindungsinformationen anzeigen“ steht das Passwort.</li>
-            <li>Diese Seite in Chrome öffnen, das Passwort hier eintragen und verbinden. Das merkt sich die Seite.</li>
-          </ol>
-        </div>
-        <div class="row">
-          <input class="grow" type="password" id="obsPass" placeholder="OBS-WebSocket-Passwort" autocomplete="off">
-          <input type="number" id="obsPort" value="4455" min="1" max="65535" aria-label="Port" style="flex:0 0 90px">
-        </div>
-        <button class="btn primary" id="obsBtn">Mit OBS verbinden</button>
-        <div class="status"><span class="dot" id="obsDot"></span><span id="obsText">Nicht mit OBS verbunden</span></div>
+        <div class="status"><span class="dot" id="netDot"></span><span id="netText">Verbinde …</span></div>
         <button class="btn" id="obsTestBtn">Test im Stream anzeigen</button>
-        <p class="hint" id="obsTestHint">Zeigt 5 Sekunden lang „Verbindung zu OBS steht ✓“ in der Browserquelle. Ohne laufende Runde ist die Quelle absichtlich leer.</p>
+        <p class="hint">Zeigt 5 Sekunden lang „Verbindung zu OBS steht ✓“ in der Browserquelle. Ohne laufende Runde ist die Quelle absichtlich leer.</p>
+        <div class="field">
+          <label for="netRoom">Raum-Code</label>
+          <div class="row"><input class="grow" id="netRoom" maxlength="32" autocomplete="off" spellcheck="false"><button class="btn" id="netRoomSet">Übernehmen</button></div>
+          <p class="hint">Steckt im OBS-Link. Steuerst du von einem zweiten Gerät (z. B. Handy), trag dort denselben Code ein. Ändert sich der Code, muss der Link in OBS neu eingetragen werden.</p>
+        </div>
+        <details class="field">
+          <summary>Alternative: über den OBS-WebSocket (nur am selben PC)</summary>
+          <ol class="steps">
+            <li>In OBS unter <b>Werkzeuge → WebSocket-Servereinstellungen</b> „WebSocket-Server aktivieren“ anhaken. Bei „Verbindungsinformationen anzeigen“ steht das Passwort.</li>
+            <li>Das Passwort hier eintragen und verbinden. Falls Chrome nach „Geräte im lokalen Netzwerk“ fragt: Zulassen.</li>
+          </ol>
+          <div class="row">
+            <input class="grow" type="password" id="obsPass" placeholder="OBS-WebSocket-Passwort" autocomplete="off">
+            <input type="number" id="obsPort" value="4455" min="1" max="65535" aria-label="Port" style="flex:0 0 90px">
+          </div>
+          <button class="btn" id="obsBtn">Mit OBS verbinden</button>
+          <div class="status"><span class="dot" id="obsDot"></span><span id="obsText">Nicht mit OBS verbunden</span></div>
+        </details>
         <div class="field">
           <label for="obsMode">Im Stream einblenden</label>
           <select id="obsMode">
@@ -827,8 +832,8 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
       <h3>OBS-Link fürs Wheel</h3>
       <div class="obslink">
         <div class="obslink-row"><code id="wObsUrl">crashketchum.de/wheel/</code><button class="btn" id="wObsCopy">Kopieren</button></div>
-        <p class="w-hint">In OBS als <b>Browser</b>-Quelle eintragen, Breite 1080, Höhe 1920. Daten kommen über dieselbe OBS-Verbindung wie bei Fangen.</p>
-        <div class="w-row"><span class="w-hint" id="wObsState"></span><button class="btn" id="wObsConnect" style="padding:6px 10px;font-size:12.5px">Mit OBS verbinden</button></div>
+        <p class="w-hint">In OBS als <b>Browser</b>-Quelle eintragen („Lokale Datei“ nicht anhaken), Breite 1080, Höhe 1920. Die Daten kommen übers Internet, ohne Passwort.</p>
+        <div class="w-row"><span class="w-hint" id="wObsState"></span><button class="btn" id="wObsConnect" hidden style="padding:6px 10px;font-size:12.5px">Mit OBS verbinden</button></div>
       </div>
     </div>
     <div class="w-sec">
@@ -946,7 +951,7 @@ const overlay = !!window.FANG_OVERLAY || location.hash === '#obs';
 const stageOnly = overlay || location.hash === '#buehne';
 const testLink = overlay && /test/i.test(location.search + location.hash);
 const pendingLocal = new Set(); // in diesem Fenster noch nicht animiert
-let playing = false, summaryOn = false, testOn = testLink, testTimer = 0;
+let playing = false, summaryOn = false, testOn = testLink, testTimer = 0, linkHint = false;
 
 function makeRound(list, wins, mains) {
   const prizes = [];
@@ -961,7 +966,7 @@ function parseList(text) {
   });
   return out;
 }
-function save() { store(KEY, S); bc && bc.postMessage({ t: 'state' }); pushObs(); }
+function save() { store(KEY, S); bc && bc.postMessage({ t: 'state' }); pushObs(); pushNet(); }
 
 /* ---------- Kanal zwischen Steuer- und Bühnenfenster ---------- */
 let bc = null;
@@ -1195,7 +1200,107 @@ function pushObs() {
   obs.send(JSON.stringify({ op: 6, d: { requestType: 'CallVendorRequest', requestId: 'f' + (++obsReq), requestData: { vendorName: 'obs-browser', requestType: 'emit_event', requestData: { event_name: 'fangrunde', event_data: { S: pub } } } } }));
 }
 setInterval(pushObs, 8000);
-if (overlay) window.addEventListener('fangrunde', (e) => { const d = e.detail; if (d && d.S && Array.isArray(d.S.round)) applyState(d.S); });
+if (overlay) window.addEventListener('fangrunde', (e) => { const d = e.detail; if (d && d.S && Array.isArray(d.S.round)) { gotState = true; applyState(d.S); } });
+
+/* ---------- Online-Sync: Steuerseite → OBS-Quellen übers Internet ----------
+   Kleiner MQTT-Client über WebSocket, zwei öffentliche Broker gleichzeitig (fällt einer aus, läuft der andere).
+   Thema = Raum-Code aus dem OBS-Link (?r=…). Die Steuerseite schickt den Spielstand (retained, also bekommt
+   eine frisch geladene OBS-Quelle sofort den letzten Stand), die OBS-Quellen melden sich alle 5 s zurück. */
+const NET_BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'];
+const NET_BASE = 'crashketchum-fangrunde/v1/';
+let gotState = false;
+const netRoom = (() => {
+  const m = /[?&#]r=([a-z0-9]{4,32})/i.exec(location.search + location.hash);
+  if (overlay) return m ? m[1].toLowerCase() : '';
+  let r = ''; try { r = localStorage.getItem('fangrunde.room') || ''; } catch (e) {}
+  if (!/^[a-z0-9]{4,32}$/.test(r)) {
+    const abc = 'abcdefghjkmnpqrstuvwxyz23456789', v = crypto.getRandomValues(new Uint8Array(8));
+    r = Array.from(v, (x) => abc[x % abc.length]).join(''); try { localStorage.setItem('fangrunde.room', r); } catch (e) {}
+  }
+  return r;
+})();
+function mqttConn(url, onMsg, onState) {
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  let ws = null, ok = false, buf = new Uint8Array(0), timer = 0, ping = 0, tries = 0, pid = 0;
+  const subs = [];
+  const cat = (parts) => { let n = 0; parts.forEach((x) => (n += x.length)); const o = new Uint8Array(n); let i = 0; parts.forEach((x) => { o.set(x, i); i += x.length; }); return o; };
+  const str = (t) => { const b = enc.encode(t); return cat([[b.length >> 8, b.length & 255], b]); };
+  const vlen = (n) => { const o = []; do { let d = n % 128; n = Math.floor(n / 128); if (n > 0) d |= 128; o.push(d); } while (n > 0); return o; };
+  const send = (h, parts) => { if (!ws || ws.readyState !== 1) return false; const body = cat(parts); try { ws.send(cat([[h], vlen(body.length), body])); return true; } catch (e) { return false; } };
+  const sub = (t) => { pid = (pid % 65000) + 1; send(0x82, [[pid >> 8, pid & 255], str(t), [0]]); };
+  function retry() { clearTimeout(timer); tries++; timer = setTimeout(open, Math.min(15000, 1000 * tries)); }
+  function parse() {
+    while (buf.length >= 2) {
+      let mul = 1, n = 0, i = 1, b;
+      do { if (i >= buf.length) return; b = buf[i++]; n += (b & 127) * mul; mul *= 128; } while (b & 128);
+      if (buf.length < i + n) return;
+      const h = buf[0], body = buf.slice(i, i + n); buf = buf.slice(i + n);
+      const type = h >> 4;
+      if (type === 2 && body[1] === 0) {
+        ok = true; tries = 0; subs.forEach(sub);
+        clearInterval(ping); ping = setInterval(() => send(0xC0, []), 30000); onState(true);
+      } else if (type === 3) {
+        const tl = (body[0] << 8) | body[1]; let p = 2 + tl; if ((h >> 1) & 3) p += 2;
+        onMsg(dec.decode(body.subarray(2, 2 + tl)), dec.decode(body.subarray(p)));
+      }
+    }
+  }
+  function open() {
+    buf = new Uint8Array(0);
+    try { ws = new WebSocket(url, 'mqtt'); } catch (e) { retry(); return; }
+    ws.binaryType = 'arraybuffer';
+    ws.onopen = () => send(0x10, [str('MQTT'), [4, 2, 0, 60], str('ck' + Math.random().toString(36).slice(2, 12))]);
+    ws.onmessage = (ev) => { if (typeof ev.data === 'string') return; buf = cat([buf, new Uint8Array(ev.data)]); parse(); };
+    ws.onclose = () => { const was = ok; ok = false; clearInterval(ping); if (was) onState(false); retry(); };
+    ws.onerror = () => {};
+  }
+  open();
+  return {
+    get ok() { return ok; },
+    subscribe(t) { subs.push(t); if (ok) sub(t); },
+    publish(t, msg, retain) { return ok && send(0x30 | (retain ? 1 : 0), [str(t), enc.encode(msg)]); },
+  };
+}
+let netConns = [], netLast = 0, netTimer = 0, netNote = '', netNoteT = 0;
+const netSeen = { fang: 0, wheel: 0 };
+const netTopic = () => NET_BASE + netRoom;
+const netOnline = () => netConns.some((c) => c.ok);
+function setNet(state, text) { const d = document.getElementById('netDot'), t = document.getElementById('netText'); if (d) d.className = 'dot ' + state; if (t) t.textContent = text; }
+function netWheelText() {
+  if (!netOnline()) return 'Verbinde mit dem Internet …';
+  return Date.now() - netSeen.wheel < 15000 ? 'OBS-Quelle Wheel ist verbunden ✓' : 'Online. Die OBS-Quelle Wheel meldet sich noch nicht (Link mit ?r= in OBS eingetragen?).';
+}
+function netStatus() {
+  if (overlay) return;
+  if (!netOnline()) { setNet('wait', 'Verbinde mit dem Internet-Dienst …'); return; }
+  if (netNote && Date.now() - netNoteT < 6000) { setNet('on', netNote); return; }
+  const f = Date.now() - netSeen.fang < 15000, w = Date.now() - netSeen.wheel < 15000;
+  if (f || w) setNet('on', (f ? 'OBS-Quelle Fangen ist verbunden ✓' : 'Fangen-Quelle meldet sich nicht') + (w ? ' · Wheel-Quelle verbunden ✓' : ''));
+  else setNet('wait', 'Online. Warte auf die OBS-Quelle: Link oben in OBS eintragen (mit ?r=…). Ist OBS offen, meldet sie sich nach ein paar Sekunden.');
+}
+function sendNet() {
+  if (overlay || !netOnline()) return;
+  const { obsPass, session, log, ...pub } = S;
+  const msg = JSON.stringify({ t: Date.now(), S: pub });
+  netConns.forEach((c) => c.publish(netTopic(), msg, true));
+}
+function pushNet() { if (overlay || !netConns.length) return; clearTimeout(netTimer); netTimer = setTimeout(sendNet, 80); }
+function netHello() { const msg = JSON.stringify({ k: window.WHEEL_OVERLAY ? 'wheel' : 'fang', t: Date.now() }); netConns.forEach((c) => c.publish(netTopic() + '/ov', msg, false)); }
+function netOnMsg(topic, txt) {
+  let d; try { d = JSON.parse(txt); } catch (e) { return; }
+  if (!d) return;
+  if (overlay && topic === netTopic()) {
+    if (d.S && Array.isArray(d.S.round) && d.t > netLast) { netLast = d.t; gotState = true; applyState(d.S); }
+  } else if (!overlay && topic === netTopic() + '/ov' && (d.k === 'fang' || d.k === 'wheel')) { netSeen[d.k] = Date.now(); netStatus(); }
+}
+if (netRoom && typeof WebSocket !== 'undefined' && !/claude/i.test(location.hostname)) {
+  netConns = NET_BROKERS.map((u) => mqttConn(u, netOnMsg, (on) => { if (on) { if (overlay) netHello(); else sendNet(); } netStatus(); }));
+  netConns.forEach((c) => c.subscribe(overlay ? netTopic() : netTopic() + '/ov'));
+  if (overlay) setInterval(netHello, 5000); else { setInterval(sendNet, 10000); setInterval(netStatus, 2000); }
+}
+if (!overlay && /claude/i.test(location.hostname)) setNet('', 'In dieser Vorschau gibt es keine Verbindung. Auf crashketchum.de/steuerung/ geht es.');
+/* OBS-Quelle mit altem Link (ohne Raum-Code): nach 10 s ohne Daten Hinweis zeigen */
+if (overlay && !netRoom && !testLink) setTimeout(() => { if (gotState) return; linkHint = true; renderAll(); }, 10000);
 
 /* ---------- Sound ---------- */
 let ac = null;
@@ -1650,9 +1755,11 @@ function renderAll() {
   if (!stageOnly) { renderBuyerBox(); renderRoundTab(); renderWinners(); }
   document.body.classList.toggle('green', !!S.green);
   document.body.classList.toggle('no-board', !S.showBoard);
+  if (overlay && linkHint && gotState) linkHint = false;
+  if (overlay && linkHint && $('#obsTest').dataset.l !== 'h') { $('#obsTest').dataset.l = 'h'; $('#obsTest').innerHTML = 'Bitte neuen OBS-Link eintragen<small>Steuerseite → Tab OBS → Link kopieren (mit ?r=…)</small>'; }
   if (overlay && testLink && !$('#obsTest').dataset.l) { $('#obsTest').dataset.l = 1; $('#obsTest').innerHTML = 'OBS-Link funktioniert ✓<small>Test-Link. Für den Stream die URL ohne ?test eintragen.</small>'; }
-  if (overlay) $('#obsTest').classList.toggle('on', testOn);
-  if (overlay) stage.classList.toggle('shown', testOn || S.obsMode === 'always' || playing || summaryOn || S.picks.length > 0 || !!S.showAll);
+  if (overlay) $('#obsTest').classList.toggle('on', testOn || linkHint);
+  if (overlay) stage.classList.toggle('shown', testOn || linkHint || S.obsMode === 'always' || playing || summaryOn || S.picks.length > 0 || !!S.showAll);
   if (window.wheelRender) wheelRender();
   if (!stageOnly) { const b = $('#toggleAll'); b.textContent = S.showAll ? 'Übersicht ausblenden' : 'Übersicht im Stream zeigen'; b.classList.toggle('warn', !!S.showAll); }
 }
@@ -1683,7 +1790,9 @@ document.querySelectorAll('#perBuyer button').forEach((b) => (b.onclick = () => 
 }));
 $('#copyObs').onclick = async (e) => { const b = e.currentTarget; try { await navigator.clipboard.writeText($('#obsUrl').textContent); b.textContent = 'Kopiert'; } catch (err) { b.textContent = 'Bitte markieren'; } setTimeout(() => (b.textContent = 'Kopieren'), 2000); };
 /* OBS-Link passend zur Adresse, unter der diese Seite läuft (Vercel, GitHub Pages ...) */
-if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('../obs/', location.href); u.hash = ''; u.search = ''; $('#obsUrl').textContent = u.href; }
+if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('../obs/', location.href); u.hash = ''; u.search = '?r=' + netRoom; $('#obsUrl').textContent = u.href; }
+$('#netRoom').value = netRoom;
+$('#netRoomSet').onclick = () => { const v = $('#netRoom').value.trim().toLowerCase().replace(/[^a-z0-9]/g, ''); if (v.length < 4) { $('#netRoom').value = netRoom; return; } try { localStorage.setItem('fangrunde.room', v); } catch (e) {} location.reload(); };
 $('#wTabWin').onclick = () => { wView = 'win'; renderWinners(); };
 $('#wTabNone').onclick = () => { wView = 'none'; renderWinners(); };
 $('#copyWin').onclick = async (e) => {
@@ -1790,8 +1899,8 @@ $('#assignSave').onclick = () => {
 $('#connectBtn').onclick = () => { if (ws && ws.readyState <= 1 && wsWanted) { wsWanted = false; ws.close(); } else connect(); };
 $('#obsBtn').onclick = () => { if (obsWanted || obsOk) { obsWanted = false; S.obsAuto = false; save(); try { obs && obs.close(); } catch (e) {} setObs('', 'Nicht mit OBS verbunden'); } else obsConnect(); };
 $('#obsTestBtn').onclick = () => {
-  if (!obsOk) { setObs('err', 'Erst mit OBS verbinden (Passwort eintragen, dann „Mit OBS verbinden“). Danach geht der Test.'); return; }
-  S.ping = Date.now(); save(); pushObs(); setObs('on', 'Test an OBS geschickt. In der Browserquelle sollte jetzt 5 Sekunden lang „Verbindung zu OBS steht ✓“ stehen.');
+  if (!obsOk && !netOnline()) { setNet('err', 'Noch keine Internet-Verbindung. Bitte kurz warten und nochmal drücken.'); return; }
+  S.ping = Date.now(); save(); netNote = 'Test geschickt. In OBS sollte jetzt 5 Sekunden lang „Verbindung zu OBS steht ✓“ stehen.'; netNoteT = Date.now(); netStatus();
 };
 $('#obsMode').onchange = (e) => { S.obsMode = e.target.value; save(); };
 $('#layoutSel').onchange = (e) => { S.layout = e.target.value; save(); renderAll(); };
@@ -2231,11 +2340,11 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   $$('#wThemes').addEventListener('click', (e) => { const b = e.target.closest('button[data-theme]'); if (b) { W().theme = b.dataset.theme; commit(); } });
   let testFlee = false;
   $$('#wTestCatch').onclick = () => { prev.sound = true; playCatch(prev, { who: 'Test', mon: 1 + Math.floor(Math.random() * 151), flee: testFlee }); testFlee = !testFlee; $$('#wTestCatch').textContent = testFlee ? 'Flucht testen' : 'Fang testen'; };
-  $$('#wObsConnect').onclick = () => { const b = $$('#obsBtn'); if (b) b.click(); setTimeout(renderPanel, 300); };
-  if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('../wheel/', location.href); u.hash = ''; u.search = ''; $$('#wObsUrl').textContent = u.href; }
+  
+  if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('../wheel/', location.href); u.hash = ''; u.search = '?r=' + netRoom; $$('#wObsUrl').textContent = u.href; }
   $$('#wObsCopy').onclick = () => { try { navigator.clipboard.writeText($$('#wObsUrl').textContent); $$('#wObsCopy').textContent = 'Kopiert ✓'; setTimeout(() => $$('#wObsCopy').textContent = 'Kopieren', 1500); } catch (e) {} };
   setInterval(() => { if (window.crashTab() === 'wheel') renderObsState(); }, 1500);
-  function renderObsState() { const t = $$('#obsText'); $$('#wObsState').textContent = t ? t.textContent : ''; $$('#wObsConnect').hidden = typeof obsOk !== 'undefined' && obsOk; }
+  function renderObsState() { $$('#wObsState').textContent = netWheelText(); }
 
   function renderPanel() {
     const w = W(), st = stats();
