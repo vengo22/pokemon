@@ -569,6 +569,10 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
 .wb-text.flee b { color: #f3f4fa; -webkit-text-stroke-color: #15151d; text-shadow: 0 calc(var(--k) * .8) 0 #15151d; }
 .wb-text span { display: inline-block; margin-top: calc(var(--k) * 1.4); font-size: calc(var(--k) * 4.4); padding: calc(var(--k) * .8) calc(var(--k) * 3); border-radius: 999px; background: linear-gradient(180deg, var(--t1), var(--t2)); box-shadow: inset 0 0 0 calc(var(--k) * .35) #15151d; }
 .wb-text span em { font-style: normal; color: #ffd85e; }
+#cloudState { position: fixed; left: 12px; bottom: 10px; z-index: 60; padding: 5px 10px; border-radius: 999px; font: 800 12px 'Nunito', system-ui, sans-serif; background: rgba(28,6,9,.85); border: 1px solid var(--line); color: var(--muted); pointer-events: none; }
+#cloudState:empty { display: none; }
+#cloudState.err { color: #ffb0a6; border-color: #a3182a; }
+html:not(.unlocked) #cloudState { display: none; }
 </style>
 
 <div class="gate" id="gate">
@@ -913,16 +917,17 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
 (() => {
   const H = '277375b99e186c72ac38ac47b03199038342fe0389be8765476fa2be0c5b5649';
   const root = document.documentElement;
-  const ok = () => { root.classList.add('unlocked'); };
-  let saved = null; try { saved = sessionStorage.getItem('fangrunde.gate'); } catch (e) {}
-  if (window.FANG_OVERLAY || saved === H) { ok(); return; }
+  const ok = () => { root.classList.add('unlocked'); window.dispatchEvent(new Event('crash-unlocked')); };
+  let saved = null, ck = null; try { saved = sessionStorage.getItem('fangrunde.gate'); ck = localStorage.getItem('crash.cloudkey'); } catch (e) {}
+  // ohne Cloud-Schlüssel (ältere Sitzung) einmal den Code neu abfragen, damit das Online-Speichern starten kann
+  if (window.FANG_OVERLAY || (saved === H && ck)) { ok(); return; }
   const sha = async t => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)))].map(b => b.toString(16).padStart(2, '0')).join('');
   const gate = document.getElementById('gate'), inp = document.getElementById('gateIn');
   setTimeout(() => inp.focus(), 50);
   document.getElementById('gateForm').onsubmit = async e => {
     e.preventDefault();
     if (await sha(inp.value.trim()) === H) {
-      try { sessionStorage.setItem('fangrunde.gate', H); } catch (e) {}
+      try { sessionStorage.setItem('fangrunde.gate', H); localStorage.setItem('crash.cloudkey', await sha('crashketchum-cloud:' + inp.value.trim())); } catch (e) {}
       ok();
     } else {
       document.getElementById('gateErr').textContent = 'Falscher Code';
@@ -989,7 +994,7 @@ function parseList(text) {
   });
   return out;
 }
-function save() { store(KEY, S); bc && bc.postMessage({ t: 'state' }); pushObs(); pushNet(); }
+function save() { store(KEY, S); bc && bc.postMessage({ t: 'state' }); pushObs(); pushNet(); window.cloudPush && window.cloudPush(); }
 
 /* ---------- Kanal zwischen Steuer- und Bühnenfenster ---------- */
 let bc = null;
@@ -2071,7 +2076,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   };
   // hochgeladene Logos bleiben als eigene Vorlagen auf diesem Gerät, bis man sie löscht (nicht im Sync, der Hit trägt sein Bild selbst)
   let myLogos = []; try { myLogos = JSON.parse(localStorage.getItem('crash.logos')) || []; } catch (e) {}
-  const saveLogos = () => { try { localStorage.setItem('crash.logos', JSON.stringify(myLogos)); } catch (e) {} };
+  const saveLogos = () => { try { localStorage.setItem('crash.logos', JSON.stringify(myLogos)); } catch (e) {} window.cloudPush && window.cloudPush(); };
+  window.reloadLogos = () => { try { myLogos = JSON.parse(localStorage.getItem('crash.logos')) || []; } catch (e) {} };
   const hitThumb = (h) => { const u = hitImg(h); return u ? `<img src="${u}" alt="">` : BALL; };
   function shrinkImage(file, cb) {
     const fr = new FileReader();
@@ -2368,8 +2374,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   const NIETE_DEF = 'Booster, Pack, Trostpreis, Niete, Sleeve, Sticker';
   $$('#wWnNiete').value = NIETE_DEF;
   try { $$('#wWnUrl').value = localStorage.getItem('crash.wnurl') || ''; const nv = localStorage.getItem('crash.wnniete'); if (nv !== null) $$('#wWnNiete').value = nv; } catch (e) {}
-  $$('#wWnUrl').onchange = (e) => { try { localStorage.setItem('crash.wnurl', e.target.value.trim()); } catch (x) {} };
-  $$('#wWnNiete').onchange = (e) => { try { localStorage.setItem('crash.wnniete', e.target.value.trim()); } catch (x) {} };
+  $$('#wWnUrl').onchange = (e) => { try { localStorage.setItem('crash.wnurl', e.target.value.trim()); } catch (x) {} window.cloudPush && window.cloudPush(); };
+  $$('#wWnNiete').onchange = (e) => { try { localStorage.setItem('crash.wnniete', e.target.value.trim()); } catch (x) {} window.cloudPush && window.cloudPush(); };
   // Gewinn-Text von Whatnot einordnen: Hit aus der Liste → gefangen, Nieten-Wort → flieht, sonst unbekannt
   function classify(text) {
     const t = norm(text); if (!t) return null;
@@ -2492,7 +2498,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     $$('#wPrev').classList.toggle('off', !w.live);
     $$('#wPrevNote').textContent = w.live ? '' : 'Leiste ist im Stream gerade ausgeblendet';
     // Top-Hits-Liste nur neu bauen, wenn sich die Anzahl oder Bilder ändern (sonst springt der Cursor)
-    const hsig = '#' + w.hits.map((h) => (h.won ? 1 : 0) + (h.img || '').slice(-16)).join('|');
+    const hsig = '#' + w.hits.map((h) => (h.won ? 1 : 0) + h.name + (h.img || '').slice(-16)).join('|');
     if ($$('#wHits').dataset.sig !== hsig) {
       $$('#wHits').dataset.sig = hsig;
       $$('#wHits').innerHTML = w.hits.length ? w.hits.map((h, i) => `<div class="w-hitrow${h.won ? ' won' : ''}" data-i="${i}" title="${h.won ? 'Gefangen, läuft nicht mehr im Stream' : ''}"><button class="ph" title="Bild wählen" aria-label="Bild wählen">${hitThumb(h)}</button><input type="text" value="${esc(h.name)}" placeholder="z. B. Glurak ex SAR"><button class="got" aria-pressed="${!!h.won}" title="${h.won ? 'Wieder ins Laufband' : 'Als gefangen markieren'}">${h.won ? 'Gefangen ✓' : 'Gefangen'}</button><button class="x" aria-label="Entfernen">✕</button></div><div class="w-imgmenu" data-i="${i}" hidden><span>Bild:</span><button data-img="" aria-pressed="${!h.img}">Automatisch</button>${Object.entries(HIT_PRESETS).map(([k, [n, u]]) => `<button data-img="p:${k}" title="${n}" aria-pressed="${h.img === 'p:' + k}"><img src="${u}" alt="${n}"></button>`).join('')}${myLogos.map((u, k) => `<span class="mine"><button data-img="${u}" title="Eigenes Logo" aria-pressed="${h.img === u}"><img src="${u}" alt="Eigenes Logo"></button><button class="del" data-del="${k}" title="Logo löschen" aria-label="Logo löschen">✕</button></span>`).join('')}<button data-img="up">Hochladen…</button></div>`).join('') : '<p class="w-hint">Noch keine Hits. Einfach eintragen, z. B. „Glurak ex SAR“. Sie laufen im Stream unter der Fang-Chance durch.</p>';
@@ -2518,5 +2524,73 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   let t0 = 'fang'; try { t0 = localStorage.getItem('crash.tab') || 'fang'; } catch (e) {}
   if (location.hash === '#wheel') t0 = 'wheel';
   setTab(t0);
+})();
+</script>
+<script>
+/* ---------- Online speichern (David 2026-10-29): alles, was auf der Steuerseite eingetragen wird, liegt in Supabase (Projekt „crashketchum“)
+   und ist auf jedem PC nach der Code-Eingabe wieder da. Schlüssel = SHA-256 aus dem Code, die Tabelle ist nur über get_state/put_state erreichbar. */
+(() => {
+  if (overlay) return;
+  const URL_ = 'https://fgffdwebdwdwjjpvbxdo.supabase.co/rest/v1/rpc/', KEY_ = 'sb_publishable_hdvLr7ZtMEpfwlpSiUiajg_q0arBasZ';
+  const LS = ['crash.logos', 'crash.wnniete', 'crash.wnurl', 'fangrunde.room']; // Geräte-Einstellungen, die mitwandern
+  let key = '', lastT = 0, timer = 0, busy = false, dirty = false, started = false;
+  try { lastT = +localStorage.getItem('crash.cloud.t') || 0; } catch (e) {}
+  const el = document.createElement('div'); el.id = 'cloudState'; document.body.appendChild(el);
+  const show = (ok, t) => { el.className = ok ? 'ok' : 'err'; el.textContent = t; };
+  const rpc = async (fn, body) => {
+    const r = await fetch(URL_ + fn, { method: 'POST', headers: { apikey: KEY_, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error(r.status); const txt = await r.text(); return txt ? JSON.parse(txt) : null;
+  };
+  const pack = () => {
+    const { obsPass, session, ...pub } = S, ls = {};
+    LS.forEach((k) => { try { const v = localStorage.getItem(k); if (v !== null) ls[k] = v; } catch (e) {} });
+    return { S: pub, ls };
+  };
+  const unpack = (d) => {
+    if (!d || !d.S || !Array.isArray(d.S.round)) return;
+    const keep = { obsPass: S.obsPass, session: S.session };
+    let roomChanged = false;
+    Object.entries(d.ls || {}).forEach(([k, v]) => { try { if (k === 'fangrunde.room' && localStorage.getItem(k) !== v) roomChanged = true; localStorage.setItem(k, v); } catch (e) {} });
+    S = Object.assign(d.S, keep);
+    store(KEY, S); bc && bc.postMessage({ t: 'state' }); pushObs(); pushNet();
+    // Raum-Code steckt im OBS-Link: bei Wechsel einmal neu laden, damit überall derselbe Link gilt
+    if (roomChanged) { location.reload(); return; }
+    window.reloadLogos && window.reloadLogos();
+    const nv = document.getElementById('wWnNiete'), uv = document.getElementById('wWnUrl');
+    try { if (nv && d.ls && d.ls['crash.wnniete'] != null) nv.value = d.ls['crash.wnniete']; if (uv && d.ls && d.ls['crash.wnurl'] != null) uv.value = d.ls['crash.wnurl']; } catch (e) {}
+    ['#wHits', '#wTix'].forEach((q) => { const x = document.querySelector(q); if (x) x.dataset.sig = ''; });
+    renderAll();
+  };
+  const hhmm = () => new Date().toTimeString().slice(0, 5);
+  async function push() {
+    if (!key) return;
+    if (busy) { dirty = true; return; }
+    busy = true; dirty = false;
+    const t = Date.now();
+    try { await rpc('put_state', { k: key, d: pack(), t }); lastT = t; try { localStorage.setItem('crash.cloud.t', String(t)); } catch (e) {} show(true, '☁ Online gespeichert ' + hhmm()); }
+    catch (e) { show(false, '☁ Nicht online gespeichert, versuche es gleich nochmal'); dirty = true; }
+    busy = false;
+    if (dirty) { clearTimeout(timer); timer = setTimeout(() => { timer = 0; push(); }, 3000); }
+  }
+  async function pull(first) {
+    if (!key || busy || timer) return;
+    try {
+      const r = await rpc('get_state', { k: key });
+      if (r && r.t > lastT && r.d) { lastT = r.t; try { localStorage.setItem('crash.cloud.t', String(r.t)); } catch (e) {} unpack(r.d); show(true, '☁ Online geladen ' + hhmm()); }
+      else if (first) push(); // online nichts Neueres: diesen Stand hochladen
+    } catch (e) { show(false, '☁ Online-Speicher nicht erreichbar'); }
+  }
+  window.cloudPush = () => { if (!key) return; clearTimeout(timer); timer = setTimeout(() => { timer = 0; push(); }, 1500); };
+  function start() {
+    if (started) return;
+    try { key = localStorage.getItem('crash.cloudkey') || ''; } catch (e) {}
+    if (!/^[0-9a-f]{64}$/.test(key) || /claude/i.test(location.hostname)) { key = ''; return; }
+    started = true; show(true, '☁ Verbinde …');
+    pull(true);
+    setInterval(() => pull(false), 15000);                         // Änderungen von anderen PCs holen
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) pull(false); });
+  }
+  if (document.documentElement.classList.contains('unlocked')) start();
+  window.addEventListener('crash-unlocked', start);
 })();
 </script>
