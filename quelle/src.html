@@ -2300,7 +2300,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     if (!hit) e.flee = true;
     const tk = hit && hitIdx >= 0 ? w.tix[hitIdx] : null;
     // gezogenes Ticket fliegt aus der Liste (David 2026-10-29), „Zurück“ holt es wieder
-    if (tk) { e.prize = tk.name; w.tix.splice(hitIdx, 1); }
+    // aufgehoben in tixUsed, „Neues Wheel“ holt sie zurück (David 2026-10-29)
+    if (tk) { e.prize = tk.name; w.tix.splice(hitIdx, 1); (w.tixUsed = w.tixUsed || []).push(Object.assign({}, tk, { at: hitIdx })); }
     {
       const used = new Set(w.sold.map((x) => x.mon).filter(Boolean));
       const hm = tk ? monForHit(tk) : null;
@@ -2322,6 +2323,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     delete b.dataset.sure; b.textContent = 'Neues Wheel'; b.classList.remove('warn');
     setTimeout(() => { $$('#wSetup').scrollIntoView({ behavior: 'smooth', block: 'center' }); $$('#wSetup').classList.remove('flash'); void $$('#wSetup').offsetWidth; $$('#wSetup').classList.add('flash'); $$('#wSpots').focus(); $$('#wSpots').select(); }, 50);
     snap(); const w = W(); w.name = ''; w.sold = []; w.pending = 0; w.hits.forEach((h) => { delete h.won; }); w.tix.forEach((h) => { delete h.won; });
+    // gezogene Tickets an ihren alten Platz zurück, Tickets und Top-Hits (mit Logos) bleiben erhalten
+    (w.tixUsed || []).slice().reverse().forEach((t) => { const { at, ...tk } = t; w.tix.splice(Math.min(at, w.tix.length), 0, tk); }); w.tixUsed = [];
     // das alte Whatnot-Wheel nicht ins neue übernehmen
     if (wn.set) { w.wnSkip = wn.set.title + '|' + wn.set.total + '|' + wn.set.remaining; } wn.set = null; wn.pick = '';
     commit();
