@@ -375,6 +375,10 @@ html.unlocked .gate { display: none; }
 .hdr-logo span { color: var(--red); }
 .hdr-tabs { display: flex; gap: 6px; margin-left: auto; }
 .hdr-tabs button { border: 1px solid var(--line); background: none; color: var(--muted); font-family: var(--display); font-size: 19px; letter-spacing: .4px; padding: 7px 20px; border-radius: 999px; }
+.hdr-mute { margin-left: 8px; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--fg); display: grid; place-items: center; cursor: pointer; flex: none; }
+.hdr-mute:hover { border-color: var(--muted); }
+.hdr-mute svg { width: 22px; height: 22px; }
+.hdr-mute[aria-pressed="true"] { color: var(--red); border-color: var(--red); }
 .hdr-tabs button:hover { color: var(--fg); border-color: var(--muted); }
 .hdr-tabs button[aria-selected="true"] { background: var(--red); border-color: var(--red); color: #fff; box-shadow: 0 4px 14px rgba(238,59,76,.35); }
 @media (max-width: 560px) { .hdr-logo b { display: none; } .hdr-tabs button { padding: 7px 14px; font-size: 17px; } }
@@ -623,6 +627,7 @@ html:not(.unlocked) #cloudBox { display: none; }
       <button role="tab" id="tabFang" data-tab="fang" aria-selected="true">Fangen</button>
       <button role="tab" id="tabWheel" data-tab="wheel" aria-selected="false">Wheel</button>
     </nav>
+    <button class="hdr-mute" id="hdrMute" type="button" title="Ton auf dieser Seite aus (OBS spielt weiter)" aria-label="Ton auf dieser Seite aus" aria-pressed="false"></button>
   </div>
 </header>
 <div class="app">
@@ -1356,13 +1361,22 @@ if (!overlay && /claude/i.test(location.hostname)) setNet('', 'In dieser Vorscha
 if (overlay && !netRoom && !testLink) setTimeout(() => { if (gotState) return; linkHint = true; renderAll(); }, 10000);
 
 /* ---------- Sound ---------- */
+// Ton nur auf der Steuerseite aus (David 2026-10-29), OBS spielt weiter: nur localStorage, nicht im Sync
+window.crashMuted = () => { if (overlay) return false; try { return localStorage.getItem('crash.mute') === '1'; } catch (e) { return false; } };
+(() => {
+  const b = document.getElementById('hdrMute'); if (!b) return;
+  const SPK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4z" fill="currentColor"/>', ON = SPK + '<path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>', OFF = SPK + '<path d="M22 9l-6 6M16 9l6 6"/></svg>';
+  const paint = () => { const m = window.crashMuted(); b.innerHTML = m ? OFF : ON; b.setAttribute('aria-pressed', String(m)); b.title = m ? 'Ton auf dieser Seite ist aus (OBS spielt weiter). Antippen zum Einschalten' : 'Ton auf dieser Seite aus (OBS spielt weiter)'; };
+  b.onclick = () => { try { localStorage.setItem('crash.mute', window.crashMuted() ? '0' : '1'); } catch (e) {} paint(); };
+  paint();
+})();
 let ac = null;
 /* Fang-Jingle im Stil der klassischen Game-Boy-Fanfare (eigene Melodie, kein Original-Sound): [Hz, Start s, Dauer s] */
 const CATCH_LEAD = [[392, 0, .11], [523, .11, .11], [659, .22, .11], [784, .33, .22], [659, .55, .11], [784, .66, .11], [1047, .77, .6]];
 const CATCH_BASS = [[131, 0, .33], [98, .33, .33], [131, .66, .7]];
 const CATCH_MAIN = [[1175, 1.4, .12], [1319, 1.52, .12], [1568, 1.64, .5]];
 function tone(f, dur, type = 'square', at = 0, vol = 0.06, f2) {
-  if (aborted || !S.sound || (!stageOnly && obsOk)) return; // mit OBS spielt die Browserquelle den Ton
+  if (aborted || !S.sound || (!stageOnly && obsOk) || window.crashMuted()) return; // mit OBS spielt die Browserquelle den Ton
   try {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
     const t = ac.currentTime + at, o = ac.createOscillator(), g = ac.createGain();
@@ -2260,7 +2274,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
 
   let ac = null;
   function sfx(kind) {
-    if (!W().sound) return;
+    if (!W().sound || window.crashMuted()) return;
     try {
       ac = ac || new (window.AudioContext || window.webkitAudioContext)();
       const now = ac.currentTime;
