@@ -383,18 +383,10 @@ body.tab-wheel:not(.overlay):not(.stage-only) .app { display: none; }
 html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
 
 /* ---------- Wheel: Steuerung ---------- */
-body.tab-wheel:not(.overlay):not(.stage-only) { --night: #1c0609; --panel: #2e0a10; --panel-2: #44101a; --line: #5e1c27; --muted: #e0a3aa; background-color: #2a070d; background-image: radial-gradient(circle at 10% 6%, rgba(238,59,76,.35), transparent 40%), radial-gradient(circle at 92% 94%, rgba(255,201,61,.16), transparent 42%), linear-gradient(160deg, #4a0d16 0%, #22060b 55%, #3a0a12 100%); }
-body.tab-wheel .hdr { background: rgba(40,6,12,.88); }
-body.tab-wheel .w-prev { background: repeating-conic-gradient(#3a0d14 0 25%, #2c0a10 0 50%) 0 0 / 28px 28px; }
-body.tab-wheel[data-wtheme="blue"]:not(.overlay):not(.stage-only) { --night: #060d1f; --panel: #0b1836; --panel-2: #12234b; --line: #1f3a72; --muted: #a3bde6; background-color: #071229; background-image: radial-gradient(circle at 10% 6%, rgba(74,140,255,.35), transparent 40%), radial-gradient(circle at 92% 94%, rgba(255,201,61,.14), transparent 42%), linear-gradient(160deg, #0d2152 0%, #06102a 55%, #0b1c46 100%); }
-body.tab-wheel[data-wtheme="blue"] .hdr { background: rgba(6,14,40,.88); }
-body.tab-wheel[data-wtheme="blue"] .w-prev { background: repeating-conic-gradient(#0f1e44 0 25%, #0a1634 0 50%) 0 0 / 28px 28px; }
-body.tab-wheel[data-wtheme="green"]:not(.overlay):not(.stage-only) { --night: #04140a; --panel: #082513; --panel-2: #0f361d; --line: #1d5a31; --muted: #a8d9b5; background-color: #051a0c; background-image: radial-gradient(circle at 10% 6%, rgba(76,207,106,.3), transparent 40%), radial-gradient(circle at 92% 94%, rgba(255,201,61,.14), transparent 42%), linear-gradient(160deg, #0d3d1c 0%, #05190b 55%, #0a3017 100%); }
-body.tab-wheel[data-wtheme="green"] .hdr { background: rgba(4,24,10,.88); }
-body.tab-wheel[data-wtheme="green"] .w-prev { background: repeating-conic-gradient(#0d3019 0 25%, #082411 0 50%) 0 0 / 28px 28px; }
 .w-themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .w-themes button { border: 2px solid transparent; border-radius: 12px; padding: 10px 8px; color: #fff; font-family: var(--display); font-size: 17px; letter-spacing: .3px; display: flex; align-items: center; justify-content: center; gap: 6px; }
-.w-themes button svg { width: 20px; height: 20px; }
+.w-themes button { padding: 8px; }
+.w-themes button svg { width: 40px; height: 40px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
 .w-themes button[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.25); }
 .w-themes [data-theme="red"] { background: linear-gradient(180deg, #e0303f, #7e0f1d); }
 .w-themes [data-theme="blue"] { background: linear-gradient(180deg, #2f6fe0, #0f2a7e); }
@@ -799,11 +791,11 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
       <div class="w-heat"><span class="w-hint" style="font-weight:700">So heißt die Fang-Chance im Stream:</span><ul id="wHeatList"></ul></div>
     </div>
     <div class="w-sec">
-      <h3>Farbe der Leiste</h3>
+      <h3>Farbe der Leiste (nur fürs Wheel im Stream)</h3>
       <div class="w-themes" id="wThemes">
-        <button data-theme="red" aria-pressed="false"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="#fff" stroke-width="6"/><path d="M50 18c4 14 18 20 18 38a18 18 0 0 1-36 0c0-9 5-14 9-19 0 7 3 11 7 12-2-10 0-21 2-31z" fill="#fff"/></svg> Feuer</button>
-        <button data-theme="blue" aria-pressed="false"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="#fff" stroke-width="6"/><path d="M50 16c10 16 22 28 22 42a22 22 0 0 1-44 0c0-14 12-26 22-42z" fill="#fff"/><path d="M40 60a10 10 0 0 0 9 10" stroke="#000" stroke-opacity=".25" stroke-width="5" fill="none" stroke-linecap="round"/></svg> Wasser</button>
-        <button data-theme="green" aria-pressed="false"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="#fff" stroke-width="6"/><path d="M74 22C40 22 24 40 26 70l-6 8 5 4 6-8c30 2 46-18 43-52z" fill="#fff"/><path d="M33 72c10-12 20-22 32-32" stroke="#000" stroke-opacity=".25" stroke-width="4" fill="none" stroke-linecap="round"/></svg> Pflanze</button>
+        <button data-theme="red" aria-pressed="false" aria-label="Feuer" title="Feuer"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="#fff" stroke-width="6"/><path d="M50 18c4 14 18 20 18 38a18 18 0 0 1-36 0c0-9 5-14 9-19 0 7 3 11 7 12-2-10 0-21 2-31z" fill="#fff"/></svg></button>
+        <button data-theme="blue" aria-pressed="false" aria-label="Wasser" title="Wasser"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="#fff" stroke-width="6"/><path d="M50 16c10 16 22 28 22 42a22 22 0 0 1-44 0c0-14 12-26 22-42z" fill="#fff"/><path d="M40 60a10 10 0 0 0 9 10" stroke="#000" stroke-opacity=".25" stroke-width="5" fill="none" stroke-linecap="round"/></svg></button>
+        <button data-theme="green" aria-pressed="false" aria-label="Pflanze" title="Pflanze"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="#fff" stroke-width="6"/><path d="M74 22C40 22 24 40 26 70l-6 8 5 4 6-8c30 2 46-18 43-52z" fill="#fff"/><path d="M33 72c10-12 20-22 32-32" stroke="#000" stroke-opacity=".25" stroke-width="4" fill="none" stroke-linecap="round"/></svg></button>
       </div>
     </div>
     <div class="w-sec">
@@ -2255,7 +2247,6 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     }
     const log = $$('#wLog');
     log.innerHTML = w.sold.length ? w.sold.slice().reverse().map((x) => { const m = x.mon ? monOf(x.mon) : null; return `<li><span class="n">#${x.n}</span>${m ? `<img src="${m.img}" alt="">` : ''}<span class="who">${esc(x.who || '–')}</span><span class="res ${x.hit ? 'hit' : 'flee'}">${x.hit ? 'Hit' + (x.prize ? ': ' + esc(x.prize) : '') : 'Niete, geflohen'}</span></li>`; }).join('') : '<li class="none">Noch kein Spot verkauft</li>';
-    document.body.dataset.wtheme = w.theme || 'red';
     document.querySelectorAll('#wThemes button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.theme === (w.theme || 'red'))));
     const cur = heat(st.pct);
     $$('#wHeatList').innerHTML = HEAT.slice().reverse().map((h, i, arr) => { const next = arr[i + 1]; const range = next ? `${h[0]} bis ${next[0] - 1} %` : `ab ${h[0]} %`; return `<li class="${h === cur ? 'on' : ''}"><i style="background:${h[2]}"></i><b>${h[1]}</b><span>${h[0] === 0 ? `unter ${next[0]} %` : range}</span></li>`; }).join('');
