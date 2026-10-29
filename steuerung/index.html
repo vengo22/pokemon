@@ -435,8 +435,8 @@ html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
 .w-hitrow .ph { width: 52px; height: 52px; border-radius: 8px; border: 1px solid var(--line); background: var(--night); display: grid; place-items: center; }
 .w-heat ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
 .w-heat li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 9px; border: 1px solid var(--line); font-size: 13.5px; }
-.w-heat li i { width: 12px; height: 12px; border-radius: 50%; flex: none; }
-.w-heat li b { font-family: var(--display); font-weight: 400; font-size: 16px; min-width: 80px; }
+.w-heat li svg { width: 26px; height: 26px; flex: none; }
+.w-heat li b { font-family: var(--display); font-weight: 400; font-size: 16px; min-width: 100px; }
 .w-heat li span { color: var(--muted); }
 .w-heat li.on { border-color: var(--gold); background: rgba(255,201,61,.12); }
 .w-heat li.on span::after { content: "  ← gerade"; color: var(--gold); font-weight: 800; }
@@ -517,7 +517,8 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
 .wb-chance { display: grid; gap: calc(var(--k) * .9); padding: calc(var(--k) * 1.3) calc(var(--k) * 1.8) calc(var(--k) * 1.4); border-radius: calc(var(--k) * 2.2); background: var(--tdark); }
 .wb-crow { display: flex; align-items: baseline; justify-content: space-between; gap: calc(var(--k) * 2); }
 .wb-crow small { font-family: var(--body); font-weight: 800; font-size: calc(var(--k) * 2.2); letter-spacing: .1em; color: var(--tsoft); }
-.wb-crow .hl { font-size: calc(var(--k) * 5.2); line-height: 1; color: var(--hc); margin-left: calc(var(--k) * 1.2); }
+.wb-crow .hl { font-size: calc(var(--k) * 5.2); line-height: 1; color: var(--hc); margin-left: calc(var(--k) * 1.2); display: inline-flex; align-items: center; gap: calc(var(--k) * 1.2); vertical-align: middle; }
+.wb-crow .hl svg { width: calc(var(--k) * 6.4); height: calc(var(--k) * 6.4); flex: none; filter: drop-shadow(0 calc(var(--k) * .4) calc(var(--k) * .8) rgba(0,0,0,.4)); }
 .wb-crow .pct { font-weight: 400; font-size: calc(var(--k) * 6.6); line-height: 1; color: var(--hc); font-variant-numeric: tabular-nums; }
 .wb-crow .pct small { font-family: inherit; font-size: .55em; color: inherit; letter-spacing: 0; }
 .wb-meter { position: relative; height: calc(var(--k) * 3.6); border-radius: 999px; background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 calc(var(--k) * .3) rgba(255,255,255,.12); overflow: hidden; }
@@ -815,7 +816,7 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
       <div class="w-row"><button class="btn" id="wUndo">↶ Zurück</button><button class="btn" id="wNewRound">Neue Runde</button></div>
     </div>
     <div class="w-sec">
-      <div class="w-heat"><span class="w-hint" style="font-weight:700">So heißt die Fang-Chance im Stream:</span><ul id="wHeatList"></ul></div>
+      <div class="w-heat"><span class="w-hint" style="font-weight:700">So wird die Fang-Chance im Stream angezeigt:</span><ul id="wHeatList"></ul></div>
     </div>
     <div class="w-sec">
       <h3>Farbe der Leiste (nur fürs Wheel im Stream)</h3>
@@ -1982,7 +1983,16 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     return { spotsLeft, tLeft, pct: spotsLeft ? Math.min(100, Math.round((tLeft / spotsLeft) * 100)) : 0 };
   };
   // Feste Stufen nach Prozent (David: 30 % ist warm)
-  const HEAT = [[60, 'Glühend', '#fff27a'], [40, 'Heiß', '#ffd23d'], [25, 'Warm', '#ffb347'], [12, 'Lauwarm', '#ffffff'], [0, 'Kalt', '#9fd8ff']];
+  /* Fang-Chance als Bälle, aufsteigend (David 2026-10-29): [ab %, Name, Textfarbe, Ball-Grafik] */
+  const ballSVG = (top, bottom, deco = '') => `<svg class="tierball" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="bt"><path d="M4 50a46 46 0 0 1 92 0z"/></clipPath></defs><path d="M4 50a46 46 0 0 1 92 0z" fill="${top}"/><path d="M4 50a46 46 0 0 0 92 0z" fill="${bottom}"/><g clip-path="url(#bt)">${deco}</g><ellipse cx="34" cy="26" rx="12" ry="7" fill="#fff" opacity=".35" transform="rotate(-30 34 26)"/><circle cx="50" cy="50" r="46" fill="none" stroke="#111" stroke-width="6"/><path d="M4 50h30M66 50h30" stroke="#111" stroke-width="7"/><circle cx="50" cy="50" r="14" fill="#fff" stroke="#111" stroke-width="6"/><circle cx="50" cy="50" r="6" fill="#fff" stroke="#111" stroke-width="2.5"/></svg>`;
+  const HEAT = [
+    [80, 'Meisterball', '#e9a3ff', ballSVG('#7b3fb8', '#f4f4f8', '<circle cx="26" cy="30" r="9" fill="#e8559b"/><circle cx="74" cy="30" r="9" fill="#e8559b"/><path d="M38 34V18l12 10 12-10v16" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>')],
+    [60, 'Luxusball', '#ffb37a', ballSVG('#1d1d24', '#1d1d24', '<rect x="0" y="34" width="100" height="10" fill="#d92b2b"/><path d="M14 34h72M14 44h72" stroke="#f5c542" stroke-width="2.5"/><path d="M40 12h20" stroke="#f5c542" stroke-width="4" stroke-linecap="round"/>')],
+    [40, 'Hyperball', '#ffd23d', ballSVG('#1d1d24', '#f4f4f8', '<path d="M30 6v40M70 6v40" stroke="#f5c542" stroke-width="12"/>')],
+    [25, 'Superball', '#7fb4ff', ballSVG('#2f6fe0', '#f4f4f8', '<path d="M8 40c6-14 14-22 22-24l-4 26zM92 40c-6-14-14-22-22-24l4 26z" fill="#e0303f"/>')],
+    [12, 'Pokéball', '#ffffff', ballSVG('#e0303f', '#f4f4f8')],
+    [0, 'Flottball', '#8fd3ff', ballSVG('#2f8be0', '#f4f4f8', '<path d="M50 4v18M14 26l16 10M86 26l-16 10M30 6l8 16M70 6l-8 16" stroke="#f5c542" stroke-width="6" stroke-linecap="round"/>')]
+  ];
   const heat = (p) => HEAT.find((h) => p >= h[0]);
   const monOf = (id) => ({ id, name: (DEX[id - 1] || '').split('|')[0], img: SPRITES[id - 1] });
 
@@ -2073,7 +2083,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
         bar.last[k] = v; el.textContent = v;
       });
       q('chance').hidden = !w.showChance;
-      bar.wb.style.setProperty('--hc', h[2]); q('hl').textContent = h[1].toUpperCase();
+      bar.wb.style.setProperty('--hc', h[2]); if (q('hl').dataset.n !== h[1]) { q('hl').dataset.n = h[1]; q('hl').innerHTML = h[3] + esc(h[1].toUpperCase()); }
       q('fill').style.width = Math.max(st.pct ? 6 : 0, st.pct) + '%'; q('pct').innerHTML = st.pct + '<small>%</small>';
       const who = (w.turn || '').trim();
       q('turn').hidden = !w.showTurn || !who;
@@ -2412,7 +2422,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     log.innerHTML = w.sold.length ? w.sold.slice().reverse().map((x) => { const m = x.mon ? monOf(x.mon) : null; return `<li><span class="n">#${x.n}</span>${m ? `<img src="${m.img}" alt="">` : ''}<span class="who">${esc(x.who || '–')}</span><span class="res ${x.hit ? 'hit' : 'flee'}">${x.hit ? 'Hit' + (x.prize ? ': ' + esc(x.prize) : '') : 'Niete, geflohen'}</span></li>`; }).join('') : '<li class="none">Noch kein Spot verkauft</li>';
     document.querySelectorAll('#wThemes button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.theme === (w.theme || 'red'))));
     const cur = heat(st.pct);
-    $$('#wHeatList').innerHTML = HEAT.slice().reverse().map((h, i, arr) => { const next = arr[i + 1]; const range = next ? `${h[0]} bis ${next[0] - 1} %` : `ab ${h[0]} %`; return `<li class="${h === cur ? 'on' : ''}"><i style="background:${h[2]}"></i><b>${h[1]}</b><span>${h[0] === 0 ? `unter ${next[0]} %` : range}</span></li>`; }).join('');
+    $$('#wHeatList').innerHTML = HEAT.slice().reverse().map((h, i, arr) => { const next = arr[i + 1]; const range = next ? `${h[0]} bis ${next[0] - 1} %` : `ab ${h[0]} %`; return `<li class="${h === cur ? 'on' : ''}">${h[3]}<b>${h[1]}</b><span>${h[0] === 0 ? `unter ${next[0]} %` : range}</span></li>`; }).join('');
     renderObsState();
   }
 
