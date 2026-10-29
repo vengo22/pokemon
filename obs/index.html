@@ -825,12 +825,30 @@ html:not(.unlocked) #cloudBox { display: none; }
       <p class="w-sold" id="wSoldInfo"></p>
       <p class="w-hint">Die Hits sind die Pokémon, die man fangen kann. Bei „Gefangen“ gehen Hits und Spots runter, bei „Flieht“ (Niete) nur die Spots. Daraus rechnet die Leiste die Fang-Chance.</p>
     </div>
+    <div class="w-sec w-wn" id="wWnBox">
+      <h3>Automatisch mit Whatnot</h3>
+      <p class="w-hint">Der Wheel-Leser erkennt verkaufte Spots und gezogene Tickets selbst. Einmal einrichten, dann pro Show nur ein Klick.</p>
+      <div class="w-wnstate" id="wWnState"><span class="dot"></span><span id="wWnText">Nicht verbunden</span></div>
+      <select id="wWnSet" hidden aria-label="Welches Wheel"></select>
+      <details id="wWnHelp">
+        <summary>So geht's</summary>
+        <ol class="steps">
+          <li><b>Einmalig:</b> Diesen gelben Knopf mit der Maus in die Lesezeichenleiste ziehen: <a class="w-bm" id="wBm" href="#">Wheel-Leser</a></li>
+          <li><b>Pro Show:</b> Diese Seite offen lassen, deine Whatnot-Show im Browser öffnen und dort, sobald das Wheel zu sehen ist, das Lesezeichen <b>Wheel-Leser</b> anklicken.</li>
+          <li>Fertig: Oben steht dann „Verbunden ✓“. Jeder verkaufte Spot und jedes gezogene Ticket kommt von selbst, auch in OBS.</li>
+        </ol>
+        <p class="w-hint" style="display:none"><input type="text" id="wWnUrl" autocomplete="off"><button class="btn" id="wWnOpen">Öffnen</button></p>
+      </details>
+      <label class="w-hint" for="wWnNiete" style="font-weight:700">Steht beim Gewinn eines deiner Tickets, wird dessen Pokémon gefangen. Steht dort eines dieser Wörter, flieht das Pokémon:</label>
+      <input type="text" id="wWnNiete" autocomplete="off" style="padding:7px 10px">
+      <ul class="w-wnlog" id="wWnLog" hidden></ul>
+    </div>
     <div class="w-sec">
-      <h3>Spot verkauft: was wurde gezogen?</h3>
+      <h3>Von Hand (falls etwas nicht erkannt wird)</h3>
       <div class="w-pending" id="wPending" hidden></div>
       <label class="w-hint" for="wBuyer" style="font-weight:700">Jetzt dran (Name eintippen, optional)</label>
       <input type="text" id="wBuyer" placeholder="Name des Käufers, z. B. pika_paul" autocomplete="off">
-      <p class="w-hint" id="wTixBtnsHint" style="font-weight:700">Ticket gezogen? Einfach antippen, dann wird genau dieses Pokémon gefangen:</p>
+      <p class="w-hint" id="wTixBtnsHint" style="font-weight:700">Ticket gezogen, aber nicht erkannt? Antippen, dann wird genau dieses Pokémon gefangen:</p>
       <div class="w-tixbtns" id="wTixBtns"></div>
       <div class="w-big">
         <button class="w-hit" id="wHitBtn">Gefangen!<small>Hit gezogen</small></button>
@@ -861,7 +879,7 @@ html:not(.unlocked) #cloudBox { display: none; }
     </div>
     <div class="w-sec">
       <h3>Tickets im Whatnot-Wheel</h3>
-      <p class="w-hint">Trag jedes Ticket so ein, wie es im Whatnot-Wheel steht (z. B. „Bisasam Ticket 14“). Das Pokémon wird automatisch erkannt, du kannst es ändern. Wird das Ticket gezogen, tippst du es oben unter „Spot verkauft“ an. Bleibt gespeichert, bis du es mit ✕ löschst.</p>
+      <p class="w-hint">Trag jedes Ticket so ein, wie es im Whatnot-Wheel steht (z. B. „Bisasam Ticket 14“). Das Pokémon wird automatisch erkannt, du kannst es ändern. Wird das Ticket gezogen, erkennt der Wheel-Leser es und fängt genau dieses Pokémon. Bleibt gespeichert, bis du es mit ✕ löschst.</p>
       <datalist id="wMonList"></datalist>
       <div class="w-hits" id="wTix"></div>
       <div class="w-row"><button class="btn" id="wAddTix">+ Ticket hinzufügen</button></div>
@@ -881,24 +899,6 @@ html:not(.unlocked) #cloudBox { display: none; }
         <div class="w-row"><span class="w-hint" id="wObsState"></span><button class="btn" id="wObsConnect" hidden style="padding:6px 10px;font-size:12.5px">Mit OBS verbinden</button></div>
       </div>
     </div>
-    <details class="w-sec w-wn" id="wWnBox">
-      <summary><h3>Automatisch mit Whatnot (optional)</h3></summary>
-      <p class="w-hint">Brauchst du nicht. Nur wer möchte, kann hier einen Wheel-Leser einrichten, der verkaufte Spots selbst mitzählt.</p>
-      <div class="w-wnstate" id="wWnState"><span class="dot"></span><span id="wWnText">Nicht verbunden</span></div>
-      <select id="wWnSet" hidden aria-label="Welches Wheel"></select>
-      <details id="wWnHelp">
-        <summary>So verbindest du Whatnot (einmal einrichten)</summary>
-        <ol class="steps">
-          <li>Diesen Knopf in die <b>Lesezeichenleiste</b> ziehen: <a class="w-bm" id="wBm" href="#">Wheel-Leser</a></li>
-          <li>Link deiner Whatnot-Show eintragen und öffnen: <span class="w-row" style="margin-top:6px"><input type="text" id="wWnUrl" placeholder="https://www.whatnot.com/live/…" autocomplete="off"><button class="btn" id="wWnOpen">Öffnen</button></span></li>
-          <li>Im Whatnot-Tab auf das Lesezeichen <b>Wheel-Leser</b> klicken. Unten links erscheint ein gelber Kasten, der die Spots mitliest.</li>
-        </ol>
-        <p class="w-hint">Der Whatnot-Tab muss im Browser offen bleiben (darf im Hintergrund sein). Jeder verkaufte Spot wird dann hier automatisch abgezogen.</p>
-      </details>
-      <label class="w-hint" for="wWnNiete" style="font-weight:700">Was auf Whatnot gewonnen wird, ordnet die Seite selbst ein: Steht dort ein Hit aus deiner Liste, wird gefangen. Steht dort eines dieser Wörter, flieht das Pokémon:</label>
-      <input type="text" id="wWnNiete" autocomplete="off" style="padding:7px 10px">
-      <ul class="w-wnlog" id="wWnLog" hidden></ul>
-    </details>
     <div class="w-sec">
       <h3>Verlauf</h3>
       <ul class="w-log" id="wLog"></ul>
