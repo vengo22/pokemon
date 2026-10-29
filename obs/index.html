@@ -422,6 +422,8 @@ body.tab-wheel[data-wtheme="green"] .w-prev { background: repeating-conic-gradie
 .w-sec h3 { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
 .w-panel input[type=text], .w-panel input[type=number] { width: 100%; background: var(--night); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; }
 .w-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.w-setup input { font-size: 20px !important; font-weight: 800; text-align: center; }
+#wSetup.flash { animation: wpend 1.2s ease-in-out 2; border-radius: 12px; }
 .w-nums label { font-size: 12px; color: var(--muted); font-weight: 700; display: grid; gap: 4px; }
 .w-big { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .w-big .w-miss { grid-column: 1 / -1; }
@@ -765,6 +767,15 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
     <div class="w-prev" id="wPrev"><div class="wov" id="wovPrev"></div><div class="w-prev-note" id="wPrevNote"></div></div>
   </div>
   <div class="w-panel">
+    <div class="w-sec" id="wSetup">
+      <h3>Diese Runde einstellen</h3>
+      <div class="w-nums w-setup">
+        <label>Runde<input type="number" id="wRound" min="1"></label>
+        <label>Spots in der Runde<input type="number" id="wSpots" min="1"></label>
+        <label>davon Gewinne (Hits)<input type="number" id="wTickets" min="0"></label>
+      </div>
+      <p class="w-hint">Die Hits sind die Pokémon, die man fangen kann. Bei „Gefangen“ gehen Hits und Spots runter, bei „Flieht“ (Niete) nur die Spots. Daraus rechnet die Leiste die Fang-Chance.</p>
+    </div>
     <div class="w-sec w-wn">
       <h3>Whatnot-Verbindung</h3>
       <div class="w-wnstate" id="wWnState"><span class="dot"></span><span id="wWnText">Nicht verbunden</span></div>
@@ -795,13 +806,6 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
       <div class="w-row"><button class="btn" id="wUndo">↶ Zurück</button><button class="btn" id="wNewRound">Neue Runde</button></div>
     </div>
     <div class="w-sec">
-      <h3>Runde</h3>
-      <div class="w-nums">
-        <label>Runde<input type="number" id="wRound" min="1"></label>
-        <label>Spots gesamt<input type="number" id="wSpots" min="1"></label>
-        <label>Hits gesamt<input type="number" id="wTickets" min="0"></label>
-      </div>
-      <p class="w-hint">Die Hits sind die Pokémon, die man fangen kann. Bei „Gefangen“ gehen Hits und Spots runter, bei „Flieht“ (Niete) nur die Spots. Daraus rechnet die Leiste die Fang-Chance.</p>
       <div class="w-heat"><span class="w-hint" style="font-weight:700">So heißt die Fang-Chance im Stream:</span><ul id="wHeatList"></ul></div>
     </div>
     <div class="w-sec">
@@ -2098,6 +2102,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const b = ev.currentTarget;
     if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Wirklich? Nochmal klicken'; b.classList.add('warn'); setTimeout(() => { delete b.dataset.sure; b.textContent = 'Neue Runde'; b.classList.remove('warn'); }, 3500); return; }
     delete b.dataset.sure; b.textContent = 'Neue Runde'; b.classList.remove('warn');
+    setTimeout(() => { $$('#wSetup').scrollIntoView({ behavior: 'smooth', block: 'center' }); $$('#wSetup').classList.remove('flash'); void $$('#wSetup').offsetWidth; $$('#wSetup').classList.add('flash'); $$('#wSpots').focus(); $$('#wSpots').select(); }, 50);
     snap(); const w = W(); w.round = (+w.round || 0) + 1; w.sold = []; w.pending = 0; w.hits.forEach((h) => { delete h.won; });
     // das alte Whatnot-Wheel nicht in die neue Runde übernehmen
     if (wn.set) { w.wnSkip = wn.set.title + '|' + wn.set.total + '|' + wn.set.remaining; } wn.set = null; wn.pick = '';
