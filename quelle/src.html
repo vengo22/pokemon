@@ -136,7 +136,7 @@ body:not(.overlay) .stage.clear:not(.playing) .s-empty { display: grid; }
 /* Transparent: nur Pokémon, Ball und Ergebnis */
 .stage.clear { background: transparent; border-color: transparent; }
 .stage.clear::before, .stage.clear .s-head, .stage.clear .s-buyer, .stage.clear .s-grid, .stage.clear .summary { display: none; }
-body:not(.overlay) .stage.clear { background: repeating-conic-gradient(#1b2450 0 25%, #151d40 0 50%) 0 0 / 28px 28px; border: 1px dashed var(--line); }
+body:not(.overlay) .stage.clear { background: repeating-conic-gradient(#3a0d14 0 25%, #2c0a10 0 50%) 0 0 / 28px 28px; border: 1px dashed var(--line); }
 /* Übersicht aller Pokémon, per Knopf ein- und ausblendbar */
 .s-board { position: absolute; inset: calc(var(--u) * 2); display: flex; flex-direction: column; gap: calc(var(--u) * 1.2); padding: calc(var(--u) * 1.8); border-radius: calc(var(--u) * 1.6); background: rgba(9,14,38,.9); border: calc(var(--u) * .2) solid var(--line); opacity: 0; pointer-events: none; transition: opacity .45s; z-index: 2; }
 .s-board.show { opacity: 1; }
@@ -258,21 +258,22 @@ textarea { resize: vertical; min-height: 150px; font-family: var(--mono); font-s
 [hidden] { display: none !important; }
 
 /* Fröhlicher Hintergrund nur für die Steuerseite (OBS bleibt transparent) */
+/* Einheitliches rotes Design für Code, Fangen und Wheel (David 2026-10-29), Pokébälle im Hintergrund */
+body:not(.overlay):not(.stage-only), .gate { --night: #1c0609; --panel: #2e0a10; --panel-2: #44101a; --line: #5e1c27; --muted: #e0a3aa; }
 body:not(.overlay):not(.stage-only) {
+  background-color: #2a070d;
   background:
-    radial-gradient(circle at 10% 6%, rgba(238,59,76,.24), transparent 38%),
-    radial-gradient(circle at 92% 94%, rgba(255,201,61,.18), transparent 42%),
-    radial-gradient(circle at 88% 8%, rgba(47,214,181,.13), transparent 34%),
-    radial-gradient(circle at 15% 95%, rgba(143,168,255,.14), transparent 40%),
-    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22260%22%20height%3D%22260%22%3E%3Cg%20transform%3D%22translate%2860%2062%29%20rotate%28-18%29%22%20opacity%3D%220.07%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2230%22/%3E%3Cpath%20d%3D%22M-30%200H-9.6M9.6%200H30%22/%3E%3Ccircle%20r%3D%229.6%22/%3E%3Ccircle%20r%3D%224.2%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%28195%20185%29%20rotate%2824%29%22%20opacity%3D%220.05%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2222%22/%3E%3Cpath%20d%3D%22M-22%200H-7.04M7.04%200H22%22/%3E%3Ccircle%20r%3D%227.04%22/%3E%3Ccircle%20r%3D%223.08%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%28200%2048%29%20rotate%280%29%22%20opacity%3D%220.06%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2210%22/%3E%3Cpath%20d%3D%22M-10%200H-3.2M3.2%200H10%22/%3E%3Ccircle%20r%3D%223.2%22/%3E%3Ccircle%20r%3D%221.4000000000000001%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2852%20205%29%20rotate%2840%29%22%20opacity%3D%220.05%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2213%22/%3E%3Cpath%20d%3D%22M-13%200H-4.16M4.16%200H13%22/%3E%3Ccircle%20r%3D%224.16%22/%3E%3Ccircle%20r%3D%221.8200000000000003%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3C/svg%3E") 0 0 / 260px 260px,
-    linear-gradient(160deg, #18215a 0%, #10173d 55%, #1d1647 100%);
+    radial-gradient(circle at 10% 6%, rgba(238,59,76,.35), transparent 40%),
+    radial-gradient(circle at 92% 94%, rgba(255,201,61,.16), transparent 42%),
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22260%22%20height%3D%22260%22%3E%3Cg%20transform%3D%22translate%2860%2062%29%20rotate%28-18%29%22%20opacity%3D%220.13%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2230%22/%3E%3Cpath%20d%3D%22M-30%200H-9.6M9.6%200H30%22/%3E%3Ccircle%20r%3D%229.6%22/%3E%3Ccircle%20r%3D%224.2%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%28195%20185%29%20rotate%2824%29%22%20opacity%3D%220.1%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2222%22/%3E%3Cpath%20d%3D%22M-22%200H-7.04M7.04%200H22%22/%3E%3Ccircle%20r%3D%227.04%22/%3E%3Ccircle%20r%3D%223.08%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%28200%2048%29%20rotate%280%29%22%20opacity%3D%220.11%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2210%22/%3E%3Cpath%20d%3D%22M-10%200H-3.2M3.2%200H10%22/%3E%3Ccircle%20r%3D%223.2%22/%3E%3Ccircle%20r%3D%221.4000000000000001%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2852%20205%29%20rotate%2840%29%22%20opacity%3D%220.1%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2213%22/%3E%3Cpath%20d%3D%22M-13%200H-4.16M4.16%200H13%22/%3E%3Ccircle%20r%3D%224.16%22/%3E%3Ccircle%20r%3D%221.8200000000000003%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3C/svg%3E") 0 0 / 260px 260px,
+    linear-gradient(160deg, #4a0d16 0%, #22060b 55%, #3a0a12 100%);
   background-attachment: fixed;
 }
 html .gate { background:
-    radial-gradient(circle at 20% 15%, rgba(238,59,76,.25), transparent 40%),
+    radial-gradient(circle at 20% 15%, rgba(238,59,76,.38), transparent 40%),
     radial-gradient(circle at 80% 85%, rgba(255,201,61,.18), transparent 42%),
-    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22260%22%20height%3D%22260%22%3E%3Cg%20transform%3D%22translate%2860%2062%29%20rotate%28-18%29%22%20opacity%3D%220.07%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2230%22/%3E%3Cpath%20d%3D%22M-30%200H-9.6M9.6%200H30%22/%3E%3Ccircle%20r%3D%229.6%22/%3E%3Ccircle%20r%3D%224.2%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%28195%20185%29%20rotate%2824%29%22%20opacity%3D%220.05%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2222%22/%3E%3Cpath%20d%3D%22M-22%200H-7.04M7.04%200H22%22/%3E%3Ccircle%20r%3D%227.04%22/%3E%3Ccircle%20r%3D%223.08%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%28200%2048%29%20rotate%280%29%22%20opacity%3D%220.06%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2210%22/%3E%3Cpath%20d%3D%22M-10%200H-3.2M3.2%200H10%22/%3E%3Ccircle%20r%3D%223.2%22/%3E%3Ccircle%20r%3D%221.4000000000000001%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2852%20205%29%20rotate%2840%29%22%20opacity%3D%220.05%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2213%22/%3E%3Cpath%20d%3D%22M-13%200H-4.16M4.16%200H13%22/%3E%3Ccircle%20r%3D%224.16%22/%3E%3Ccircle%20r%3D%221.8200000000000003%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3C/svg%3E") 0 0 / 260px 260px,
-    linear-gradient(160deg, #18215a, #10173d 55%, #1d1647); }
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22260%22%20height%3D%22260%22%3E%3Cg%20transform%3D%22translate%2860%2062%29%20rotate%28-18%29%22%20opacity%3D%220.13%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2230%22/%3E%3Cpath%20d%3D%22M-30%200H-9.6M9.6%200H30%22/%3E%3Ccircle%20r%3D%229.6%22/%3E%3Ccircle%20r%3D%224.2%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%28195%20185%29%20rotate%2824%29%22%20opacity%3D%220.1%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2222%22/%3E%3Cpath%20d%3D%22M-22%200H-7.04M7.04%200H22%22/%3E%3Ccircle%20r%3D%227.04%22/%3E%3Ccircle%20r%3D%223.08%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%28200%2048%29%20rotate%280%29%22%20opacity%3D%220.11%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2210%22/%3E%3Cpath%20d%3D%22M-10%200H-3.2M3.2%200H10%22/%3E%3Ccircle%20r%3D%223.2%22/%3E%3Ccircle%20r%3D%221.4000000000000001%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2852%20205%29%20rotate%2840%29%22%20opacity%3D%220.1%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223%22%3E%3Ccircle%20r%3D%2213%22/%3E%3Cpath%20d%3D%22M-13%200H-4.16M4.16%200H13%22/%3E%3Ccircle%20r%3D%224.16%22/%3E%3Ccircle%20r%3D%221.8200000000000003%22%20fill%3D%22%23fff%22/%3E%3C/g%3E%3C/svg%3E") 0 0 / 260px 260px,
+    linear-gradient(160deg, #4a0d16, #22060b 55%, #3a0a12); }
 .roundtimer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255,255,255,.04); font-size: 14px; color: var(--muted); }
 .roundtimer b { font-family: var(--mono); font-size: 22px; color: var(--fg); letter-spacing: .04em; }
 .roundtimer.on { border-color: rgba(47,214,181,.5); background: rgba(47,214,181,.08); }
@@ -283,7 +284,7 @@ html .gate { background:
 .subtabs button[aria-pressed="true"] { background: rgba(255,255,255,.08); color: var(--fg); border-color: var(--fg); }
 .wtable-wrap { max-height: 55vh; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
 .wtable { width: 100%; border-collapse: collapse; font-size: 13px; }
-.wtable th { position: sticky; top: 0; background: #141b3a; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 8px 10px; }
+.wtable th { position: sticky; top: 0; background: var(--panel); text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 8px 10px; }
 .wtable td { padding: 7px 10px; border-top: 1px solid var(--line); vertical-align: middle; }
 .wtable td.t { font-family: var(--mono); color: var(--muted); white-space: nowrap; }
 .wtable td.who { font-weight: 800; }
@@ -360,13 +361,13 @@ html:not(.unlocked) .app { visibility: hidden; }
 html.unlocked .gate { display: none; }
 .gate form { width: min(340px, 100%); display: grid; gap: 12px; text-align: center; background: var(--panel, #141b3a); border: 1px solid var(--line); border-radius: 14px; padding: 26px 22px; }
 .gate h2 { margin: 0; font-size: 20px; }
-.gate input { font-size: 24px; letter-spacing: .3em; text-align: center; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: #0b1028; color: var(--fg); }
+.gate input { font-size: 24px; letter-spacing: .3em; text-align: center; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--night); color: var(--fg); }
 .gate button { font-size: 16px; padding: 10px; border-radius: 10px; border: 0; background: #ff5d6c; color: #fff; font-weight: 700; cursor: pointer; }
 .gate .err { color: #ff8a95; min-height: 1.2em; margin: 0; font-size: 14px; }
 .gate.shake form { animation: gshake .35s; }
 @keyframes gshake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
 /* ---------- Header mit Tabs (Fangen / Wheel), nur Steuerseite ---------- */
-.hdr { position: sticky; top: 0; z-index: 50; background: rgba(13,20,48,.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.hdr { position: sticky; top: 0; z-index: 50; background: rgba(40,6,12,.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
 .hdr-in { max-width: 1300px; margin: 0 auto; display: flex; align-items: center; gap: 18px; padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); }
 .hdr-logo { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 24px; letter-spacing: .5px; white-space: nowrap; }
 .hdr-logo svg { width: 42px; height: 42px; flex: none; transition: transform .5s cubic-bezier(.3,1.6,.5,1); }
@@ -396,7 +397,7 @@ html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
 .w-prev-col { display: flex; flex-direction: column; gap: 10px; align-items: center; position: sticky; top: 80px; }
 @media (max-width: 900px) { .w-prev-col { position: static; } }
 .w-prev-head { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; font-weight: 800; }
-.w-prev { position: relative; height: min(calc(100vh - 140px), 900px); aspect-ratio: 9 / 16; max-width: 100%; border-radius: 14px; border: 1px dashed var(--line); overflow: hidden; background: repeating-conic-gradient(#1b2450 0 25%, #151d40 0 50%) 0 0 / 28px 28px; }
+.w-prev { position: relative; height: min(calc(100vh - 140px), 900px); aspect-ratio: 9 / 16; max-width: 100%; border-radius: 14px; border: 1px dashed var(--line); overflow: hidden; background: repeating-conic-gradient(#3a0d14 0 25%, #2c0a10 0 50%) 0 0 / 28px 28px; }
 @media (max-width: 900px) { .w-prev { height: auto; width: 100%; } }
 .w-prev.off .wb-bar { opacity: .35; }
 .w-prev-note { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; color: var(--muted); font-size: 12.5px; pointer-events: none; }
