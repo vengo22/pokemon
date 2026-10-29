@@ -425,6 +425,13 @@ body.tab-wheel .w-prev { background: repeating-conic-gradient(#3a0d14 0 25%, #2c
 .w-hits { display: flex; flex-direction: column; gap: 6px; }
 .w-hitrow { display: grid; grid-template-columns: 52px 1fr auto; gap: 8px; align-items: center; }
 .w-hitrow .ph { width: 52px; height: 52px; border-radius: 8px; border: 1px solid var(--line); background: var(--night); display: grid; place-items: center; }
+.w-heat ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.w-heat li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 9px; border: 1px solid var(--line); font-size: 13.5px; }
+.w-heat li i { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.w-heat li b { font-family: var(--display); font-weight: 400; font-size: 16px; min-width: 80px; }
+.w-heat li span { color: var(--muted); }
+.w-heat li.on { border-color: var(--gold); background: rgba(255,201,61,.12); }
+.w-heat li.on span::after { content: "  ← gerade"; color: var(--gold); font-weight: 800; }
 .w-hitrow.won input { text-decoration: line-through; opacity: .5; }
 .w-hitrow.won .ph { opacity: .4; filter: grayscale(1); }
 .w-log .res.flee { background: #f3f4fa; color: #15151d; }
@@ -778,6 +785,7 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
         <label>Hits gesamt<input type="number" id="wTickets" min="0"></label>
       </div>
       <p class="w-hint">Die Hits sind die Pokémon, die man fangen kann. Bei „Gefangen“ gehen Hits und Spots runter, bei „Flieht“ (Niete) nur die Spots. Daraus rechnet die Leiste die Fang-Chance.</p>
+      <div class="w-heat"><span class="w-hint" style="font-weight:700">So heißt die Fang-Chance im Stream:</span><ul id="wHeatList"></ul></div>
     </div>
     <div class="w-sec">
       <h3>Im Stream anzeigen</h3>
@@ -2225,6 +2233,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     }
     const log = $$('#wLog');
     log.innerHTML = w.sold.length ? w.sold.slice().reverse().map((x) => { const m = x.mon ? monOf(x.mon) : null; return `<li><span class="n">#${x.n}</span>${m ? `<img src="${m.img}" alt="">` : ''}<span class="who">${esc(x.who || '–')}</span><span class="res ${x.hit ? 'hit' : 'flee'}">${x.hit ? 'Hit' + (x.prize ? ': ' + esc(x.prize) : '') : 'Niete, geflohen'}</span></li>`; }).join('') : '<li class="none">Noch kein Spot verkauft</li>';
+    const cur = heat(st.pct);
+    $$('#wHeatList').innerHTML = HEAT.slice().reverse().map((h, i, arr) => { const next = arr[i + 1]; const range = next ? `${h[0]} bis ${next[0] - 1} %` : `ab ${h[0]} %`; return `<li class="${h === cur ? 'on' : ''}"><i style="background:${h[2]}"></i><b>${h[1]}</b><span>${h[0] === 0 ? `unter ${next[0]} %` : range}</span></li>`; }).join('');
     renderObsState();
   }
 
