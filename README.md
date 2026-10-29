@@ -2,8 +2,8 @@
 
 Overlay und Steuerseite für die Pokémon-Fangrunden im Whatnot-Stream.
 
-- **index.html**: öffentliche Startseite (aus `quelle/start.html`): Whatnot-Livestream mit Live/Offline-Anzeige und alle Social-Links (Liste `SOCIALS` oben im Skript).
-- **api/whatnot.js**: Vercel-Funktion, liest das öffentliche Whatnot-Profil und liefert den Live-Status als JSON (`/api/whatnot`, mit `?debug=1` zur Fehlersuche). Läuft nur auf Vercel, nicht auf GitHub Pages. Die Links stehen oben im Skript in `SOCIALS`.
+- **index.html**: öffentliche Startseite (aus `quelle/start.html`): Profil-Karte wie auf Whatnot (Profilbild, Name, Beschreibung) mit Live-Tracker und alle Social-Links (Liste `SOCIALS` oben im Skript).
+- **api/whatnot.js**: Vercel-Funktion, liest das öffentliche Whatnot-Profil und liefert Live-Status, Name, Profilbild und Beschreibung als JSON (`/api/whatnot`, mit `?debug=1` zur Fehlersuche). Läuft nur auf Vercel, nicht auf GitHub Pages. Die Links stehen oben im Skript in `SOCIALS`.
 - **steuerung/index.html**: Steuerseite für Chris (mit Code geschützt), Tabs Fangen und Wheel. Hier werden Preise verteilt, Käufer und Pokémon eingetragen und die Fänge gestartet. Der Tab „Gewinner“ zeigt, wer was gewonnen hat.
 - **obs.html**: Browserquelle für OBS (1080 × 1920, transparent). Zeigt Fang-Animation und Übersicht im Stream.
 - **wheel/index.html**: Browserquelle fürs Wheel (1080 × 1920, transparent). Leiste oben mit Runde, Pokémon (Tickets), Spots, Fang-Chance, Top-Hits und Gewinnern, dazu eine Fang-Animation bei jedem Treffer. Gesteuert im Tab „Wheel“ der Steuerseite.

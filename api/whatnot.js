@@ -41,11 +41,13 @@ function pickLast(text, keys) {
   return best;
 }
 
+function decode(t) { return String(t).replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>'); }
+
 module.exports = async (req, res) => {
   const q = req.query || {};
   const user = /^[A-Za-z0-9_.-]{1,40}$/.test(q.u || '') ? q.u : 'crashketchum';
   const profile = 'https://www.whatnot.com/user/' + user;
-  const out = { ok: false, user, profile, live: null, liveUrl: null, followers: null, rating: null, reviews: null, sold: null, checked: new Date().toISOString() };
+  const out = { ok: false, user, profile, live: null, liveUrl: null, name: null, avatar: null, bio: null, followers: null, rating: null, reviews: null, sold: null, checked: new Date().toISOString() };
   const dbg = {};
   try {
     const ctl = new AbortController();
@@ -73,6 +75,18 @@ module.exports = async (req, res) => {
     if (typeof out.live !== 'boolean') out.live = null;
     if (typeof out.rating === 'number' && (out.rating <= 0 || out.rating > 5)) out.rating = null;
 
+    // Profil: Name, Bild, Beschreibung (aus den Vorschau-Metadaten und dem JSON beim Benutzernamen)
+    const meta = (prop) => { const m = html.match(new RegExp('<meta[^>]+(?:property|name)=["\']' + prop + '["\'][^>]*content=["\']([^"\']*)', 'i')) || html.match(new RegExp('<meta[^>]+content=["\']([^"\']*)["\'][^>]*(?:property|name)=["\']' + prop + '["\']', 'i')); return m ? decode(m[1]) : null; };
+    const str = (text, key) => { const m = text && text.match(new RegExp('\\\\?"' + key + '\\\\?"\\s*:\\s*\\\\?"((?:[^"\\\\]|\\\\[^"])*)\\\\?"')); return m && m[1] ? decode(m[1].replace(/\\u([0-9a-f]{4})/gi, (x, h) => String.fromCharCode(parseInt(h, 16))).replace(/\\\//g, '/')) : null; };
+    const ogTitle = meta('og:title'), ogImage = meta('og:image'), ogDesc = meta('og:description');
+    dbg.og = { title: ogTitle, image: ogImage, description: ogDesc };
+    out.name = str(after, 'displayName') || (ogTitle ? ogTitle.split(/\s[|·–-]\s/)[0].trim() : null);
+    const img = (after.match(/\\?"(?:profileImage|profileImageUrl|avatar|image)\\?"\s*:\s*\{?[^}]{0,200}?(https?:[^"\\]+?\.(?:jpe?g|png|webp)[^"\\]*)/i) || [])[1];
+    out.avatar = (img && img.replace(/\\\//g, '/')) || ogImage || null;
+    out.bio = str(after, 'bio') || ogDesc || null;
+    if (out.live === null && ogTitle && /\b(is live|ist live|live now|jetzt live)\b/i.test(ogTitle)) out.live = true;
+    if (at >= 0) dbg.snippet = html.slice(at, at + 1500);
+
     // Laufende Show: Link auf /live/<id> im Ausschnitt
     const lm = (after || html).match(/\/live\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
     if (lm) out.liveUrl = 'https://www.whatnot.com/live/' + lm[1];
@@ -88,7 +102,7 @@ module.exports = async (req, res) => {
         dbg.followers = 'text';
       }
     }
-    out.ok = out.live !== null || out.followers !== null || out.sold !== null || out.rating !== null;
+    out.ok = out.live !== null || out.avatar !== null || out.followers !== null || out.sold !== null || out.rating !== null;
     if (!out.ok) out.error = 'Keine Daten auf der Profilseite gefunden';
   } catch (e) {
     out.error = String(e && e.message || e);
@@ -96,7 +110,7 @@ module.exports = async (req, res) => {
   if (q.debug) out.debug = dbg;
   res.setHeader('content-type', 'application/json; charset=utf-8');
   res.setHeader('access-control-allow-origin', '*');
-  // eine Minute im Vercel-Cache, damit Whatnot nicht bei jedem Besucher abgefragt wird
-  res.setHeader('cache-control', out.ok ? 'public, s-maxage=60, stale-while-revalidate=240' : 'public, s-maxage=20');
+  // 30 Sekunden im Vercel-Cache, damit Whatnot nicht bei jedem Besucher abgefragt wird
+  res.setHeader('cache-control', out.ok ? 'public, s-maxage=30, stale-while-revalidate=60' : 'public, s-maxage=20');
   res.status(200).send(JSON.stringify(out));
 };
