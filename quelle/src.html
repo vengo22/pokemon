@@ -2086,18 +2086,23 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   }
 
   // Laufband von rechts nach links: Inhalt so oft wiederholen, dass es lückenlos läuft
-  function marquee(tr, html, speed) {
+  function marquee(tr, html, speed, tries = 0) {
     tr.classList.remove('run'); tr.innerHTML = html;
     if (!html) return;
-    requestAnimationFrame(() => {
-      const vp = tr.parentNode, w1 = tr.scrollWidth; if (!w1 || !vp.clientWidth) return;
+    clearTimeout(tr._retry);
+    // per Timer statt requestAnimationFrame: läuft auch, wenn der Tab gerade im Hintergrund ist
+    setTimeout(() => {
+      if (tr.innerHTML !== html) return;
+      const vp = tr.parentNode, w1 = tr.scrollWidth;
+      // Leiste gerade unsichtbar (anderer Tab, ausgeblendet): später nochmal messen, statt stehen zu bleiben
+      if (!w1 || !vp.clientWidth) { if (tries < 600) tr._retry = setTimeout(() => marquee(tr, html, speed, tries + 1), 1000); return; }
       const reps = Math.max(1, Math.ceil(vp.clientWidth / w1));
       const one = html.repeat(reps);
       tr.innerHTML = one + one;
       const k = vp.clientWidth / 88; // Breite der Leiste in --k-Einheiten
       tr.style.setProperty('--dur', Math.max(6, (w1 * reps) / (k * speed)) + 's');
       tr.classList.add('run');
-    });
+    }, 30);
   }
 
   /* Stream-Leiste: eine Instanz pro Wurzel (OBS-Seite und Vorschau) */
@@ -2140,7 +2145,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       const hk = hits.map((x) => x.name + '/' + (x.img || '').length + (x.img || '').slice(-12)).join('|') + '|' + bar.wb.clientWidth;
       if (hk !== bar.hitKey) {
         bar.hitKey = hk;
-        marquee(q('htr'), hits.map((x) => `<span class="it">${hitThumb(x)}${esc(x.name.trim())}</span>`).join(''), 9);
+        marquee(q('htr'), hits.map((x) => `<span class="it">${hitThumb(x)}${esc(x.name.trim())}</span>`).join(''), 11);
       }
     };
     new ResizeObserver(() => bar.update()).observe(bar.wb);
