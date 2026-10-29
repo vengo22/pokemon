@@ -1813,16 +1813,9 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const spotsLeft = Math.max(0, w.spots - w.sold.length - (w.pending || 0)), tLeft = Math.max(0, w.tickets - hitsDone);
     return { spotsLeft, tLeft, pct: spotsLeft ? Math.min(100, Math.round((tLeft / spotsLeft) * 100)) : 0 };
   };
-  // Die Stufe richtet sich danach, wie die Chance jetzt im Vergleich zum Rundenstart steht (Pokémon / Spots am Anfang).
-  // Sind viele Spots ohne Treffer weg, steigt die Chance und es wird heißer. Wurden viele Pokémon früh gefangen, kühlt es ab.
-  const HEAT = [[2, 'Glühend', '#fff27a'], [1.5, 'Heiß', '#ffd23d'], [1.15, 'Warm', '#ffb347'], [0.85, 'Normal', '#ffffff'], [0.5, 'Kühl', '#cfe8ff'], [0, 'Eiskalt', '#9fd8ff']];
-  const heat = (p) => {
-    const w = W(), base = w.spots ? (w.tickets / w.spots) * 100 : 0;
-    if (!p) return HEAT[HEAT.length - 1];
-    if (p >= 100) return HEAT[0];
-    const r = base ? p / base : 1;
-    return HEAT.find((h) => r >= h[0]);
-  };
+  // Feste Stufen nach Prozent (David: 30 % ist warm)
+  const HEAT = [[60, 'Glühend', '#fff27a'], [40, 'Heiß', '#ffd23d'], [25, 'Warm', '#ffb347'], [12, 'Lauwarm', '#ffffff'], [0, 'Kalt', '#9fd8ff']];
+  const heat = (p) => HEAT.find((h) => p >= h[0]);
   const monOf = (id) => ({ id, name: (DEX[id - 1] || '').split('|')[0], img: SPRITES[id - 1] });
 
   const BALL = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M5 53a45 45 0 0 0 90 0z" fill="#f3f4fa" stroke="#15151d" stroke-width="6"/><g class="top"><path d="M5 47a45 45 0 0 1 90 0z" fill="#ee3b4c" stroke="#15151d" stroke-width="6"/><path d="M22 28a30 30 0 0 1 22-13" stroke="#fff" stroke-opacity=".55" stroke-width="6" fill="none" stroke-linecap="round"/></g><rect x="4" y="46" width="92" height="8" fill="#15151d"/><circle cx="50" cy="50" r="13" fill="#f3f4fa" stroke="#15151d" stroke-width="6"/><circle class="btn" cx="50" cy="50" r="5.5" fill="#ffffff"/></svg>';
