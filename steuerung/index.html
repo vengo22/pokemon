@@ -2099,10 +2099,11 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   function marquee(tr, html, speed, tries = 0) {
     tr.classList.remove('run'); tr.innerHTML = html;
     if (!html) return;
-    clearTimeout(tr._retry);
+    clearTimeout(tr._retry); clearTimeout(tr._t);
+    const gen = tr._gen = (tr._gen || 0) + 1;
     // per Timer statt requestAnimationFrame: läuft auch, wenn der Tab gerade im Hintergrund ist
-    setTimeout(() => {
-      if (tr.innerHTML !== html) return;
+    tr._t = setTimeout(() => {
+      if (tr._gen !== gen) return; // inzwischen neu gebaut
       const vp = tr.parentNode, w1 = tr.scrollWidth;
       // Leiste gerade unsichtbar (anderer Tab, ausgeblendet): später nochmal messen, statt stehen zu bleiben
       if (!w1 || !vp.clientWidth) { if (tries < 600) tr._retry = setTimeout(() => marquee(tr, html, speed, tries + 1), 1000); return; }
