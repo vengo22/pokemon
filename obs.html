@@ -1304,6 +1304,10 @@ if (overlay && !netRoom && !testLink) setTimeout(() => { if (gotState) return; l
 
 /* ---------- Sound ---------- */
 let ac = null;
+/* Fang-Jingle im Stil der klassischen Game-Boy-Fanfare (eigene Melodie, kein Original-Sound): [Hz, Start s, Dauer s] */
+const CATCH_LEAD = [[392, 0, .11], [523, .11, .11], [659, .22, .11], [784, .33, .22], [659, .55, .11], [784, .66, .11], [1047, .77, .6]];
+const CATCH_BASS = [[131, 0, .33], [98, .33, .33], [131, .66, .7]];
+const CATCH_MAIN = [[1175, 1.4, .12], [1319, 1.52, .12], [1568, 1.64, .5]];
 function tone(f, dur, type = 'square', at = 0, vol = 0.06, f2) {
   if (aborted || !S.sound || (!stageOnly && obsOk)) return; // mit OBS spielt die Browserquelle den Ton
   try {
@@ -1319,8 +1323,11 @@ function sfx(k) {
   if (k === 'throw') tone(300, .45, 'triangle', 0, .08, 1200);
   if (k === 'poof') tone(1400, .25, 'sawtooth', 0, .04, 200);
   if (k === 'wobble') tone(180, .07, 'square', 0, .07);
-  if (k === 'caught') [523, 659, 784, 1047].forEach((f, i) => tone(f, .16, 'square', i * .1, .05));
-  if (k === 'main') [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, .2, 'square', i * .11, .05));
+  if (k === 'caught' || k === 'main') {
+    CATCH_LEAD.forEach(([f, at, d]) => tone(f, d, 'square', at, .05));
+    CATCH_BASS.forEach(([f, at, d]) => tone(f, d, 'triangle', at, .09));
+    if (k === 'main') CATCH_MAIN.forEach(([f, at, d]) => tone(f, d, 'square', at, .05));
+  }
   if (k === 'flee') [600, 450, 300].forEach((f, i) => tone(f, .14, 'triangle', i * .1, .07));
 }
 
@@ -2142,7 +2149,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       if (kind === 'throw') tone(300, 0.9, 0.5, 'triangle', 0.08, 900);
       if (kind === 'wob') tone(180, 0, 0.12, 'square', 0.05, 140);
       if (kind === 'pop') { tone(900, 0, 0.18, 'sawtooth', 0.06, 200); [392, 330, 262].forEach((f, i) => tone(f, 0.25 + i * 0.13, 0.25, 'triangle', 0.1)); }
-      if (kind === 'click') { tone(1200, 0, 0.05, 'square', 0.06); [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.12 + i * 0.11, 0.3, 'triangle', 0.12)); }
+      if (kind === 'click') { tone(1200, 0, 0.05, 'square', 0.06); CATCH_LEAD.forEach(([f, at, d]) => tone(f, 0.15 + at, d, 'square', 0.06)); CATCH_BASS.forEach(([f, at, d]) => tone(f, 0.15 + at, d, 'triangle', 0.1)); }
     } catch (e) {}
   }
 
