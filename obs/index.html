@@ -449,6 +449,14 @@ html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
 .w-hitrow .x:hover { color: var(--red); border-color: var(--red); }
 /* Hits 1:1 wie im Whatnot-Wheel, mit eigenem Pokémon pro Hit (David 2026-10-29) */
 #wHits .w-hitrow { grid-template-columns: 52px 1fr auto auto; }
+button.ph { padding: 0; cursor: pointer; }
+button.ph:hover { border-color: var(--gold); }
+.w-imgmenu { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--night); }
+.w-imgmenu[hidden] { display: none; }
+.w-imgmenu span { color: var(--muted); font-size: 12.5px; font-weight: 800; }
+.w-imgmenu button { height: 40px; min-width: 40px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); font: 800 12.5px 'Nunito', system-ui, sans-serif; display: grid; place-items: center; }
+.w-imgmenu button img { width: 30px; height: 30px; object-fit: contain; }
+.w-imgmenu button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
 #wTix .w-hitrow { grid-template-columns: 52px 1fr auto auto; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
 #wTix .w-hitrow .ph { grid-row: span 2; }
 #wTix .w-hitrow input:not(.pm) { grid-column: 2 / 5; }
@@ -845,8 +853,9 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
     </div>
     <div class="w-sec">
       <h3>Hits im Laufband (nur von Hand)</h3>
-      <p class="w-hint">Diese Hits laufen im Stream unten durch. Hier passiert nichts automatisch: Tipp auf „Gefangen“, wenn einer weg ist, dann verschwindet er aus dem Laufband.</p>
+      <p class="w-hint">Diese Hits laufen im Stream unten durch. Hier passiert nichts automatisch: Tipp auf „Gefangen“, wenn einer weg ist, dann verschwindet er aus dem Laufband. Tipp aufs Bild, um ein eigenes Logo zu wählen oder hochzuladen.</p>
       <div class="w-hits" id="wHits"></div>
+      <input type="file" id="wHitFile" accept="image/*" hidden>
       <div class="w-row"><button class="btn" id="wAddHit">+ Hit hinzufügen</button><span class="w-hint">Enter springt in die nächste Zeile</span></div>
     </div>
     <div class="w-sec">
@@ -2052,6 +2061,33 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   const monForHit = (h) => (h && (h.mon || '').trim() && findMon(h.mon)) || (h ? findMon(h.name) : null);
   const iconOf = (m) => m ? `<img src="${m.img}" alt="${esc(m.name)}" title="${esc(m.name)}">` : BALL;
   const hitIcon = (name) => iconOf(findMon(name));
+  /* Eigenes Bild pro Laufband-Hit (David 2026-10-29): eigene Zeichnungen als Vorlage oder hochgeladenes Bild (klein gerechnet, damit es schnell zu OBS kommt) */
+  const svgUrl = (svg) => 'data:image/svg+xml,' + encodeURIComponent(svg);
+  const HIT_PRESETS = {
+    '30': ['30 Jahre', svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30 70l-10 26 14-6 8 12 8-28zM70 70l10 26-14-6-8 12-8-28z" fill="#2f6fe0"/><circle cx="50" cy="44" r="40" fill="#f5c542" stroke="#b8860b" stroke-width="4"/><circle cx="50" cy="44" r="31" fill="#e0303f"/><text x="50" y="55" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="32" fill="#fff">30</text><text x="50" y="70" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="10" fill="#fff" letter-spacing="1">JAHRE</text></svg>')],
+    'ball': ['Pokéball', svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M4 50a46 46 0 0 1 92 0z" fill="#e0303f"/><path d="M4 50a46 46 0 0 0 92 0z" fill="#f4f4f8"/><circle cx="50" cy="50" r="46" fill="none" stroke="#111" stroke-width="6"/><path d="M4 50h30M66 50h30" stroke="#111" stroke-width="7"/><circle cx="50" cy="50" r="14" fill="#fff" stroke="#111" stroke-width="6"/></svg>')],
+    'star': ['Stern', svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 4l13 30 32 3-24 21 7 32-28-17-28 17 7-32L5 37l32-3z" fill="#f5c542" stroke="#b8860b" stroke-width="4" stroke-linejoin="round"/></svg>')],
+    'crown': ['Krone', svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M10 74L6 26l24 22L50 14l20 34 24-22-4 48z" fill="#f5c542" stroke="#b8860b" stroke-width="4" stroke-linejoin="round"/><rect x="10" y="76" width="80" height="12" rx="3" fill="#f5c542" stroke="#b8860b" stroke-width="4"/><circle cx="50" cy="56" r="7" fill="#e0303f"/></svg>')],
+    'box': ['Display', svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 8l40 18v48L50 92 10 74V26z" fill="#2f6fe0" stroke="#0f2a7e" stroke-width="4" stroke-linejoin="round"/><path d="M10 26l40 18 40-18M50 44v48" fill="none" stroke="#0f2a7e" stroke-width="4"/><path d="M50 8l40 18-40 18-40-18z" fill="#4a8cff"/><circle cx="70" cy="62" r="9" fill="#f5c542"/></svg>')]
+  };
+  const hitImg = (h) => {
+    const v = (h && h.img) || '';
+    if (v.startsWith('p:') && HIT_PRESETS[v.slice(2)]) return HIT_PRESETS[v.slice(2)][1];
+    if (v.startsWith('data:image/')) return v;
+    const m = h ? findMon(h.name) : null; return m ? m.img : '';
+  };
+  const hitThumb = (h) => { const u = hitImg(h); return u ? `<img src="${u}" alt="">` : BALL; };
+  function shrinkImage(file, cb) {
+    const fr = new FileReader();
+    fr.onload = () => { const im = new Image(); im.onload = () => {
+      const N = 96, c = document.createElement('canvas'); c.width = c.height = N;
+      const r = Math.min(N / im.width, N / im.height), w = im.width * r, h = im.height * r;
+      c.getContext('2d').drawImage(im, (N - w) / 2, (N - h) / 2, w, h);
+      let u = c.toDataURL('image/webp', .85); if (!u.startsWith('data:image/webp')) u = c.toDataURL('image/png');
+      cb(u);
+    }; im.src = fr.result; };
+    fr.readAsDataURL(file);
+  }
 
   // Laufband von rechts nach links: Inhalt so oft wiederholen, dass es lückenlos läuft
   function marquee(tr, html, speed) {
@@ -2105,10 +2141,10 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       // Hits-Laufband
       const hits = w.hits.filter((x) => (x.name || '').trim() && !x.won);
       q('hits').hidden = !w.showHits || !hits.length;
-      const hk = hits.map((x) => x.name).join('|') + '|' + bar.wb.clientWidth;
+      const hk = hits.map((x) => x.name + '/' + (x.img || '').length + (x.img || '').slice(-12)).join('|') + '|' + bar.wb.clientWidth;
       if (hk !== bar.hitKey) {
         bar.hitKey = hk;
-        marquee(q('htr'), hits.map((x) => { const m = findMon(x.name); return `<span class="it">${m ? `<img src="${m.img}" alt="">` : BALL}${esc(x.name.trim())}</span>`; }).join(''), 9);
+        marquee(q('htr'), hits.map((x) => `<span class="it">${hitThumb(x)}${esc(x.name.trim())}</span>`).join(''), 9);
       }
     };
     new ResizeObserver(() => bar.update()).observe(bar.wb);
@@ -2244,10 +2280,12 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const who = $$('#wBuyer').value.trim();
     const e = { n: w.sold.length + 1, who, hit, t: new Date().toTimeString().slice(0, 5) };
     if (!hit) e.flee = true;
-    if (hit && hitIdx >= 0 && w.tix[hitIdx]) { w.tix[hitIdx].won = true; e.prize = w.tix[hitIdx].name; }
+    const tk = hit && hitIdx >= 0 ? w.tix[hitIdx] : null;
+    // gezogenes Ticket fliegt aus der Liste (David 2026-10-29), „Zurück“ holt es wieder
+    if (tk) { e.prize = tk.name; w.tix.splice(hitIdx, 1); }
     {
       const used = new Set(w.sold.map((x) => x.mon).filter(Boolean));
-      const hm = hit && hitIdx >= 0 ? monForHit(w.tix[hitIdx]) : null;
+      const hm = tk ? monForHit(tk) : null;
       let id = hm && hm.id;
       if (!id) do { id = 1 + Math.floor(Math.random() * 151); } while (used.has(id) && used.size < 151);
       e.mon = id; w.lastHit = { id: Date.now(), who, mon: id, flee: !hit, ball: heat(st.pct)[1] };
@@ -2284,8 +2322,19 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const row = e.target.closest('.w-hitrow'); if (!row) return; const i = +row.dataset.i, h = W().hits[i];
     if (e.target.closest('.x')) { W().hits.splice(i, 1); commit(); }
     if (e.target.closest('.got')) { snap(); h.won = !h.won; commit(); } // nur Laufband, keine Animation, keine Zähler
+    if (e.target.closest('.ph')) { const m = row.nextElementSibling; const open = m && m.classList.contains('w-imgmenu') && !m.hidden; $$('#wHits').querySelectorAll('.w-imgmenu').forEach((x) => (x.hidden = true)); if (m && m.classList.contains('w-imgmenu')) m.hidden = open; }
   });
-  $$('#wHits').addEventListener('input', (e) => { const row = e.target.closest('.w-hitrow'); if (!row) return; const h = W().hits[+row.dataset.i]; h.name = e.target.value; row.querySelector('.ph').innerHTML = hitIcon(h.name); save(); bars.forEach((b) => b.update()); });
+  $$('#wHits').addEventListener('click', (e) => {
+    const b = e.target.closest('.w-imgmenu [data-img]'); if (!b) return;
+    const i = +b.closest('.w-imgmenu').dataset.i, h = W().hits[i], v = b.dataset.img;
+    if (v === 'up') { const f = $$('#wHitFile'); f.dataset.i = i; f.value = ''; f.click(); return; }
+    snap(); h.img = v; $$('#wHits').dataset.sig = ''; commit();
+  });
+  $$('#wHitFile').addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0], h = W().hits[+e.target.dataset.i]; if (!f || !h) return;
+    shrinkImage(f, (u) => { snap(); h.img = u; $$('#wHits').dataset.sig = ''; commit(); });
+  });
+  $$('#wHits').addEventListener('input', (e) => { const row = e.target.closest('.w-hitrow'); if (!row) return; const h = W().hits[+row.dataset.i]; h.name = e.target.value; row.querySelector('.ph').innerHTML = hitThumb(h); save(); bars.forEach((b) => b.update()); });
   /* Tickets im Whatnot-Wheel: Name + Pokémon, gezogenes Ticket erkennt der Wheel-Leser */
   $$('#wAddTix').onclick = () => { const w = W(); if (w.tix.length >= 100) return; w.tix.push({ name: '', mon: '' }); commit(); const ins = document.querySelectorAll('#wTix input:not(.pm)'); ins[ins.length - 1] && ins[ins.length - 1].focus(); };
   $$('#wTix').addEventListener('click', (e) => {
@@ -2439,12 +2488,12 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     $$('#wPrev').classList.toggle('off', !w.live);
     $$('#wPrevNote').textContent = w.live ? '' : 'Leiste ist im Stream gerade ausgeblendet';
     // Top-Hits-Liste nur neu bauen, wenn sich die Anzahl oder Bilder ändern (sonst springt der Cursor)
-    const hsig = w.hits.map((h) => (h.won ? 1 : 0)).join('');
+    const hsig = '#' + w.hits.map((h) => (h.won ? 1 : 0) + (h.img || '').slice(-16)).join('|');
     if ($$('#wHits').dataset.sig !== hsig) {
       $$('#wHits').dataset.sig = hsig;
-      $$('#wHits').innerHTML = w.hits.length ? w.hits.map((h, i) => `<div class="w-hitrow${h.won ? ' won' : ''}" data-i="${i}" title="${h.won ? 'Gefangen, läuft nicht mehr im Stream' : ''}"><span class="ph">${hitIcon(h.name)}</span><input type="text" value="${esc(h.name)}" placeholder="z. B. Glurak ex SAR"><button class="got" aria-pressed="${!!h.won}" title="${h.won ? 'Wieder ins Laufband' : 'Als gefangen markieren'}">${h.won ? 'Gefangen ✓' : 'Gefangen'}</button><button class="x" aria-label="Entfernen">✕</button></div>`).join('') : '<p class="w-hint">Noch keine Hits. Einfach eintragen, z. B. „Glurak ex SAR“. Sie laufen im Stream unter der Fang-Chance durch.</p>';
+      $$('#wHits').innerHTML = w.hits.length ? w.hits.map((h, i) => `<div class="w-hitrow${h.won ? ' won' : ''}" data-i="${i}" title="${h.won ? 'Gefangen, läuft nicht mehr im Stream' : ''}"><button class="ph" title="Bild wählen" aria-label="Bild wählen">${hitThumb(h)}</button><input type="text" value="${esc(h.name)}" placeholder="z. B. Glurak ex SAR"><button class="got" aria-pressed="${!!h.won}" title="${h.won ? 'Wieder ins Laufband' : 'Als gefangen markieren'}">${h.won ? 'Gefangen ✓' : 'Gefangen'}</button><button class="x" aria-label="Entfernen">✕</button></div><div class="w-imgmenu" data-i="${i}" hidden><span>Bild:</span><button data-img="" aria-pressed="${!h.img}">Automatisch</button>${Object.entries(HIT_PRESETS).map(([k, [n, u]]) => `<button data-img="p:${k}" title="${n}" aria-pressed="${h.img === 'p:' + k}"><img src="${u}" alt="${n}"></button>`).join('')}<button data-img="up"${(h.img || '').startsWith('data:') ? ' aria-pressed="true"' : ''}>Hochladen…</button></div>`).join('') : '<p class="w-hint">Noch keine Hits. Einfach eintragen, z. B. „Glurak ex SAR“. Sie laufen im Stream unter der Fang-Chance durch.</p>';
     }
-    const tsig = w.tix.map((h) => (h.won ? 1 : 0)).join('');
+    const tsig = '#' + w.tix.map((h) => h.name + '\u0001' + (h.mon || '')).join('\u0002');
     if ($$('#wTix').dataset.sig !== tsig) {
       $$('#wTix').dataset.sig = tsig;
       $$('#wTix').innerHTML = w.tix.length ? w.tix.map((h, i) => `<div class="w-hitrow${h.won ? ' won' : ''}" data-i="${i}" title="${h.won ? 'Schon gezogen' : ''}"><span class="ph">${iconOf(monForHit(h))}</span><input type="text" value="${esc(h.name)}" placeholder="Ticket wie im Whatnot-Wheel, z. B. Bisasam Ticket 14"><input type="text" class="pm" list="wMonList" value="${esc(h.mon || '')}" placeholder="Pokémon" aria-label="Pokémon für dieses Ticket"><button class="got" title="Dieses Ticket als gezogen eintragen"${h.won ? ' disabled' : ''}>Gezogen</button><button class="x" aria-label="Entfernen">✕</button></div>`).join('') : '<p class="w-hint">Noch keine Tickets eingetragen.</p>';
