@@ -2277,7 +2277,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const lh = S.wheel.lastHit;
     if (lh && lh.id > seenHit) {
       seenHit = lh.id;
-      if (S.wheel.anim && Date.now() - lh.id < 30000) bars.forEach((b) => b.catch(lh));
+      if ((S.wheel.anim || lh.test) && Date.now() - lh.id < 30000) bars.forEach((b) => b.catch(lh));
     }
     if (ctl) renderPanel();
   }
@@ -2509,7 +2509,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   setInterval(() => { if (window.crashTab() === 'wheel') renderWn(); }, 1000);
   $$('#wThemes').addEventListener('click', (e) => { const b = e.target.closest('button[data-theme]'); if (b) { W().theme = b.dataset.theme; commit(); } });
   let testFlee = false;
-  $$('#wTestCatch').onclick = () => { prev.sound = true; playCatch(prev, { who: 'Test', mon: 1 + Math.floor(Math.random() * 151), flee: testFlee }); testFlee = !testFlee; $$('#wTestCatch').textContent = testFlee ? 'Flucht testen' : 'Fang testen'; };
+  // Test läuft über den normalen Weg (lastHit), damit er auch in der OBS-Quelle erscheint (David 2026-10-29); Zähler bleiben unberührt
+  $$('#wTestCatch').onclick = () => { prev.sound = !(typeof obsOk !== 'undefined' && obsOk); W().lastHit = { id: Date.now(), who: 'Test', mon: 1 + Math.floor(Math.random() * 151), flee: testFlee, ball: heat(stats().pct)[1], test: true }; commit(); testFlee = !testFlee; $$('#wTestCatch').textContent = testFlee ? 'Flucht testen' : 'Fang testen'; };
   
   if (/^https?:$/.test(location.protocol) && !/claude/i.test(location.hostname)) { const u = new URL('../wheel/', location.href); u.hash = ''; u.search = '?r=' + netRoom; $$('#wObsUrl').textContent = u.href; }
   $$('#wObsCopy').onclick = () => { try { navigator.clipboard.writeText($$('#wObsUrl').textContent); $$('#wObsCopy').textContent = 'Kopiert ✓'; setTimeout(() => $$('#wObsCopy').textContent = 'Kopieren', 1500); } catch (e) {} };
