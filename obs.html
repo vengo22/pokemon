@@ -2557,7 +2557,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   if (overlay) return;
   const URL_ = 'https://fgffdwebdwdwjjpvbxdo.supabase.co/rest/v1/rpc/', KEY_ = 'sb_publishable_hdvLr7ZtMEpfwlpSiUiajg_q0arBasZ';
   const LS = ['crash.logos', 'crash.wnniete', 'crash.wnurl', 'fangrunde.room']; // Geräte-Einstellungen, die mitwandern
-  let key = '', lastT = 0, timer = 0, busy = false, dirty = false, started = false;
+  let key = '', lastT = 0, timer = 0, busy = false, started = false;
   try { lastT = +localStorage.getItem('crash.cloud.t') || 0; } catch (e) {}
   // Schild unten links, antippen öffnet: diesen PC hochladen / online neu laden / alten Stand zurückholen
   const box = document.createElement('div'); box.id = 'cloudBox';
@@ -2569,9 +2569,9 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   el.onclick = () => { menu.hidden = !menu.hidden; menu.querySelector('[data-c="back"]').hidden = !hasBackup(); };
   menu.onclick = async (e) => {
     const c = e.target.closest('button[data-c]'); if (!c) return; menu.hidden = true;
-    if (c.dataset.c === 'up') { clearTimeout(timer); timer = 0; await push(); }
-    if (c.dataset.c === 'down') { lastT = 0; await pull(false, true); }
-    if (c.dataset.c === 'back') { try { const b = JSON.parse(localStorage.getItem('crash.backup')); if (b) { unpack(b, true); clearTimeout(timer); timer = 0; await push(); } } catch (x) {} }
+    if (c.dataset.c === 'up') { clearTimeout(timer); timer = 0; await sync('up'); }
+    if (c.dataset.c === 'down') { clearTimeout(timer); timer = 0; await sync('down'); }
+    if (c.dataset.c === 'back') { try { const b = JSON.parse(localStorage.getItem('crash.backup')); if (b) { unpack(b, true); clearTimeout(timer); timer = 0; await sync('up'); } } catch (x) {} }
   };
   const rpc = async (fn, body) => {
     const r = await fetch(URL_ + fn, { method: 'POST', headers: { apikey: KEY_, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -2600,33 +2600,52 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     renderAll();
   };
   const hhmm = () => new Date().toTimeString().slice(0, 5);
-  async function push() {
+  // Zwei-Wege-Abgleich (David 2026-10-29): jede Änderung auf jedem PC wird hochgeladen. Haben zwei PCs gleichzeitig geändert,
+  // wird zusammengeführt: was hier seit dem letzten Abgleich geändert wurde, gewinnt, alles andere kommt von online.
+  const canon = (v) => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']' : v && typeof v === 'object' ? '{' + Object.keys(v).sort().filter((k) => v[k] !== undefined).map((k) => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}' : JSON.stringify(v === undefined ? null : v);
+  const same = (a, b) => canon(a) === canon(b);
+  const loadBase = () => { try { return JSON.parse(localStorage.getItem('crash.cloud.base')); } catch (e) { return null; } };
+  const saveBase = (b, t) => { lastT = t; try { localStorage.setItem('crash.cloud.base', JSON.stringify(b)); localStorage.setItem('crash.cloud.t', String(t)); } catch (e) {} };
+  function merge(base, local, remote, depth) {
+    const out = {}, keys = new Set([...Object.keys(local || {}), ...Object.keys(remote || {})]);
+    keys.forEach((k) => {
+      const l = local ? local[k] : undefined, r = remote ? remote[k] : undefined, b = base ? base[k] : undefined;
+      if (depth < 2 && l && r && typeof l === 'object' && typeof r === 'object' && !Array.isArray(l) && !Array.isArray(r)) out[k] = merge(b || {}, l, r, depth + 1);
+      else out[k] = same(l, b) ? r : l;
+      if (out[k] === undefined) delete out[k];
+    });
+    return out;
+  }
+  const put = async (d) => { const t = Date.now(); await rpc('put_state', { k: key, d, t }); return t; };
+  async function sync(mode) {
     if (!key) return;
-    if (busy) { dirty = true; return; }
-    busy = true; dirty = false;
-    const t = Date.now();
-    try { await rpc('put_state', { k: key, d: pack(), t }); lastT = t; try { localStorage.setItem('crash.cloud.t', String(t)); } catch (e) {} show(true, '☁ Online gespeichert ' + hhmm()); }
-    catch (e) { show(false, '☁ Nicht online gespeichert, versuche es gleich nochmal'); dirty = true; }
-    busy = false;
-    if (dirty) { clearTimeout(timer); timer = setTimeout(() => { timer = 0; push(); }, 3000); }
-  }
-  async function pull(first, force) {
-    if (!key || busy || (timer && !force)) return;
+    if (busy) { again = true; return; }
+    busy = true; again = false;
     try {
-      const r = await rpc('get_state', { k: key });
-      if (r && r.t > lastT && r.d) { lastT = r.t; try { localStorage.setItem('crash.cloud.t', String(r.t)); } catch (e) {} unpack(r.d); show(true, '☁ Online geladen ' + hhmm()); }
-      else if (first) push(); // online nichts Neueres: diesen Stand hochladen
-    } catch (e) { show(false, '☁ Online-Speicher nicht erreichbar'); }
+      const r = await rpc('get_state', { k: key }), local = pack(), base = loadBase();
+      if (mode === 'up' || !r || !r.d) { saveBase(local, await put(local)); show(true, '☁ Online gespeichert ' + hhmm()); }
+      else if (mode === 'down' || !base) { unpack(r.d); saveBase(pack(), r.t); show(true, '☁ Online geladen ' + hhmm()); } // frischer PC: nie mit eigenem Stand überschreiben
+      else {
+        const mine = !same(local, base);
+        if (r.t > lastT) {
+          if (mine) { const m = merge(base, local, r.d, 0); unpack(m, true); const now = pack(); saveBase(now, await put(now)); show(true, '☁ Zusammengeführt und gespeichert ' + hhmm()); }
+          else { unpack(r.d, true); saveBase(pack(), r.t); show(true, '☁ Online geladen ' + hhmm()); }
+        } else if (mine) { saveBase(local, await put(local)); show(true, '☁ Online gespeichert ' + hhmm()); }
+      }
+    } catch (e) { show(false, '☁ Online-Speicher nicht erreichbar, versuche es weiter'); }
+    busy = false;
+    if (again) setTimeout(() => sync(), 300);
   }
-  window.cloudPush = () => { if (!key) return; clearTimeout(timer); timer = setTimeout(() => { timer = 0; push(); }, 1500); };
+  let again = false;
+  window.cloudPush = () => { if (!key) return; clearTimeout(timer); timer = setTimeout(() => { timer = 0; sync(); }, 800); };
   function start() {
     if (started) return;
     try { key = localStorage.getItem('crash.cloudkey') || ''; } catch (e) {}
     if (!/^[0-9a-f]{64}$/.test(key) || /claude/i.test(location.hostname)) { key = ''; return; }
     started = true; show(true, '☁ Verbinde …');
-    pull(true);
-    setInterval(() => pull(false), 15000);                         // Änderungen von anderen PCs holen
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) pull(false); });
+    sync();
+    setInterval(() => { if (!timer) sync(); }, 5000);               // Änderungen von anderen PCs holen
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
   }
   if (document.documentElement.classList.contains('unlocked')) start();
   window.addEventListener('crash-unlocked', start);
