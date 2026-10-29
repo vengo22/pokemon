@@ -455,6 +455,10 @@ button.ph:hover { border-color: var(--gold); }
 .w-imgmenu[hidden] { display: none; }
 .w-imgmenu span { color: var(--muted); font-size: 12.5px; font-weight: 800; }
 .w-imgmenu button { height: 40px; min-width: 40px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); font: 800 12.5px 'Nunito', system-ui, sans-serif; display: grid; place-items: center; }
+.w-imgmenu .mine { display: inline-flex; align-items: center; gap: 0; }
+.w-imgmenu .mine button[data-img] { border-radius: 8px 0 0 8px; }
+.w-imgmenu .mine .del { min-width: 22px; padding: 0 4px; border-radius: 0 8px 8px 0; border-left: 0; color: var(--muted); }
+.w-imgmenu .mine .del:hover { color: var(--red); }
 .w-imgmenu button img { width: 30px; height: 30px; object-fit: contain; }
 .w-imgmenu button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
 #wTix .w-hitrow { grid-template-columns: 52px 1fr auto auto; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
@@ -2076,6 +2080,9 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     if (v.startsWith('data:image/')) return v;
     const m = h ? findMon(h.name) : null; return m ? m.img : '';
   };
+  // hochgeladene Logos bleiben als eigene Vorlagen auf diesem Gerät, bis man sie löscht (nicht im Sync, der Hit trägt sein Bild selbst)
+  let myLogos = []; try { myLogos = JSON.parse(localStorage.getItem('crash.logos')) || []; } catch (e) {}
+  const saveLogos = () => { try { localStorage.setItem('crash.logos', JSON.stringify(myLogos)); } catch (e) {} };
   const hitThumb = (h) => { const u = hitImg(h); return u ? `<img src="${u}" alt="">` : BALL; };
   function shrinkImage(file, cb) {
     const fr = new FileReader();
@@ -2117,7 +2124,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
         <div class="wb-crow"><span><small>FANG-CHANCE:</small><b class="hl" data-hl></b></span><b class="pct" data-pct></b></div>
         <div class="wb-meter"><div class="fill" data-fill></div><div class="seg"></div></div>
       </div>
-      <div class="wb-run" data-hits><div class="rh">${BALL}DIESE HITS KANNST DU ZIEHEN</div><div class="vp"><div class="tr" data-htr></div></div></div>
+      <div class="wb-run" data-hits><div class="rh">${BALL}DIE TOP-HITS:</div><div class="vp"><div class="tr" data-htr></div></div></div>
     </div></div>
     <div class="wb-catch" data-catch><div class="wb-glow"></div><img class="wb-mon" alt=""><div class="wb-stars"></div><div class="wb-ball">${BALL}</div><div class="wb-text"><b>Gefangen!</b></div></div></div>`;
     const q = (a) => root.querySelector('[data-' + a + ']');
@@ -2325,6 +2332,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     if (e.target.closest('.ph')) { const m = row.nextElementSibling; const open = m && m.classList.contains('w-imgmenu') && !m.hidden; $$('#wHits').querySelectorAll('.w-imgmenu').forEach((x) => (x.hidden = true)); if (m && m.classList.contains('w-imgmenu')) m.hidden = open; }
   });
   $$('#wHits').addEventListener('click', (e) => {
+    const d = e.target.closest('.w-imgmenu [data-del]');
+    if (d) { myLogos.splice(+d.dataset.del, 1); saveLogos(); $$('#wHits').dataset.sig = ''; render(); return; }
     const b = e.target.closest('.w-imgmenu [data-img]'); if (!b) return;
     const i = +b.closest('.w-imgmenu').dataset.i, h = W().hits[i], v = b.dataset.img;
     if (v === 'up') { const f = $$('#wHitFile'); f.dataset.i = i; f.value = ''; f.click(); return; }
@@ -2332,7 +2341,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   });
   $$('#wHitFile').addEventListener('change', (e) => {
     const f = e.target.files && e.target.files[0], h = W().hits[+e.target.dataset.i]; if (!f || !h) return;
-    shrinkImage(f, (u) => { snap(); h.img = u; $$('#wHits').dataset.sig = ''; commit(); });
+    shrinkImage(f, (u) => { if (!myLogos.includes(u)) { myLogos.unshift(u); myLogos = myLogos.slice(0, 24); saveLogos(); } snap(); h.img = u; $$('#wHits').dataset.sig = ''; commit(); });
   });
   $$('#wHits').addEventListener('input', (e) => { const row = e.target.closest('.w-hitrow'); if (!row) return; const h = W().hits[+row.dataset.i]; h.name = e.target.value; row.querySelector('.ph').innerHTML = hitThumb(h); save(); bars.forEach((b) => b.update()); });
   /* Tickets im Whatnot-Wheel: Name + Pokémon, gezogenes Ticket erkennt der Wheel-Leser */
@@ -2491,7 +2500,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const hsig = '#' + w.hits.map((h) => (h.won ? 1 : 0) + (h.img || '').slice(-16)).join('|');
     if ($$('#wHits').dataset.sig !== hsig) {
       $$('#wHits').dataset.sig = hsig;
-      $$('#wHits').innerHTML = w.hits.length ? w.hits.map((h, i) => `<div class="w-hitrow${h.won ? ' won' : ''}" data-i="${i}" title="${h.won ? 'Gefangen, läuft nicht mehr im Stream' : ''}"><button class="ph" title="Bild wählen" aria-label="Bild wählen">${hitThumb(h)}</button><input type="text" value="${esc(h.name)}" placeholder="z. B. Glurak ex SAR"><button class="got" aria-pressed="${!!h.won}" title="${h.won ? 'Wieder ins Laufband' : 'Als gefangen markieren'}">${h.won ? 'Gefangen ✓' : 'Gefangen'}</button><button class="x" aria-label="Entfernen">✕</button></div><div class="w-imgmenu" data-i="${i}" hidden><span>Bild:</span><button data-img="" aria-pressed="${!h.img}">Automatisch</button>${Object.entries(HIT_PRESETS).map(([k, [n, u]]) => `<button data-img="p:${k}" title="${n}" aria-pressed="${h.img === 'p:' + k}"><img src="${u}" alt="${n}"></button>`).join('')}<button data-img="up"${(h.img || '').startsWith('data:') ? ' aria-pressed="true"' : ''}>Hochladen…</button></div>`).join('') : '<p class="w-hint">Noch keine Hits. Einfach eintragen, z. B. „Glurak ex SAR“. Sie laufen im Stream unter der Fang-Chance durch.</p>';
+      $$('#wHits').innerHTML = w.hits.length ? w.hits.map((h, i) => `<div class="w-hitrow${h.won ? ' won' : ''}" data-i="${i}" title="${h.won ? 'Gefangen, läuft nicht mehr im Stream' : ''}"><button class="ph" title="Bild wählen" aria-label="Bild wählen">${hitThumb(h)}</button><input type="text" value="${esc(h.name)}" placeholder="z. B. Glurak ex SAR"><button class="got" aria-pressed="${!!h.won}" title="${h.won ? 'Wieder ins Laufband' : 'Als gefangen markieren'}">${h.won ? 'Gefangen ✓' : 'Gefangen'}</button><button class="x" aria-label="Entfernen">✕</button></div><div class="w-imgmenu" data-i="${i}" hidden><span>Bild:</span><button data-img="" aria-pressed="${!h.img}">Automatisch</button>${Object.entries(HIT_PRESETS).map(([k, [n, u]]) => `<button data-img="p:${k}" title="${n}" aria-pressed="${h.img === 'p:' + k}"><img src="${u}" alt="${n}"></button>`).join('')}${myLogos.map((u, k) => `<span class="mine"><button data-img="${u}" title="Eigenes Logo" aria-pressed="${h.img === u}"><img src="${u}" alt="Eigenes Logo"></button><button class="del" data-del="${k}" title="Logo löschen" aria-label="Logo löschen">✕</button></span>`).join('')}<button data-img="up">Hochladen…</button></div>`).join('') : '<p class="w-hint">Noch keine Hits. Einfach eintragen, z. B. „Glurak ex SAR“. Sie laufen im Stream unter der Fang-Chance durch.</p>';
     }
     const tsig = '#' + w.tix.map((h) => h.name + '\u0001' + (h.mon || '')).join('\u0002');
     if ($$('#wTix').dataset.sig !== tsig) {
