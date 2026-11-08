@@ -456,6 +456,10 @@ html:not(.unlocked) .hdr, html:not(.unlocked) .wheel-app { visibility: hidden; }
 .w-sold .btn { margin-left: 6px; padding: 4px 10px; font-size: 12.5px; }
 .w-big:has(#wHitBtn[hidden]) { grid-template-columns: 1fr; }
 #wHitBtn[hidden] { display: none; }
+.w-bulk summary { cursor: pointer; font-weight: 700; font-size: 13.5px; margin-top: 8px; }
+.w-bulk textarea { width: 100%; box-sizing: border-box; margin: 6px 0; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--night); color: var(--fg); font: inherit; resize: vertical; }
+.w-tixfind { width: 100%; box-sizing: border-box; padding: 8px 10px; margin-top: 4px; }
+.w-tixbtns.many, .w-hits.many { max-height: 380px; overflow-y: auto; padding-right: 4px; }
 .w-tixbtns { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; margin: 6px 0 10px; }
 .w-tixbtns button { display: grid; justify-items: center; gap: 2px; padding: 8px 6px; border-radius: 12px; border: 2px solid var(--gold); background: linear-gradient(180deg, #ffd85e, #f0b93a); color: #2a1a00; font: 800 12.5px/1.2 'Nunito', system-ui, sans-serif; cursor: pointer; }
 .w-tixbtns button:hover { filter: brightness(1.08); }
@@ -538,6 +542,7 @@ body.wheel-ov .stage, body.wheel-ov .app { display: none !important; }
 .wb-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--k) * 1.3); }
 .wb-tile { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: calc(var(--k) * 1.6); border-radius: calc(var(--k) * 2.2); padding: calc(var(--k) * 1.2) calc(var(--k) * 2); background: rgba(255,255,255,.96); color: #15151d; box-shadow: inset 0 calc(var(--k) * -.6) 0 rgba(0,0,0,.12); }
 .wb-tile b { font-weight: 400; font-size: calc(var(--k) * 12); line-height: .95; font-variant-numeric: tabular-nums; }
+.wb-tile b.d3 { font-size: calc(var(--k) * 9); } .wb-tile b.d4 { font-size: calc(var(--k) * 7); } /* 3- und 4-stellige Zahlen (große Wheels) passen so neben den Text */
 .wb-tile small { font-size: calc(var(--k) * 3.3); line-height: 1.05; }
 .wb-tile small em { display: block; font-style: normal; font-family: var(--body); font-weight: 800; font-size: calc(var(--k) * 2.1); letter-spacing: .06em; text-transform: uppercase; opacity: .75; margin-top: calc(var(--k) * .4); }
 .wb-tile.gold { background: linear-gradient(180deg, #ffd85e, #f4a91f); color: #2a1a00; box-shadow: inset 0 calc(var(--k) * -.6) 0 rgba(0,0,0,.18); }
@@ -854,6 +859,7 @@ html:not(.unlocked) #cloudBox { display: none; }
       <label class="w-hint" for="wBuyer" style="font-weight:700">Jetzt dran (Name eintippen, optional)</label>
       <input type="text" id="wBuyer" placeholder="Name des Käufers, z. B. pika_paul" autocomplete="off">
       <p class="w-hint" id="wTixBtnsHint" style="font-weight:700">Ticket gezogen, aber nicht erkannt? Antippen, dann wird genau dieses Pokémon gefangen:</p>
+      <input type="text" class="w-tixfind" id="wTixFind" placeholder="Ticket suchen, z. B. 214 oder Glurak" autocomplete="off" hidden>
       <div class="w-tixbtns" id="wTixBtns"></div>
       <div class="w-big">
         <button class="w-hit" id="wHitBtn">Gefangen!<small>Hit gezogen</small></button>
@@ -887,7 +893,13 @@ html:not(.unlocked) #cloudBox { display: none; }
       <p class="w-hint">Trag jedes Ticket so ein, wie es im Whatnot-Wheel steht (z. B. „Bisasam Ticket 14“). Das Pokémon wird automatisch erkannt, du kannst es ändern. Wird das Ticket gezogen, erkennt der Wheel-Leser es und fängt genau dieses Pokémon. Bleibt gespeichert, bis du es mit ✕ löschst.</p>
       <datalist id="wMonList"></datalist>
       <div class="w-hits" id="wTix"></div>
-      <div class="w-row"><button class="btn" id="wAddTix">+ Ticket hinzufügen</button></div>
+      <div class="w-row"><button class="btn" id="wAddTix">+ Ticket hinzufügen</button><span class="w-hint" id="wTixCount"></span></div>
+      <details class="w-bulk">
+        <summary>Viele Tickets auf einmal (z. B. bei 500 Spots)</summary>
+        <p class="w-hint">Eine Zeile pro Ticket, so wie im Whatnot-Wheel. Pokémon werden automatisch erkannt. Bis zu 500 Tickets.</p>
+        <textarea id="wTixBulk" rows="6" placeholder="Glurak Ticket 1&#10;Bisasam Ticket 2&#10;Pikachu Ticket 3"></textarea>
+        <div class="w-row"><button class="btn" id="wTixBulkAdd">Hinzufügen</button><button class="btn" id="wTixClear">Alle Tickets löschen</button></div>
+      </details>
     </div>
     <div class="w-sec">
       <h3>Hits im Laufband (nur von Hand)</h3>
@@ -2047,7 +2059,15 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   const stats = () => {
     const w = W(), hitsDone = w.sold.filter((x) => x.hit).length;
     const spotsLeft = Math.max(0, w.spots - w.sold.length - (w.pending || 0)), tLeft = Math.max(0, w.tickets - hitsDone);
-    return { spotsLeft, tLeft, pct: spotsLeft ? Math.min(100, Math.round((tLeft / spotsLeft) * 100)) : 0 };
+    const pct = spotsLeft ? Math.min(100, (tLeft / spotsLeft) * 100) : 0;
+    return { spotsLeft, tLeft, pct, pctTxt: fmtPct(pct) };
+  };
+  // Große Wheels (z. B. 500 Spots, David 2026-11-08): kleine Chancen mit Komma statt 0 %, z. B. 2 Hits in 500 Spots = 0,4 %
+  const fmtPct = (p) => {
+    if (p <= 0) return '0';
+    if (p >= 100) return '100';
+    if (p < 10) return String(Math.max(0.1, Math.round(p * 10) / 10)).replace('.', ',');
+    return String(Math.min(99, Math.round(p)));
   };
   // Feste Stufen nach Prozent (David: 30 % ist warm)
   /* Fang-Chance als Bälle, aufsteigend (David 2026-10-29): [ab %, Name, Textfarbe, Ball-Grafik] */
@@ -2188,11 +2208,11 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
       q('name').textContent = ((w.name || '').trim() || 'Live-Wheel').toUpperCase();
       [['t', st.tLeft], ['s', st.spotsLeft]].forEach(([k, v]) => {
         const el = q(k); if (bar.last[k] !== undefined && bar.last[k] !== v) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
-        bar.last[k] = v; el.textContent = v;
+        bar.last[k] = v; el.textContent = v; const d = String(v).length; el.classList.toggle('d3', d === 3); el.classList.toggle('d4', d >= 4);
       });
       q('chance').hidden = !w.showChance;
       bar.wb.style.setProperty('--hc', h[2]); if (q('hl').dataset.n !== h[1]) { q('hl').dataset.n = h[1]; q('hl').innerHTML = h[3] + esc(h[1].toUpperCase()); }
-      q('fill').style.width = Math.max(st.pct ? 6 : 0, st.pct) + '%'; q('pct').innerHTML = st.pct + '<small>%</small>';
+      q('fill').style.width = Math.max(st.pct ? 6 : 0, st.pct) + '%'; q('pct').innerHTML = st.pctTxt + '<small>%</small>';
       const who = (w.turn || '').trim();
       q('turn').hidden = !w.showTurn || !who;
       if (q('who').textContent !== who) { q('who').textContent = who; const t = q('turn'); t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); }
@@ -2400,7 +2420,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
   });
   $$('#wHits').addEventListener('input', (e) => { const row = e.target.closest('.w-hitrow'); if (!row) return; const h = W().hits[+row.dataset.i]; h.name = e.target.value; row.querySelector('.ph').innerHTML = hitThumb(h); save(); bars.forEach((b) => b.update()); });
   /* Tickets im Whatnot-Wheel: Name + Pokémon, gezogenes Ticket erkennt der Wheel-Leser */
-  $$('#wAddTix').onclick = () => { const w = W(); if (w.tix.length >= 100) return; w.tix.push({ name: '', mon: '' }); commit(); const ins = document.querySelectorAll('#wTix input:not(.pm)'); ins[ins.length - 1] && ins[ins.length - 1].focus(); };
+  $$('#wAddTix').onclick = () => { const w = W(); if (w.tix.length >= 500) return; w.tix.push({ name: '', mon: '' }); commit(); const ins = document.querySelectorAll('#wTix input:not(.pm)'); ins[ins.length - 1] && ins[ins.length - 1].focus(); };
   // große Ticket-Knöpfe unter „Spot verkauft“ (David 2026-10-29: einfacher als der Wheel-Leser)
   function renderTixBtns() {
     const w = W(), st = stats(), pend = w.pending || 0;
@@ -2408,12 +2428,37 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     if ($$('#wTixBtns').dataset.sig !== bsig) {
       $$('#wTixBtns').dataset.sig = bsig;
       const can = st.tLeft > 0 && (st.spotsLeft > 0 || pend > 0), list = w.tix.map((h, i) => [h, i]).filter(([h]) => (h.name || '').trim());
-      $$('#wTixBtns').innerHTML = list.map(([h, i]) => `<button type="button" data-i="${i}"${can ? '' : ' disabled'}>${iconOf(monForHit(h))}<span>${esc(h.name)}</span></button>`).join('');
+      $$('#wTixBtns').innerHTML = list.map(([h, i]) => `<button type="button" data-i="${i}" data-k="${esc(norm(h.name))}"${can ? '' : ' disabled'}>${iconOf(monForHit(h))}<span>${esc(h.name)}</span></button>`).join('');
       $$('#wTixBtnsHint').hidden = !list.length;
+      // viele Tickets (große Wheels): Suchfeld und scrollbare Liste statt riesiger Knopfwand
+      const many = list.length > 12; $$('#wTixFind').hidden = !many; $$('#wTixBtns').classList.toggle('many', many); if (!many) $$('#wTixFind').value = '';
+      filterTixBtns();
       $$('#wHitBtn').hidden = !!list.length; // mit Tickets reicht ein Knopf pro Ticket
     }
   }
-  $$('#wTixBtns').addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (!b || b.disabled) return; $$('#wTixBtns').dataset.sig = ''; sell(true, +b.dataset.i); });
+  $$('#wTixBtns').addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (!b || b.disabled) return; $$('#wTixFind').value = ''; $$('#wTixBtns').dataset.sig = ''; sell(true, +b.dataset.i); });
+  // Suche: Zahl findet genau diese Ticketnummer (14 findet nicht 114), Text findet alles, was ihn enthält
+  function filterTixBtns() {
+    const q = norm($$('#wTixFind').value || ''), num = /^\d+$/.test(q);
+    $$('#wTixBtns').querySelectorAll('button[data-i]').forEach((b) => {
+      const k = b.dataset.k || '';
+      b.hidden = !!q && !(num ? (' ' + k.replace(/[^\d]+/g, ' ') + ' ').includes(' ' + q + ' ') : k.includes(q));
+    });
+  }
+  $$('#wTixFind').addEventListener('input', filterTixBtns);
+  $$('#wTixFind').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return; e.preventDefault();
+    const vis = [...$$('#wTixBtns').querySelectorAll('button[data-i]')].filter((b) => !b.hidden);
+    if (vis.length === 1) vis[0].click(); // genau ein Treffer: Enter trägt ihn ein
+  });
+  // viele Tickets auf einmal einfügen
+  $$('#wTixBulkAdd').onclick = () => {
+    const w = W(), lines = $$('#wTixBulk').value.split(/\n+/).map((x) => x.trim()).filter(Boolean);
+    if (!lines.length) return; snap();
+    lines.slice(0, Math.max(0, 500 - w.tix.length)).forEach((name) => { const m = findMon(name); w.tix.push({ name, mon: m ? m.name : '' }); });
+    $$('#wTixBulk').value = ''; commit();
+  };
+  $$('#wTixClear').onclick = () => { const w = W(); if (!w.tix.length || !confirm('Alle ' + w.tix.length + ' Tickets löschen?')) return; snap(); w.tix = []; w.tixUsed = []; commit(); };
   $$('#wTix').addEventListener('click', (e) => {
     const row = e.target.closest('.w-hitrow'); if (!row) return; const i = +row.dataset.i;
     if (e.target.closest('.x')) { W().tix.splice(i, 1); commit(); }
@@ -2572,7 +2617,7 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     $$('#wFleeBtn').disabled = !pend && (!st.spotsLeft || st.spotsLeft <= st.tLeft);
     $$('#wPending').hidden = !pend;
     if (pend) $$('#wPending').innerHTML = `<span><b>${pend}</b> ${pend === 1 ? 'neuer Spot' : 'neue Spots'} auf Whatnot verkauft. Wird automatisch eingeordnet, sobald Whatnot den Gewinn zeigt. Sonst antippen: Gefangen oder Flieht.</span>` + (pend > 1 ? '<span class="w-row"><button class="btn" id="wPendMiss">Alle als Niete (Flieht)</button></span>' : '');
-    $$('#wStatus').innerHTML = `<span>Noch <b>${st.tLeft}</b> Pokémon</span><span>in <b>${st.spotsLeft}</b> Spots</span><span>Chance <b>${st.pct}%</b></span>` + (!st.spotsLeft ? '<span style="color:var(--gold)">Wheel ausverkauft</span>' : '');
+    $$('#wStatus').innerHTML = `<span>Noch <b>${st.tLeft}</b> Pokémon</span><span>in <b>${st.spotsLeft}</b> Spots</span><span>Chance <b>${st.pctTxt} %</b></span>` + (!st.spotsLeft ? '<span style="color:var(--gold)">Wheel ausverkauft</span>' : '');
     $$('#wUndo').disabled = !undoStack.length;
     $$('#wPrev').classList.toggle('off', !w.live);
     $$('#wPrevNote').textContent = w.live ? '' : 'Leiste ist im Stream gerade ausgeblendet';
@@ -2586,6 +2631,8 @@ if (S.obsAuto && S.obsPass !== undefined && !stageOnly) { obsWanted = true; obsO
     const tsig = '#' + w.tix.map((h) => h.name + '\u0001' + (h.mon || '')).join('\u0002');
     if ($$('#wTix').dataset.sig !== tsig) {
       $$('#wTix').dataset.sig = tsig;
+      $$('#wTix').classList.toggle('many', w.tix.length > 8);
+      $$('#wTixCount').textContent = w.tix.length > 8 ? w.tix.length + ' Tickets' + (w.tix.length >= 500 ? ' (Maximum)' : '') : '';
       $$('#wTix').innerHTML = w.tix.length ? w.tix.map((h, i) => `<div class="w-hitrow${h.won ? ' won' : ''}" data-i="${i}" title="${h.won ? 'Schon gezogen' : ''}"><span class="ph">${iconOf(monForHit(h))}</span><input type="text" value="${esc(h.name)}" placeholder="Ticket wie im Whatnot-Wheel, z. B. Bisasam Ticket 14"><input type="text" class="pm" list="wMonList" value="${esc(h.mon || '')}" placeholder="Pokémon" aria-label="Pokémon für dieses Ticket"><button class="got" title="Dieses Ticket als gezogen eintragen"${h.won ? ' disabled' : ''}>Gezogen</button><button class="x" aria-label="Entfernen">✕</button></div>`).join('') : '<p class="w-hint">Noch keine Tickets eingetragen.</p>';
     }
     const log = $$('#wLog');
